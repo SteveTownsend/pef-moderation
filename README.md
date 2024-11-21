@@ -1,12 +1,12 @@
-# ozone-bsky
-Ozone moderation tools
+# nafo-forum-moderation
+Various moderation tools in support of the work of [NAFO Forum](https://nafoforum.org/)
 
-Supports Bluesky [NAFO custom labeler](nafo-moderation.bsky.social) on domain [nafo-moderation.org](https://ozone.nafo-moderation.org/xrpc/_health?version=0.1.1)  
-[Installation instructions](https://github.com/bluesky-social/ozone/blob/main/HOSTING.md)  
+Supports [Bluesky](https://bsky.app/) [NAFO Forum custom labeler](nafo-moderation.bsky.social) on domain [nafo-moderation.org](https://ozone.nafo-moderation.org/xrpc/_health?version=0.1.1)  
+Set up using [Installation instructions for Bluesky's Ozone](https://github.com/bluesky-social/ozone/blob/main/HOSTING.md)  
 Suggestions welcome via any of the following:  
-[Issues tab on this repository](https://github.com/SteveTownsend/ozone-bsky/issues)  
-Email to [service admin](mailto:admin@nafo-moderation.org)  
-DM or public post to [service account](nafo-moderation.bsky.social)
+- [Issues tab on this repository](https://github.com/SteveTownsend/ozone-bsky/issues)  
+- Email to [service admin](mailto:admin@nafo-moderation.org)  
+- DM or public post to [service account](nafo-moderation.bsky.social)
 
 # Moderation Policy
 The target community is **NAFO and allies**. Broadly, this covers anybody involved in the fight for democracy  
@@ -18,9 +18,12 @@ All moderation requires human review before a label is applied to content. In th
 labeling may be implemented.  
 This service labels asymmetrically:  
 - Offending accounts outside the community of NAFO and allies are usually labeled at the account level so abuse is highlighted universally. Experience on X shows that one-time abusers are typically repeat offenders. Post-by-post moderation does not scale.
-- For offenders within the community, granular content labelinng is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
-This is to help with managing the load as the platfrom grows, and to ensure users are aware of content  
-violations before they engage with an account  
+- For offenders within the community, granular content labeling is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
+
+This approach helps with managing the load as the platform grows, and to ensure users are aware of content  
+violations before they engage with an account. Specifically, 60/40 propagandists mix fact with disnformation  
+to sow disruption in democracies.  A user innocently engaging with the account based on the factual content needs  
+to know the context.  
 There is no plan to act as a verifier of friendly accounts.  
 Send moderation appeals and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
 are not justified in the service's immutable history will be automatically approved. Denial appeals will be supported by   
@@ -47,50 +50,57 @@ All moderators agree to the following:
 - Abuse of the moderation tools to bully users inside or outside the community or pursue personal grievances is prohibited.
 - Reportable behaviour that would result in a content label on any social media or other communication channel is prohibited.
 - Provided it is not egregiously in violation of any service label, an amnesty for prior content is granted at the time access is granted to new moderators.
-- Late detection of reportable behaviour can be remediated by removal insofar as it is possible, and a team-public commitment to the team to not repeat.
+- Late detection of reportable behaviour can be remediated by removal insofar as it is possible, and a team-public commitment to not repeat.
 - Important revisions to moderation policy will be published on the service account.
 - [Element](https://element.io/) chatroom is used for all subject-relevant moderation team discussions. A commitment to engage there is required, as team votes may be required to tie-break.
 - It is permitted to discuss ground rules with candidates before access is granted.
 - Sharing outside the moderation team of internal discussions and communications in any form is prohibited. This includes any disruptive behaviour, such as rumour-mongering and screengrabs.
-- once team size reaches 10, a new service admin may be nominated by a unanimous vote of the team.
+- once team size reaches ten, a new service admin may be nominated by a unanimous vote of the team.
 - No rubber stamping of reports. All reported content must be manually reviewed, and a comment affirming the reasons include on all **Label** actions.
 - respectful evangelism of the service is encouraged. Disruptive harassment of potential users is prohibited.
 - intentional or inadvertent public identification of any moderator other than yourself is prohibited.
 - this is unpaid volunteer work. Acceptance or solicitation of any consideration is prohibited.
 - no fixed time commitment is required. Moderators may opt out of the team at any time on request to admin. Inactive moderators may be asked whether they wish to remain involved, and removed if not.
 - There is zero tolerance for prohibited behaviour deemed by [current service admin](https://bsky.app/profile/stevetownsend0.bsky.social) to be intentional.  
-New moderators will be provided access to the web UI on written agreement to these guidelines.
+
+New moderators will be provided access to the web UI on written agreement to these guidelines.  
 Registration at [NAFO Forum](https://nafoforum.org/) to track ongoing efforts to fight disinformation is strongly suggested  
 but not required.
 
 # Moderator Safety
-Moderators need a moderation account on Bluesky separate from their personal account to avoid conflicts of interest and  
-harassment on the platform.
+The work is satisfying but monotonous and demands constant focus and critical thinking.  Prolonged exposure to toxic  
+internet content is well-known to damage mental health.  
+Self-care is more important than this work.  Take breaks often and for as long as needed.  
+**More volunteers can be found. Your mental health is precious, and needed so you can help.**  
+Moderators need a moderation account on Bluesky separate from their personal account to avoid conflicts of interest  
+and possible harassment on the platform.  
 Sharing of your personal identification information is not a requirement.  
 Public acknowledgement by a moderator that they are active on this service is at moderator's sole option. Consider the  
-risks carefully before going public.
+risks carefully before going public.  
 Moderation policy discussions should not be held on your public TL or any other public medium. Service admin account on  
-Bluesky is the sole exception.
-Admin has amnesty for prior violations of this on his personal account prior to the publication of this document.
+Bluesky is the sole exception.  
+Admin has amnesty for prior violations of this on his personal account prior to the publication of this document.  
 A record of active community participation and reliable reporting safeguard before access is provided helps protect against  
-infiltrators. Moderators assume the risk of infiltration.
-Once team grows to 6 members, approval by a two-thirds supermajority is required to onboard a new moderator.
+infiltrators. Moderators assume the risk of infiltration.  
+Once team grows to six members, approval by a two-thirds supermajority is required to onboard a new moderator.  
 Moderation decisions are recorded in the system as public domain information intermingled with moderator identification.  
 When public domain information is published e.g. during an Appeal, all embedded private information must be redacted.  
 Redaction may includes visual obfuscation or paraphrasing.
 
 # Moderation Workflow
-Currently simple: reports arrive in the Ozone queue and are actioned ad hoc via **Label** or **Acknowledge**
+Currently simple: reports arrive in the Ozone queue and are actioned ad hoc via **Label** or **Acknowledge**  
 As team grows it is likely this will become:
 - initial review of queued report
 - either resolve quickly in queue, or **Escalate**
 - actioning moderator actions the report or delegates to a better choide (e.g. based on language or topic) by updating the **Tag**  
+
 **Tag** schema tbd
 
 # Future plans
 Automation:
 - query-based for historic abusive content
 - real-time
+
 Running costs are currently covered by startup admin (this poster). If costs increase significantly it may be necessary to  
 find outside support for running costs.  
 Metrics:  
@@ -100,11 +110,11 @@ Metrics:
 Server is a VPS hosted by Digital Ocean, to the specs suggested, with backups at a small extra cost.  
 Four domains: nafo-moderation.org/com/net/info set up at Squarespace. They are just the registrar,  
 all DNS setup is done in the Digital Ocean web UI.  
-Web server Installation via the Console on the Digital Ocean "Droplet", which is what they call a VPS.  
+Web server Installation via the Console on the Digital Ocean "Droplet", which is what they call a VPS.    
 Reports arrive once it's all working properly, and can be managed using a serviceable, but not perfect, [web UI](https://github.com/bluesky-social/ozone/blob/main/docs/userguide.md).  
 Service account is nafo-moderation.bsky.social.  
 The endpoint targeted by the reporting API is ozone.moderation.org. I had to add a CNAME record to  
 make that work by redirecting it to nafo-moderation.org. I got confused with domain naming during  
 installation.  
 Set up nafo-moderation.org is a supported domain in [Proton email](https://proton.me/mail) to support appeals and other  
-stuff. Possibly for other users to help out down the line, too.
+stuff. Possibly for other users to help out down the line, too.  
