@@ -36,6 +36,8 @@ Costs and funding are public domain information available on request from [admin
 For people who are familiar with social media reporting guidelines, the rules for this service are different. The  
 goal is to disarm accounts posting viral disinformation and other content violations as quickly and broadly as possible.  
 Typically a single report is sufficient to be dispositive. No more mass reporting or arduous parsing the Terms of Service.  
+Be as clear as possible. Report one abusive post, or the account with a post link if you wish, and a comment.  
+Reports without comments make work harder and may be wrongly denied.  
 Repeat reports of labeled content add no value. Please ensure you are running with the labels against which you are  
 reporting to avoid duplicate effort.
 
