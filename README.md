@@ -40,6 +40,7 @@ Be as clear as possible. Report one abusive post, or the account with a post lin
 Reports without comments make work harder and may be wrongly denied.  
 Repeat reports of labeled content add no value. Please ensure you are running with the labels against which you are  
 reporting to avoid duplicate effort.
+Please report illegal or especially egregious content to the platform as well as this service.
 
 # Moderator Guidelines
 All moderators agree to the following:  
