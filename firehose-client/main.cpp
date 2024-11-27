@@ -114,6 +114,19 @@ do_session(
     if(ec)
         return fail(ec, "handshake");
 
+    // main processing loop
+    while (true) {
+        // This buffer will hold the incoming message
+        beast::flat_buffer buffer;
+
+        // Read a message into our buffer
+        ws.async_read(buffer, yield[ec]);
+        if(ec)
+            return fail(ec, "read");
+
+        // The make_printable() function helps print a ConstBufferSequence
+        std::cout << beast::make_printable(buffer.data()) << std::endl;
+    }
     // This buffer will hold the incoming message
     beast::flat_buffer buffer;
 
@@ -128,9 +141,6 @@ do_session(
         return fail(ec, "close");
 
     // If we get here then the connection is closed gracefully
-
-    // The make_printable() function helps print a ConstBufferSequence
-    std::cout << beast::make_printable(buffer.data()) << std::endl;
 }
 
 //------------------------------------------------------------------------------
