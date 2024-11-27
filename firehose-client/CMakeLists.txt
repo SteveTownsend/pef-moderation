@@ -4,6 +4,7 @@ project(firehose-client VERSION 0.1.0 LANGUAGES C CXX)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(UNIT_TESTS_ENABLED ON)
 
 include(CMakePrintHelpers)
 
@@ -76,5 +77,9 @@ IF(Boost_FOUND)
 ENDIF()
 IF(OpenSSL_FOUND)
   target_link_libraries(firehose-client ${OPENSSL_LIBRARIES})
+ENDIF()
+
+if (UNIT_TESTS_ENABLED)
+  add_subdirectory(test)
 ENDIF()
 
