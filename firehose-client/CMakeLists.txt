@@ -25,6 +25,8 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/cjgdev/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
+INCLUDE_DIRECTORIES(${aho_corasick_SOURCE_DIR}/src)
+
 include(CMakePrintHelpers)
 
 # For Boost.Beast (REST, Websocket)
@@ -70,8 +72,8 @@ cmake_print_variables(Boost_LIBRARY_DIRS)
 cmake_print_variables(OpenSSL_FOUND)
 cmake_print_variables(OPENSSL_INCLUDE_DIR)
 cmake_print_variables(OPENSSL_LIBRARIES)
-
-add_executable(firehose-client main.cpp)
+add_executable(firehose-client main.cpp datasource.cpp matcher.cpp)
+INCLUDE_DIRECTORIES(firehose_client .)
 IF(Boost_FOUND)
   target_link_libraries(firehose-client ${Boost_LIBRARIES})
 ENDIF()
