@@ -21,11 +21,11 @@ This service labels asymmetrically:
 - For offenders within the community, granular content labeling is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
 
 This approach helps with managing the load as the platform grows, and to ensure users are aware of content  
-violations before they engage with an account. Specifically, 60/40 propagandists mix fact with disnformation  
+violations before they engage with an account. Specifically, 60/40 propagandists mix fact with disinformation  
 to sow disruption in democracies.  A user innocently engaging with the account based on the factual content needs  
 to know the context.  
 There is no plan to act as a verifier of friendly accounts.  
-Send moderation appeals and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
+Send moderation **Appeals** and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
 are not justified in the service's immutable history will be automatically approved. Denial appeals will be supported by   
 provision of relevant moderation history, redacted to remove private information for the protection of moderators.  
 Target SLA for report moderation and appeals is 24 hours.  
