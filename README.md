@@ -74,6 +74,8 @@ but not required.
 The work is satisfying but monotonous and demands constant focus and critical thinking.  Prolonged exposure to toxic  
 internet content is well-known to damage mental health.  
 Self-care is more important than this work.  Take breaks often and for as long as needed.  
+If a team member sees content they cannot or don't want to moderate for any reason, they should **Escalate** with a  
+comment for the team
 **More volunteers can be found. Your mental health is precious, and needed so you can help.**  
 Moderators need a moderation account on Bluesky separate from their personal account to avoid conflicts of interest  
 and possible harassment on the platform.  
