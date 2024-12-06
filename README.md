@@ -28,6 +28,9 @@ There is no plan to act as a verifier of friendly accounts.
 Send moderation **Appeals** and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
 are not justified in the service's immutable history will be automatically approved. Denial appeals will be supported by   
 provision of relevant moderation history, redacted to remove private information for the protection of moderators.  
+We do not use platform labels like _!warn_, _!hide_, ... Platform labels may be used for the very worst offenders like CSAM,  
+human or animal torture, which have been observed _ad hoc_ by the team and will presumably be removed once platform  
+catches up.
 Target SLA for report moderation and appeals is 24 hours.  
 As team grows, the goal is to do better. This may be revised based on real-world constraints and experience.  
 Costs and funding are public domain information available on request from [admin](mailto:admin@nafo-moderation.org).
