@@ -2,7 +2,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-constexpr const char *DataPath = "../../../test/data/";
+constexpr const char *DataPath = "../data/";
 
 inline nlohmann::json load_json_from_file(const std::string &filename) {
   std::string decorated = DataPath + filename;

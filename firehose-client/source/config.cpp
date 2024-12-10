@@ -23,9 +23,9 @@ http://www.fsf.org/licensing/licenses
 
 config::config(std::string const &filename) {
   try {
-	  _config = YAML::LoadFile(filename);
-  } catch (std::exception const & exc) {
-	  REL_CRITICAL("Error processing config file {}", filename);
+    _config = YAML::LoadFile(filename);
+  } catch (std::exception const &exc) {
+    REL_CRITICAL("Error processing config file {}:{}", filename, exc.what());
   }
 }
 

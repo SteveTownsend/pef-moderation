@@ -21,5 +21,7 @@ target_link_libraries(
   ${ICU_LIBRARIES}
 )
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 include(GoogleTest)
 gtest_discover_tests(firehose_client_tests)
