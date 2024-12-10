@@ -60,7 +60,7 @@ TEST(MatcherTest, Parse) {
         html << L"</i>";
     }
     html << L"</p></body></html>";
-    std::wcout << html.str() << '\n';
+    EXPECT_EQ(html.str(), L"<html><body><p>The Answer to the Great Question... Of Life, the Universe and Everything... Is... Forty-two, said Deep Thought, with infinite majesty and calm.</p></body></html>");
   }
 }
 

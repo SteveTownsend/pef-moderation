@@ -64,6 +64,14 @@
             }
         },
         {
+            "name": "platform-linux",
+            "hidden": true,
+            "cacheVariables": {},
+            "environment": {
+                "PROJECT_PLATFORM": "linux"
+            }
+        },
+        {
             "name": "generator-ninja",
             "hidden": true,
             "generator": "Ninja"
@@ -74,29 +82,15 @@
             "generator": "Visual Studio 17 2022"
         },
         {
-            "name": "compiler-clang",
+            "name": "compiler-gcc",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++"
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
             },
             "environment": {
-                "PROJECT_COMPILER": "clang",
-                "PROJECT_COMPILER_FLAGS": "-Wno-overloaded-virtual -Wno-delete-non-abstract-non-virtual-dtor -Wno-inconsistent-missing-override -Wno-reinterpret-base-class -D__cpp_lib_char8_t -D__cpp_consteval -D__cpp_lib_format"
-            }
-        },
-        {
-            "name": "compiler-clang-cl",
-            "hidden": true,
-            "inherits": "compiler-clang",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang-cl",
-                "CMAKE_CXX_COMPILER": "clang-cl"
-            },
-            "environment": {
-                "CC": "clang-cl",
-                "CXX": "clang-cl",
-                "PROJECT_COMPILER_FLAGS": "/permissive- /EHsc /W4 /WX -Wno-overloaded-virtual -Wno-delete-non-abstract-non-virtual-dtor -Wno-inconsistent-missing-override -Wno-reinterpret-base-class -D__cpp_lib_char8_t -D__cpp_consteval -D__cpp_lib_format"
+                "PROJECT_COMPILER": "gcc",
+                "PROJECT_COMPILER_FLAGS": ""
             }
         },
         {
@@ -168,43 +162,43 @@
             "binaryDir": "${sourceDir}/build/logging-msvc"
         },
         {
-            "name": "Debug-Clang",
+            "name": "Debug-GCC",
             "inherits": [
                 "buildtype-debug",
                 "architecture-x64",
-                "platform-win32-unicode",
+                "platform-linux",
                 "generator-ninja",
-                "compiler-clang-cl",
+                "compiler-gcc",
                 "common"
             ],
             "description": "Debug build for testing.",
-            "binaryDir": "${sourceDir}/build/debug-clang"
+            "binaryDir": "${sourceDir}/build/debug-gcc"
         },
         {
-            "name": "Release-Clang",
+            "name": "Release-GCC",
             "inherits": [
                 "buildtype-release",
                 "architecture-x64",
-                "platform-win32-unicode",
+                "platform-linux",
                 "generator-ninja",
-                "compiler-clang-cl",
+                "compiler-gcc",
                 "common"
             ],
             "description": "Optimized release build.",
-            "binaryDir": "${sourceDir}/build/release-clang"
+            "binaryDir": "${sourceDir}/build/release-gcc"
         },
         {
-            "name": "Logging-Clang",
+            "name": "Logging-GCC",
             "inherits": [
                 "buildtype-relwithdebinfo",
                 "architecture-x64",
-                "platform-win32-unicode",
+                "platform-linux",
                 "generator-ninja",
-                "compiler-clang-cl",
+                "compiler-gcc",
                 "common"
             ],
             "description": "Optimized release build with logging.",
-            "binaryDir": "${sourceDir}/build/logging-clang"
+            "binaryDir": "${sourceDir}/build/logging-gcc"
         }
     ],
     "buildPresets": [
@@ -227,21 +221,21 @@
             "description": "Debug build for testing."
         },
         {
-            "name": "rel-clang",
-            "displayName": "Release (Clang)",
-            "configurePreset": "Release-Clang",
+            "name": "rel-gcc",
+            "displayName": "Release (GCC)",
+            "configurePreset": "Release-GCC",
             "description": "Optimized release build."
         },
         {
-            "name": "log-clang",
-            "displayName": "Logging (Clang)",
-            "configurePreset": "Logging-Clang",
+            "name": "log-gcc",
+            "displayName": "Logging (GCC)",
+            "configurePreset": "Logging-GCC",
             "description": "Optimized release build with logging."
         },
         {
-            "name": "deb-clang",
-            "displayName": "Debug (Clang)",
-            "configurePreset": "Debug-Clang",
+            "name": "deb-gcc",
+            "displayName": "Debug (GCC)",
+            "configurePreset": "Debug-GCC",
             "description": "Debug build for testing."
         }
     ]

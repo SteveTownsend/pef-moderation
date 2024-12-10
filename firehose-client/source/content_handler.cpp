@@ -62,7 +62,7 @@ void content_handler::handle(beast::flat_buffer const &beast_data) {
   REL_TRACE("Filter match : {}", json_msg);
   for (auto &match : matches) {
     for (auto &index : match.second) {
-      REL_TRACE(L"{}:{}", index.get_index(), index.get_keyword());
+      REL_TRACE("{}:{}", index.get_index(), wstring_to_utf8(index.get_keyword()));
     }
   }
 

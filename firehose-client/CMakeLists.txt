@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 1.0.0 LANGUAGES C CXX)
+project(firehose_client VERSION 1.1.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -15,19 +15,21 @@ if(WIN32)
                 _UNICODE
                 NOMINMAX
                 _AMD64_
-                WIN32_LEAN_AND_MEAN
-                SPDLOG_WCHAR_TO_UTF8_SUPPORT)
+                WIN32_LEAN_AND_MEAN)
         if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
                 add_compile_definitions(
                         _FULL_LOGGING
                         NDEBUG
                 )
         endif()
+elseif(UNIX)
+	# add_compile_definitions(std=gnu++23)
 endif()
 
 include(CMakePrintHelpers)
 
-configure_file(./cmake/firehost_client_config.hpp.in firehost_client_config.hpp)
+configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/firehost_client_config.hpp)
+SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 include(FetchContent)
 FetchContent_Declare(
@@ -42,7 +44,7 @@ FetchContent_MakeAvailable(googletest)
 
 FetchContent_Declare(
   aho_corasick
-  GIT_HASH 4a38c77ec94bcf1a178260781bc5d8350f49ae4d
+  GIT_HASH 93eb16ba2571f9e2bd05ae17681c62121cc436d1
   GIT_REPOSITORY https://github.com/SteveTownsend/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
@@ -108,6 +110,9 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
   GIT_TAG 0.8.0
 )
+if (UNIX)
+  SET(YAML_BUILD_SHARED_LIBS ON)
+endif()
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 
@@ -129,6 +134,9 @@ add_executable(firehose_client
   ./source/parser.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client  ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES} nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp)
+if (UNIX)
+  target_link_libraries(firehose_client  stdc++)
+endif()
 
 if (UNIT_TESTS_ENABLED)
   add_subdirectory(test)

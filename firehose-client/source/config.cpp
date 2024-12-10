@@ -19,9 +19,14 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "config.hpp"
+#include "log_wrapper.hpp"
 
 config::config(std::string const &filename) {
-  _config = YAML::LoadFile(filename);
+  try {
+	  _config = YAML::LoadFile(filename);
+  } catch (std::exception const & exc) {
+	  REL_CRITICAL("Error processing config file {}", filename);
+  }
 }
 
 YAML::Node const &config::get_config() const { return _config; }

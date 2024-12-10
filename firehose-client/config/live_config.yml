@@ -3,7 +3,7 @@ firehose_client:
     filename: "./logs/firehose_client.log"
     level: "debug" # per spdlog values trace, debug, info, warn, error, critical, off
   filters:
-    filename: "../../config/live_filters"
+    filename: "./config/live_filters"
   datasource:
     hosts:
       "jetstream1.us-east.bsky.network"

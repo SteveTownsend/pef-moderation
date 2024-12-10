@@ -61,6 +61,10 @@ std::wstring to_canonical(std::string_view const input) {
 }
 
 std::string wstring_to_utf8(std::wstring const &rc_string) {
+  return wstring_to_utf8(std::wstring_view(rc_string.c_str(), rc_string.length()));
+}
+
+std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (rc_string.empty())
     return std::string();
 

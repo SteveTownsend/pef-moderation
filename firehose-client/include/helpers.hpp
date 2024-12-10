@@ -51,6 +51,7 @@ inline std::string dump_json(nlohmann::json &full_json) {
 
 // convert wstring to UTF-8 string
 std::string wstring_to_utf8(std::wstring const &str);
+std::string wstring_to_utf8(std::wstring_view str);
 
 std::string print_emits(const aho_corasick::wtrie::emit_collection &c);
 // template <>
