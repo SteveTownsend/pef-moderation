@@ -1,0 +1,34 @@
+{
+  "did": "did:plc:enoqppezgwi4ggtpmiaek5k6",
+  "time_us": 1733083012764349,
+  "kind": "commit",
+  "commit": {
+    "rev": "3lcbfepfysx2j",
+    "operation": "update",
+    "collection": "app.bsky.actor.profile",
+    "rkey": "self",
+    "record": {
+      "$type": "app.bsky.actor.profile",
+      "avatar": {
+        "$type": "blob",
+        "ref": {
+          "$link": "bafkreic2chvj5yz6tquuvtmu2my3ojooxphgyitet2ztpka5zilcbye6ra"
+        },
+        "mimeType": "image/jpeg",
+        "size": 105669
+      },
+      "banner": {
+        "$type": "blob",
+        "ref": {
+          "$link": "bafkreidc7b2zlvwhhj56rjhamm4fcjqovtdskiclhmvccgoodz5trh73yq"
+        },
+        "mimeType": "image/jpeg",
+        "size": 447723
+      },
+      "createdAt": "2024-11-17T16:20:09.945Z",
+      "description": "Ramblings from a flyover state just. like. yours.\n\nMother of three. ðŸ’šðŸ’›ðŸ©· (donâ€™t show them my posts, theyâ€™ll roast me)",
+      "displayName": "Mrs. Calvert"
+    },
+    "cid": "bafyreievkxtc2sexity327xulducq37jbb2ogwu64xjkg6wqdmj2en7enq"
+  }
+}

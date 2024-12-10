@@ -1,3 +1,5 @@
+#ifndef __config_hpp__
+#define __config_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -17,16 +19,19 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include <aho_corasick/aho_corasick.hpp>
+#include "yaml-cpp/yaml.h"
 #include <string>
 
-class matcher {
+class config {
 public:
-  matcher() = delete;
-  ~matcher() = default;
-  matcher(std::string const &match);
-  bool matches_any(std::string const &candidate) const;
+  config() = delete;
+  ~config() = default;
+
+  config(std::string const &filename);
+  const YAML::Node &get_config() const;
 
 private:
-  mutable aho_corasick::trie _trie;
+  YAML::Node _config;
 };
+
+#endif

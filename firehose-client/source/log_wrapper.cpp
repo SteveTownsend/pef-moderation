@@ -18,14 +18,22 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "matcher.hpp"
+#include "log_wrapper.hpp"
+#include "config.hpp"
+#include "firehost_client_config.hpp"
+#include <filesystem>
 
-matcher::matcher(std::string const &match) {
-  _trie.case_insensitive();
-  _trie.insert(match);
-}
+std::shared_ptr<spdlog::logger> logger;
 
-bool matcher::matches_any(std::string const &candidate) const {
-  auto result = _trie.parse_text(candidate);
-  return !result.empty();
+void init_logging(std::string const &log_file,
+                  spdlog::level::level_enum log_level) {
+  std::filesystem::path logPath(log_file);
+  try {
+    std::string fileName(logPath.generic_string());
+    logger = spdlog::basic_logger_mt(PROJECT_NAME, fileName, true);
+    logger->set_pattern("%Y-%m-%d %T.%e %8l %6t %v");
+  } catch (const spdlog::spdlog_ex &) {
+  }
+  logger->set_level(log_level); // Set mod's log level
+  logger->flush_on(log_level);  // Set mod's log to always flush
 }

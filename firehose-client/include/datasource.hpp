@@ -1,3 +1,5 @@
+#ifndef __datasource_hpp__
+#define __datasource_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -27,6 +29,9 @@ http://www.fsf.org/licensing/licenses
 #include <iostream>
 #include <string>
 
+#include "config.hpp"
+#include "content_handler.hpp"
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -34,23 +39,23 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-class matcher;
-
 class datasource {
 public:
   datasource() = delete;
   ~datasource() = default;
-  datasource(std::string const &host, std::string const &port,
-             std::string const &source, matcher const &filter);
+  datasource(config const &settings);
   void start();
 
 private:
-  std::string const &_host;
-  std::string const &_port;
-  std::string const &_source;
-  matcher const &_filter;
+  // TODO support round robin if needed
+  std::string _host;
+  std::string _port;
+  std::string _subscription;
+  content_handler _handler;
+  config const &_settings;
 
   void do_work(net::io_context &ioc, ssl::context &ctx,
                net::yield_context yield);
   void fail(beast::error_code ec, char const *what);
 };
+#endif

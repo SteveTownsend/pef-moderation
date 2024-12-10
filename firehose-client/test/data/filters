@@ -1,0 +1,84 @@
+## target,labels,report,qualifier,contingent
+## "scope" e.g. "only profiles"
+## future - complex queries to narrow the matches
+## Soviet and other hammer-sickle genocide celebrants
+☭|abusive,violent|false|substring|
+Stalin|abusive,violent|false|word|
+Stalinist|abusive,violent|false|word|
+## slurs
+troon|abusive|false|word|
+nigger|abusive|false|word|
+nogger|abusive|false|word|
+mudshark|abusive|false|substring|
+## Nazism
+## very frequent
+## Hitler|abusive,violent|false|substring|
+Heil Hitler|abusive,violent|false|substring|
+Holohoax|abusive,violent|false|substring|
+Führer Friday|abusive,violent|false|substring|
+Fuehrer Friday|abusive,violent|false|substring|
+## \o|abusive,violent|false|substring|
+## URLs are a problem
+## o/|abusive,violent|false|substring|
+## unclear if helpful
+## 1488|abusive,violent|false|substring|
+## review for legitimate Hindu usage
+卐|abusive,violent|false|substring|
+## coded, SS
+⚡⚡|abusive,evasion,violent|false|substring|
+## networks
+mintcat|abusive,engagementfarmer,network,disruptive|false|substring|
+KiwiFarms|abusive,network|false|substring|
+ꗪꜞ⒲ꜞẝშ┌ෆ𝐬|abusive,network|false|substring|
+groyp|abusive,network|false|substring|
+/allstaredge.info|abusive,engagementfarmer|false|substring|
+/privatevid.vercel.app|abusive,network,nsfw,engagementfarmer|false|substring|
+preetyliv.llc|abusive,network,nsfw,engagementfarmer|false|substring|
+pleniiixa.blogspot.com|abusive,network,nsfw,engagementfarmer|false|substring|
+vanillasky.click|disinfo,network|false|substring|
+infobrics.org|disinfo,network|false|substring|
+/rt.com|disinfo,network|false|substring|
+/rumble.com|disinfo,network|false|substring|
+/lemediaen442.fr|disinfo,network|false|substring|
+breitbart.com|disinfo,network|false|substring|
+ukraine.today.co.uk|disinfo,disruptive|false|substring|
+breakthrough news|disinfo,disruptive|false|substring|
+mintpress news|disinfo,disruptive|false|substring|
+## Gaza phishers
+gofundme.com/|engagementfarmer,abusive|false|substring|from Gaza
+## violent speech
+woodChipper|abusive,violent|false|substring|
+## rapist/rape come up a lot in legitimage usage
+## rapist|abusive,violent|false|word|
+## rape|abusive,violent|false|word|
+TND|abusive,violent|false|word|
+BNRAN|abusive,violent|false|word|
+## coded - kill yourself
+KYS|abusive,violent|false|word|
+## very frequent
+retard|abusive|false|substring|
+## Porn hashtags - removing for now
+## onlyfans|nsfw,engagementfarmer|false|substring|
+## #kink|nsfw,engagementfarmer|false|substring|
+## #porn|nsfw,engagementfarmer|false|substring|
+## #nsfw|nsfw,engagementfarmer|false|substring|
+## October 7 2023 atrocity celebrants
+from the river to the sea|abusive,violent|false|substring|
+globalize the intifada|abusive,violent|false|substring|
+🔻|abusive,violent|false|substring|
+## deadnaming - however, this is also a frequent typo
+Isreal|abusive|false|word|
+## anti-Ukraine slurs and talking points
+## total hoh*l death, birthday is a problem
+## THD|abusive,violent|false|substring|
+Хохол|abusive|false|substring|
+Banderite|abusive|false|word|
+ukronazi|abusive|false|word|
+ukranazi|abusive|false|word|
+Kiev|disinfo,abusive|false|word|regime
+coup|disinfo,abusive|false|word|Maidan,Georgia,CIA
+Nuland|disinfo,abusive|false|word|
+## denialism
+bucha|abusive,violent,disinfo|false|word|
+## 9/11 denialism and fearmongering
+9/11|disinfo|false|substring|dancing,Israelis,Jews,another

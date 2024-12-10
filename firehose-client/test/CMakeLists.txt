@@ -1,11 +1,25 @@
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 add_executable(
-  filter_test
-  filter_test.cpp
+  firehose_client_tests
+  ${PROJECT_SOURCE_DIR}/source/helpers.cpp
+  ${PROJECT_SOURCE_DIR}/source/log_wrapper.cpp
+  ${PROJECT_SOURCE_DIR}/source/matcher.cpp
+  ${PROJECT_SOURCE_DIR}/source/matcher.cpp
+  ${PROJECT_SOURCE_DIR}/source/parser.cpp
+  ./source/matcher_test.cpp
+  ./source/parser_test.cpp
 )
+# No logging in tests
+target_compile_definitions(firehose_client_tests PUBLIC DISABLE_LOGGING)
+target_include_directories(firehose_client_tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/include ./include)
 target_link_libraries(
-  filter_test
+  firehose_client_tests
+  nlohmann_json_schema_validator
   GTest::gtest_main
+  GTest::gmock_main
+  spdlog
+  ${ICU_LIBRARIES}
 )
 
 include(GoogleTest)
-gtest_discover_tests(filter_test)
+gtest_discover_tests(firehose_client_tests)

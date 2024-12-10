@@ -19,13 +19,26 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "datasource.hpp"
+#include "firehost_client_config.hpp"
+#include "log_wrapper.hpp"
 #include "matcher.hpp"
 
-datasource::datasource(std::string const &host, std::string const &port,
-                       std::string const &source, matcher const &filter)
-    : _host(host), _port(port), _source(source), _filter(filter) {}
+datasource::datasource(config const &settings) : _settings(settings) {
+  _host = _settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
+              .as<std::string>();
+  _port = _settings.get_config()[PROJECT_NAME]["datasource"]["port"]
+              .as<std::string>();
+  _subscription =
+      _settings.get_config()[PROJECT_NAME]["datasource"]["subscription"]
+          .as<std::string>();
+  _handler.set_filter(
+      _settings.get_config()[PROJECT_NAME]["filters"]["filename"]
+          .as<std::string>());
+}
 
 void datasource::start() {
+  REL_INFO("client startup for {}:{} at {}, filters {}", _host, _port,
+           _subscription, _handler.get_filter());
   // The io_context is required for all I/O
   net::io_context ioc;
 
@@ -111,7 +124,7 @@ void datasource::do_work(net::io_context &ioc, ssl::context &ctx,
       websocket::stream_base::timeout::suggested(beast::role_type::client));
 
   // Perform the websocket handshake
-  ws.async_handshake(_host, _source, yield[ec]);
+  ws.async_handshake(_host, _subscription, yield[ec]);
   if (ec)
     return fail(ec, "handshake");
   // main processing loop
@@ -124,19 +137,8 @@ void datasource::do_work(net::io_context &ioc, ssl::context &ctx,
     if (ec)
       return fail(ec, "read");
 
-    if (!_filter.matches_any(beast::buffers_to_string(buffer.data()))) {
-      continue;
-    }
-    // The make_printable() function helps print a ConstBufferSequence
-    std ::cout << beast::make_printable(buffer.data()) << std::endl;
+    _handler.handle(buffer);
   }
-  // This buffer will hold the incoming message
-  beast::flat_buffer buffer;
-
-  // Read a message into our buffer
-  ws.async_read(buffer, yield[ec]);
-  if (ec)
-    return fail(ec, "read");
 
   // Close the WebSocket connection
   ws.async_close(websocket::close_code::normal, yield[ec]);

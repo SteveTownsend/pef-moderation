@@ -33,27 +33,46 @@ http://www.fsf.org/licensing/licenses
 //
 //------------------------------------------------------------------------------
 
+#include "config.hpp"
 #include "datasource.hpp"
+#include "firehost_client_config.hpp"
+#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include <iostream>
 
 int main(int argc, char **argv) {
-  // Check command line arguments.
-  if (argc != 4) {
-    std::cerr << "Usage: firehose-client <host> <port> <source>\n"
-              << "Example:\n"
-              << "    ./firehose-client.exe jetstream1.us-east.bsky.network "
-                 "443 /subscribe\n";
-    // for profile and post commits:
-    // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
+  bool log_ready(false);
+  try {
+    // Check command line arguments.
+    if (argc != 2) {
+      std::cerr << "Usage: firehose-client <config-file-name>\n";
+      // for profile and post commits:
+      // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
+      return EXIT_FAILURE;
+    }
+    config settings(argv[1]);
+
+    std::string const log_file(
+        settings.get_config()[PROJECT_NAME]["logging"]["filename"]
+            .as<std::string>());
+    spdlog::level::level_enum log_level(spdlog::level::from_str(
+        settings.get_config()[PROJECT_NAME]["logging"]["level"]
+            .as<std::string>()));
+    init_logging(log_file, log_level);
+    log_ready = true;
+
+    REL_INFO("firehose_client v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
+             PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
+
+    datasource(settings).start();
+
+    return EXIT_SUCCESS;
+  } catch (std::exception const &exc) {
+    if (log_ready) {
+      REL_CRITICAL("Unhandled exception : {}", exc.what());
+    } else {
+      std::cerr << "Unhandled exception : " << exc.what() << '\n';
+    }
     return EXIT_FAILURE;
   }
-  auto const host = argv[1];
-  auto const port = argv[2];
-  auto const source = argv[3];
-
-  matcher filter("smoke");
-  datasource(host, port, source, filter).start();
-
-  return EXIT_SUCCESS;
 }
