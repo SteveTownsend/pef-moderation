@@ -23,6 +23,12 @@ http://www.fsf.org/licensing/licenses
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>
 
+namespace json {
+std::map<std::string, std::vector<std::string>> TargetFieldNames = {
+    {"app.bsky.feed.post", {"text"}},
+    {"app.bsky.actor.profile", {"description", "displayName"}}};
+}
+
 // convert UTF-8 input to canonical form where case differences are erased
 std::wstring to_canonical(std::string_view const input) {
   int32_t capacity((static_cast<int32_t>(input.length()) * 3));
@@ -61,7 +67,8 @@ std::wstring to_canonical(std::string_view const input) {
 }
 
 std::string wstring_to_utf8(std::wstring const &rc_string) {
-  return wstring_to_utf8(std::wstring_view(rc_string.c_str(), rc_string.length()));
+  return wstring_to_utf8(
+      std::wstring_view(rc_string.c_str(), rc_string.length()));
 }
 
 std::string wstring_to_utf8(std::wstring_view rc_string) {

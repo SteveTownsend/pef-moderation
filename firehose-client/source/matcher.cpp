@@ -116,20 +116,10 @@ matcher::match_results matcher::all_matches_for_candidates(
       all_matches.insert(all_matches.end(), whole_words.cbegin(),
                          whole_words.cend());
     if (!all_matches.empty()) {
-      results.emplace_back(next.second, all_matches);
+      results.emplace_back(next.first, next.second, all_matches);
     }
   }
   return results;
-}
-
-matcher::match_results
-matcher::find_whole_word_matches(std::string const &string_data) const {
-  // use ICU canonical form for multilanguage support
-  auto matches(_whole_word_trie.parse_text(to_canonical(string_data)));
-  if (!matches.empty()) {
-    return match_results({{string_data, matches}});
-  }
-  return match_results{};
 }
 
 matcher::rule::rule(std::string const &rule_string) {

@@ -27,9 +27,6 @@ http://www.fsf.org/licensing/licenses
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;
 
-constexpr std::string_view PostId = "app.bsky.feed.post"sv;
-constexpr std::string_view ProfileId = "app.bsky.actor.profile"sv;
-
 class parser {
 public:
   parser() = default;

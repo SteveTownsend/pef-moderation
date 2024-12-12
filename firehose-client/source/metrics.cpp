@@ -1,5 +1,3 @@
-#ifndef __content_handler_hpp__
-#define __content_handler_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -20,25 +18,20 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "matcher.hpp"
-#include "post_processor.hpp"
-#include <boost/beast/core.hpp>
+#include "metrics.hpp"
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
+metrics::metrics()
+    : _exposer("127.0.0.1:9090"), _registry(new prometheus::Registry) {
+  // ask the exposer to scrape the registry on incoming HTTP requests
+  _exposer.RegisterCollectable(_registry);
+}
 
-class content_handler {
-public:
-  content_handler();
-  ~content_handler() = default;
-  void set_filter(std::string const &filter_file);
-  std::string get_filter() const;
+metrics &metrics::instance() {
+  static metrics my_instance;
+  return my_instance;
+}
 
-  void handle(beast::flat_buffer const &beast_data);
-
-private:
-  bool _is_ready;
-  std::string _filter_file;
-  matcher _matcher;
-  post_processor<payload> _post_processor;
-};
-#endif
+prometheus::Family<prometheus::Counter> &
+metrics::add_counter(std::string const &name, std::string const &help) {
+  return prometheus::BuildCounter().Name(name).Help(help).Register(*_registry);
+}

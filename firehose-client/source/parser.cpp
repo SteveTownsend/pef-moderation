@@ -43,40 +43,43 @@ parser::candidate_list parser::get_candidates_from_flat_buffer(
 // TODO Could use SAX parsing down the line
 parser::candidate_list
 parser::get_candidates_from_json(nlohmann::json &full_json) const {
-  REL_TRACE("Target {}", dump_json(full_json));
-  // handle updates
-  if (full_json["kind"] == "identity") {
-    nlohmann::json record(full_json["identity"]);
-    if (record.contains("handle")) {
-      return {{"handle", record["handle"].template get<std::string>()}};
+  // Handle exceptions as they come up.
+  // Example: record["type"] can sometimes be a "proxy" object not a string
+  try {
+    REL_TRACE("Target {}", dump_json(full_json));
+    // handle updates
+    if (full_json["kind"] == "identity") {
+      nlohmann::json record(full_json["identity"]);
+      if (record.contains("handle")) {
+        return {{"handle", record["handle"].template get<std::string>()}};
+      }
+      return {};
     }
-    return {};
-  }
 
-  // other than handles, only interested in commits
-  if (full_json["kind"] != "commit")
-    return {};
+    // other than handles, only interested in commits
+    if (full_json["kind"] != "commit")
+      return {};
 
-  auto commit(full_json["commit"]);
-  // Skip deletions
-  if (commit["operation"] == "delete")
-    return {};
+    auto commit(full_json["commit"]);
+    // Skip deletions
+    if (commit["operation"] == "delete")
+      return {};
 
-  nlohmann::json record(commit["record"]);
-  auto record_type(record["$type"].template get<std::string>());
-  if (record_type == PostId && record.contains("text")) {
-    return {{"text", record["text"].template get<std::string>()}};
-  } else if (record_type == ProfileId) {
+    nlohmann::json record(commit["record"]);
+    auto record_type(record["$type"].template get<std::string>());
+    auto const record_fields(json::TargetFieldNames.find(record_type));
     parser::candidate_list results;
-    if (record.contains("description")) {
-      results.emplace_back("description",
-                           record["description"].template get<std::string>());
-    }
-    if (record.contains("displayName")) {
-      results.emplace_back("displayName",
-                           record["displayName"].template get<std::string>());
+    if (record_fields != json::TargetFieldNames.cend()) {
+      for (auto &field_name : record_fields->second) {
+        if (record.contains(field_name)) {
+          results.emplace_back(field_name,
+                               record[field_name].template get<std::string>());
+        }
+      }
     }
     return results;
+  } catch (std::exception const &exc) {
+    REL_ERROR("Error {} processing JSON\n{}", exc.what(), dump_json(full_json));
   }
   return {};
 }

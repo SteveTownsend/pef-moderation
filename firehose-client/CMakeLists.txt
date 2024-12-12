@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 1.1.0 LANGUAGES C CXX)
+project(firehose_client VERSION 1.2.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -50,6 +50,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(aho_corasick)
 include_directories(${aho_corasick_SOURCE_DIR}/src)
 
+FetchContent_Declare(
+  prometheus-cpp
+  GIT_TAG v1.3.0
+  GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp
+)
+SET(ENABLE_PUSH OFF)
+SET(ENABLE_COMPRESSION OFF)
+SET(ENABLE_TESTING OFF)
+FetchContent_MakeAvailable(prometheus-cpp)
+include_directories(${prometheus-cpp_SOURCE_DIR})
+cmake_print_variables(prometheus-cpp_FOUND prometheus-cpp_SOURCE_DIR)
+
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
 cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
@@ -62,17 +74,17 @@ SET(Boost_NO_BOOST_CMAKE TRUE)
 SET(BOOST_ROOT $ENV{BOOST_ROOT})
 set(BOOST_LIBRARYDIR $ENV{BOOST_LIBRARYDIR})
 
-# For OpenSSL
-set(OPENSSL_INCLUDE_DIR $ENV{OPENSSL_INCLUDE_DIR})
-set(OPENSSL_ROOT_DIR $ENV{OPENSSL_ROOT_DIR})
-set(OPENSSL_VERSION $ENV{OPENSSL_VERSION})
-
 find_package(Boost REQUIRED COMPONENTS system context)
 IF(Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
   ADD_DEFINITIONS( "-DHAS_BOOST" )
 ENDIF()
+
+# For OpenSSL
+set(OPENSSL_INCLUDE_DIR $ENV{OPENSSL_INCLUDE_DIR})
+set(OPENSSL_ROOT_DIR $ENV{OPENSSL_ROOT_DIR})
+set(OPENSSL_VERSION $ENV{OPENSSL_VERSION})
 
 find_package(OpenSSL REQUIRED)
 IF(OpenSSL_FOUND)
@@ -131,9 +143,10 @@ add_executable(firehose_client
   ./source/helpers.cpp
   ./source/log_wrapper.cpp
   ./source/matcher.cpp
+  ./source/metrics.cpp
   ./source/parser.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(firehose_client  ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES} nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp)
+target_link_libraries(firehose_client prometheus-cpp::pull ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES} nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp)
 if (UNIX)
   target_link_libraries(firehose_client  stdc++)
 endif()

@@ -24,8 +24,14 @@ http://www.fsf.org/licensing/licenses
 #include <algorithm>
 #include <format>
 #include <iterator>
+#include <map>
 #include <sstream>
 #include <string>
+#include <vector>
+
+namespace json {
+extern std::map<std::string, std::vector<std::string>> TargetFieldNames;
+}
 
 // brute force to_lower, not locale-aware
 inline std::string to_lower(std::string_view const input) {

@@ -38,16 +38,16 @@ void content_handler::handle(beast::flat_buffer const &beast_data) {
   auto matches(_matcher.find_all_matches(beast_data));
   // confirm any matched rules with contingent string matches
   for (auto next_match = matches.begin(); next_match != matches.end();) {
-    for (auto rule_key = next_match->second.begin();
-         rule_key != next_match->second.end();) {
+    for (auto rule_key = std::get<2>(*next_match).begin();
+         rule_key != std::get<2>(*next_match).end();) {
       matcher::rule this_rule = _matcher.find_rule(rule_key->get_keyword());
-      if (!this_rule.matches_any_contingent(next_match->first)) {
-        rule_key = next_match->second.erase(rule_key);
+      if (!this_rule.matches_any_contingent(std::get<1>(*next_match))) {
+        rule_key = std::get<2>(*next_match).erase(rule_key);
       } else {
         ++rule_key;
       }
     }
-    if (next_match->second.empty()) {
+    if (std::get<2>(*next_match).empty()) {
       next_match = matches.erase(next_match);
     } else {
       ++next_match;
@@ -57,14 +57,7 @@ void content_handler::handle(beast::flat_buffer const &beast_data) {
   if (matches.empty()) {
     return;
   }
-
   std::string json_msg(boost::beast::buffers_to_string(beast_data.data()));
-  REL_TRACE("Filter match : {}", json_msg);
-  for (auto &match : matches) {
-    for (auto &index : match.second) {
-      REL_TRACE("{}:{}", index.get_index(), wstring_to_utf8(index.get_keyword()));
-    }
-  }
 
-  _verifier.wait_enqueue(payload(json_msg, matches));
+  _post_processor.wait_enqueue(payload(json_msg, matches));
 }

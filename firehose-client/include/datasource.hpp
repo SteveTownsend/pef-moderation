@@ -27,6 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <prometheus/counter.h>
 #include <string>
 
 #include "config.hpp"
@@ -53,6 +54,8 @@ private:
   std::string _subscription;
   content_handler _handler;
   config const &_settings;
+  prometheus::Family<prometheus::Counter> &_input_messages;
+  prometheus::Family<prometheus::Counter> &_input_message_bytes;
 
   void do_work(net::io_context &ioc, ssl::context &ctx,
                net::yield_context yield);

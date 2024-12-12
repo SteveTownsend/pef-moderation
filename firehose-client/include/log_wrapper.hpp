@@ -77,7 +77,7 @@ extern std::shared_ptr<spdlog::logger> logger;
     logger->warn(a_fmt __VA_OPT__(, ) __VA_ARGS__);                            \
   }
 #define REL_ERROR(a_fmt, ...)                                                  \
-  if (logger->level() <= spdlog::level::error) {                               \
+  if (logger->level() <= spdlog::level::err) {                                 \
     logger->error(a_fmt __VA_OPT__(, ) __VA_ARGS__);                           \
   }
 #define REL_CRITICAL(a_fmt, ...)                                               \

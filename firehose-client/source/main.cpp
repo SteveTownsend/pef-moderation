@@ -37,7 +37,6 @@ http://www.fsf.org/licensing/licenses
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
-#include "matcher.hpp"
 #include <iostream>
 
 int main(int argc, char **argv) {

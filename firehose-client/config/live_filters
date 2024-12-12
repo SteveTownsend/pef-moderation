@@ -31,7 +31,9 @@ mintcat|abusive,engagementfarmer,network,disruptive|false|substring|
 KiwiFarms|abusive,network|false|substring|
 ꗪꜞ⒲ꜞẝშ┌ෆ𝐬|abusive,network|false|substring|
 groyp|abusive,network|false|substring|
-/allstaredge.info|abusive,engagementfarmer|false|substring|
+/allstaredge.info|abusive,disinfo,engagementfarmer,network|false|substring|
+/orbitjunction.com|abusive,disinfo,engagementfarmer,network|false|substring|
+.ukcolumn.org|abusive,disinfo,engagementfarmer,network|false|substring|
 /privatevid.vercel.app|abusive,network,nsfw,engagementfarmer|false|substring|
 preetyliv.llc|abusive,network,nsfw,engagementfarmer|false|substring|
 pleniiixa.blogspot.com|abusive,network,nsfw,engagementfarmer|false|substring|
@@ -40,10 +42,14 @@ infobrics.org|disinfo,network|false|substring|
 /rt.com|disinfo,network|false|substring|
 /rumble.com|disinfo,network|false|substring|
 /lemediaen442.fr|disinfo,network|false|substring|
+/thelibertydaily.com|disinfo,network|false|substring|
 breitbart.com|disinfo,network|false|substring|
 ukraine.today.co.uk|disinfo,disruptive|false|substring|
 breakthrough news|disinfo,disruptive|false|substring|
 mintpress news|disinfo,disruptive|false|substring|
+Ivan Katchanovski|disinfo,disruptive|false|substring|
+## "Ukraine proxy war" talking points
+/counterfire.org|disinfo,disruptive|false|substring|
 ## Gaza phishers
 gofundme.com/|engagementfarmer,abusive|false|substring|from Gaza
 ## violent speech
@@ -69,17 +75,26 @@ globalize the intifada|abusive,violent|false|substring|
 🔻|abusive,violent|false|substring|
 ## deadnaming - however, this is also a frequent typo
 Isreal|abusive|false|word|
+Israhell|abusive|false|word|
 ## anti-Ukraine slurs and talking points
 ## total hoh*l death, birthday is a problem
 ## THD|abusive,violent|false|substring|
 Хохол|abusive|false|substring|
-Banderite|abusive|false|word|
+Banderite|abusive|false|substring|
+banderowskie|abusive|false|word|
 ukronazi|abusive|false|word|
 ukranazi|abusive|false|word|
 Kiev|disinfo,abusive|false|word|regime
-coup|disinfo,abusive|false|word|Maidan,Georgia,CIA
+coup|disinfo,abusive|false|word|Maidan,Georgia,CIA,Tbilisi
 Nuland|disinfo,abusive|false|word|
+proxy war|disinfo,abusive|false|word|Ukraine,Syria
+Zelensky|disinfo,abusive|false|word|coke,puppet,cocaine,crook,launder
+Ukraine|disinfo,abusive|false|word|corrupt,Nazis,launder,billions,tax dollars,expansion
+biolabs|disinfo,abusive|false|word|Ukraine,Ukrainian
+color revolution|disinfo,abusive|false|substring|Ukraine,Syria,Georgia
+colour revolution|disinfo,abusive|false|substring|Ukraine,Syria,Georgia
 ## denialism
 bucha|abusive,violent,disinfo|false|word|
+false flag|abusive,violent,disinfo|false|substring|bucha,Izyum,Douma,Irpin
 ## 9/11 denialism and fearmongering
 9/11|disinfo|false|substring|dancing,Israelis,Jews,another

@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
@@ -67,13 +68,13 @@ public:
   bool add_rule(std::string const &match_rule);
   bool check_candidates(parser::candidate_list const &candidates) const;
 
-  // Stores JSON substring that matched one or more desired strings, and the
-  // matches
-  typedef std::vector<
-      std::pair<std::string, aho_corasick::wtrie::emit_collection>>
-      match_results;
+  // Stores context and JSON substring that matched one or more desired strings,
+  // and the matches
+  typedef std::tuple<std::string, std::string,
+                     aho_corasick::wtrie::emit_collection>
+      match_result;
+  typedef std::vector<match_result> match_results;
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
-  match_results find_whole_word_matches(std::string const &string_data) const;
   match_results
   all_matches_for_candidates(parser::candidate_list const &candidates) const;
 

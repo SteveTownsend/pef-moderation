@@ -23,7 +23,9 @@ http://www.fsf.org/licensing/licenses
 #include "helpers.hpp"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
+#include "metrics.hpp"
 #include "queue/readerwritercircularbuffer.h"
+#include <prometheus/counter.h>
 #include <thread>
 
 constexpr size_t QueueLimit = 10000;
@@ -34,30 +36,26 @@ struct payload {
 };
 
 template <typename T> class post_processor {
-private:
-  // Declare queue between websocket and match post-processing
-  moodycamel::BlockingReaderWriterCircularBuffer<T> _queue;
-  std::thread _thread;
-
 public:
-  post_processor() : _queue(QueueLimit) {
+  post_processor()
+      : _queue(QueueLimit),
+        _matched_elements(metrics::instance().add_counter(
+            "message_field_matches",
+            "Number of matches within each field of message")) {
+    // prometheus::Counter &match_count = _matched_elements.Add({{"host",
+    // _host}}); prometheus::Counter &byte_count =
+    //     _input_message_bytes.Add({{"host", _host}});
     _thread = std::thread([&] {
       static size_t matches(0);
       while (true) {
         T my_payload;
         _queue.wait_dequeue(my_payload);
-        matcher::match_results updated;
         for (auto &result : my_payload._matches) {
           // this is the substring of the full JSON that matched one or more
           // desired strings
-          std::string candidate(result.first);
-          if (!result.second.empty()) {
-            REL_INFO("Candidate {}\nmatches {}\non message:{}", result.first,
-                     result.second, my_payload._json_msg);
-          } else {
-            REL_WARNING("False positive {}\non message:{}", result.first,
-                        my_payload._json_msg);
-          }
+          REL_INFO("Candidate {}/{}\nmatches {}\non message:{}",
+                   std::get<0>(result), std::get<1>(result),
+                   std::get<2>(result), my_payload._json_msg);
         }
         // TODO Handle the matches
         // TODO auto-report if rule indicates, ignoring dups
@@ -69,6 +67,15 @@ public:
   }
   ~post_processor() = default;
   void wait_enqueue(T &&value) { _queue.wait_enqueue(value); }
+
+private:
+  // Declare queue between websocket and match post-processing
+  moodycamel::BlockingReaderWriterCircularBuffer<T> _queue;
+  std::thread _thread;
+  // Cardinality =
+  //   (number of rules) times (number of elements - profile/post -
+  //                            times number of fields per element)
+  prometheus::Family<prometheus::Counter> &_matched_elements;
 };
 
 #endif
