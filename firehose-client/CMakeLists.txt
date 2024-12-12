@@ -50,17 +50,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(aho_corasick)
 include_directories(${aho_corasick_SOURCE_DIR}/src)
 
-FetchContent_Declare(
-  prometheus-cpp
-  GIT_TAG v1.3.0
-  GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp
-)
-SET(ENABLE_PUSH OFF)
-SET(ENABLE_COMPRESSION OFF)
-SET(ENABLE_TESTING OFF)
-FetchContent_MakeAvailable(prometheus-cpp)
-include_directories(${prometheus-cpp_SOURCE_DIR})
-cmake_print_variables(prometheus-cpp_FOUND prometheus-cpp_SOURCE_DIR)
+find_package(prometheus-cpp CONFIG REQUIRED)
+if(NOT DEFINED prometheus-cpp_VERSION)
+  message(FATAL_ERROR "prometheus-cpp_VERSION is not defined")
+endif()
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -146,9 +139,10 @@ add_executable(firehose_client
   ./source/metrics.cpp
   ./source/parser.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(firehose_client prometheus-cpp::pull ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES} nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp)
+target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
+    nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
 if (UNIX)
-  target_link_libraries(firehose_client  stdc++)
+  target_link_libraries(firehose_client stdc++)
 endif()
 
 if (UNIT_TESTS_ENABLED)
