@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "helpers.hpp"
+#include "log_wrapper.hpp"
 #include <unicode/errorcode.h>
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>
@@ -40,12 +41,14 @@ std::wstring to_canonical(std::string_view const input) {
   if (error_code.isFailure()) {
     std::ostringstream oss;
     oss << "to_canonical: u_strFromUTF8 error " << error_code.errorName();
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   if (new_size > capacity - 1) {
     std::ostringstream oss;
     oss << "UTF-8 to UCHAR overflow for " << input << ", capacity=" << capacity
         << ", length required=" << new_size;
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   std::unique_ptr<UChar> case_folded(new UChar[capacity]);
@@ -55,12 +58,14 @@ std::wstring to_canonical(std::string_view const input) {
   if (error_code.isFailure()) {
     std::ostringstream oss;
     oss << "to_canonical: u_strFoldCase error " << error_code.errorName();
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   if (new_size > capacity - 1) {
     std::ostringstream oss;
     oss << "Case-fold overflow for " << input << ", capacity=" << capacity
         << ", length required=" << new_size;
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   return std::wstring(case_folded.get(), case_folded.get() + new_size);
@@ -87,6 +92,7 @@ std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (error_code.isFailure()) {
     std::ostringstream oss;
     oss << "wstring_to_utf8: u_strFromWCS error " << error_code.errorName();
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   buffer.resize(len);
@@ -96,6 +102,7 @@ std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (error_code.isFailure()) {
     std::ostringstream oss;
     oss << "wstring_to_utf8: u_strToUTF8 error " << error_code.errorName();
+    REL_ERROR(oss.str());
     throw std::runtime_error(oss.str());
   }
   result.resize(len);
