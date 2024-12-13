@@ -37,10 +37,15 @@ http://www.fsf.org/licensing/licenses
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 int main(int argc, char **argv) {
   bool log_ready(false);
+#if _DEBUG
+  std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+#endif
   try {
     // Check command line arguments.
     if (argc != 2) {

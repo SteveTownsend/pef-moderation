@@ -50,10 +50,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(aho_corasick)
 include_directories(${aho_corasick_SOURCE_DIR}/src)
 
-find_package(prometheus-cpp CONFIG REQUIRED)
-if(NOT DEFINED prometheus-cpp_VERSION)
-  message(FATAL_ERROR "prometheus-cpp_VERSION is not defined")
+if (UNIX)
+  find_package(prometheus-cpp CONFIG REQUIRED)
+  if(NOT DEFINED prometheus-cpp_VERSION)
+    message(FATAL_ERROR "prometheus-cpp_VERSION is not defined")
+  endif()
+elseif(WIN32)
+  # inline the package to avoid memory model mismatch
+  # https://github.com/jupp0r/prometheus-cpp/issues/621
+  FetchContent_Declare(
+    prometheus-cpp
+    GIT_TAG v1.3.0
+    GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp
+  )
+  SET(ENABLE_PUSH OFF)
+  SET(ENABLE_COMPRESSION OFF)
+  SET(ENABLE_TESTING OFF)
+  FetchContent_MakeAvailable(prometheus-cpp)
+  include_directories(${prometheus-cpp_SOURCE_DIR})
 endif()
+cmake_print_variables(prometheus-cpp_FOUND prometheus-cpp_SOURCE_DIR)
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
