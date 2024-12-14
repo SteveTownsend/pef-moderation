@@ -26,13 +26,13 @@ http://www.fsf.org/licensing/licenses
 
 // Extract UTF-8 string containing the material to be checked,  which is
 // context-dependent
-parser::candidate_list
+candidate_list
 parser::get_candidates_from_string(std::string const &full_content) const {
   nlohmann::json full_json(nlohmann::json::parse(full_content));
   return get_candidates_from_json(full_json);
 }
 
-parser::candidate_list parser::get_candidates_from_flat_buffer(
+candidate_list parser::get_candidates_from_flat_buffer(
     beast::flat_buffer const &beast_data) const {
   auto buffer(beast_data.data());
   nlohmann::json full_json(
@@ -41,7 +41,7 @@ parser::candidate_list parser::get_candidates_from_flat_buffer(
 }
 
 // TODO Could use SAX parsing down the line
-parser::candidate_list
+candidate_list
 parser::get_candidates_from_json(nlohmann::json &full_json) const {
   // Handle exceptions as they come up.
   // Example: record["type"] can sometimes be a "proxy" object not a string
@@ -51,7 +51,8 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     if (full_json["kind"] == "identity") {
       nlohmann::json record(full_json["identity"]);
       if (record.contains("handle")) {
-        return {{"handle", record["handle"].template get<std::string>()}};
+        return {{"identity", "handle",
+                 record["handle"].template get<std::string>()}};
       }
       return {};
     }
@@ -68,11 +69,11 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     nlohmann::json record(commit["record"]);
     auto record_type(record["$type"].template get<std::string>());
     auto const record_fields(json::TargetFieldNames.find(record_type));
-    parser::candidate_list results;
+    candidate_list results;
     if (record_fields != json::TargetFieldNames.cend()) {
       for (auto &field_name : record_fields->second) {
         if (record.contains(field_name)) {
-          results.emplace_back(field_name,
+          results.emplace_back(record_type, field_name,
                                record[field_name].template get<std::string>());
         }
       }

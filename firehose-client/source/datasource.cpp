@@ -25,21 +25,21 @@ http://www.fsf.org/licensing/licenses
 #include "metrics.hpp"
 #include <prometheus/counter.h>
 
-datasource::datasource(config const &settings)
+datasource::datasource(std::shared_ptr<config> &settings)
     : _settings(settings),
       _input_messages(metrics::instance().add_counter(
           "websocket_inbound_messages", "Number of inbound messages")),
       _input_message_bytes(metrics::instance().add_counter(
           "websocket_inbound_bytes", "Number of inbound message bytes")) {
-  _host = _settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
+  _host = _settings->get_config()[PROJECT_NAME]["datasource"]["hosts"]
               .as<std::string>();
-  _port = _settings.get_config()[PROJECT_NAME]["datasource"]["port"]
+  _port = _settings->get_config()[PROJECT_NAME]["datasource"]["port"]
               .as<std::string>();
   _subscription =
-      _settings.get_config()[PROJECT_NAME]["datasource"]["subscription"]
+      _settings->get_config()[PROJECT_NAME]["datasource"]["subscription"]
           .as<std::string>();
   _handler.set_filter(
-      _settings.get_config()[PROJECT_NAME]["filters"]["filename"]
+      _settings->get_config()[PROJECT_NAME]["filters"]["filename"]
           .as<std::string>());
 }
 
@@ -75,8 +75,6 @@ void datasource::start() {
 
 void datasource::do_work(net::io_context &ioc, ssl::context &ctx,
                          net::yield_context yield) {
-  prometheus::Counter &message_count = _input_messages.Add({{"host", _host}});
-  prometheus::Counter &byte_count = _input_message_bytes.Add({{"host", _host}});
   beast::error_code ec;
 
   // These objects perform our I/O
@@ -148,8 +146,9 @@ void datasource::do_work(net::io_context &ioc, ssl::context &ctx,
       return fail(ec, "read");
 
     // update stats
-    message_count.Increment();
-    byte_count.Increment(static_cast<double>(buffer.size()));
+    _input_messages.Get({{"host", _host}}).Increment();
+    _input_message_bytes.Get({{"host", _host}})
+        .Increment(static_cast<double>(buffer.size()));
 
     _handler.handle(buffer);
   }

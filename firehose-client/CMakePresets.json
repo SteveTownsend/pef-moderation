@@ -133,7 +133,7 @@
                 "common"
             ],
             "description": "Debug build for testing.",
-            "binaryDir": "${sourceDir}/build/debug-msvc"
+            "binaryDir": "${sourceDir}/debug-msvc"
         },
         {
             "name": "Release-MSVC",
@@ -146,7 +146,7 @@
                 "common"
             ],
             "description": "Optimized release build.",
-            "binaryDir": "${sourceDir}/build/release-msvc"
+            "binaryDir": "${sourceDir}/release-msvc"
         },
         {
             "name": "Logging-MSVC",
@@ -159,7 +159,7 @@
                 "common"
             ],
             "description": "Optimized release build with logging.",
-            "binaryDir": "${sourceDir}/build/logging-msvc"
+            "binaryDir": "${sourceDir}/logging-msvc"
         },
         {
             "name": "Debug-GCC",
@@ -172,7 +172,7 @@
                 "common"
             ],
             "description": "Debug build for testing.",
-            "binaryDir": "${sourceDir}/build/debug-gcc"
+            "binaryDir": "${sourceDir}/debug-gcc"
         },
         {
             "name": "Release-GCC",
@@ -185,7 +185,7 @@
                 "common"
             ],
             "description": "Optimized release build.",
-            "binaryDir": "${sourceDir}/build/release-gcc"
+            "binaryDir": "${sourceDir}/release-gcc"
         },
         {
             "name": "Logging-GCC",
@@ -198,7 +198,7 @@
                 "common"
             ],
             "description": "Optimized release build with logging.",
-            "binaryDir": "${sourceDir}/build/logging-gcc"
+            "binaryDir": "${sourceDir}/logging-gcc"
         }
     ],
     "buildPresets": [

@@ -82,32 +82,32 @@ bool matcher::matches_any(beast::flat_buffer const &beast_data) const {
   return check_candidates(candidates);
 }
 
-bool matcher::check_candidates(parser::candidate_list const &candidates) const {
+bool matcher::check_candidates(candidate_list const &candidates) const {
   for (auto &next : candidates) {
-    if (next.second.empty())
+    if (next._value.empty())
       continue;
     // use ICU canonical form for multilanguage support
-    auto result = _substring_trie.parse_text(to_canonical(next.second));
+    auto result = _substring_trie.parse_text(to_canonical(next._value));
     if (!result.empty())
       return true;
   }
   return false;
 }
 
-matcher::match_results
+match_results
 matcher::find_all_matches(beast::flat_buffer const &beast_data) const {
   auto candidates(parser().get_candidates_from_flat_buffer(beast_data));
   return all_matches_for_candidates(candidates);
 }
 
-matcher::match_results matcher::all_matches_for_candidates(
-    parser::candidate_list const &candidates) const {
+match_results
+matcher::all_matches_for_candidates(candidate_list const &candidates) const {
   match_results results;
   for (auto &next : candidates) {
-    if (next.second.empty())
+    if (next._value.empty())
       continue;
     // use ICU canonical form for multilanguage support
-    std::wstring canonical_form(to_canonical(next.second));
+    std::wstring canonical_form(to_canonical(next._value));
     aho_corasick::basic_trie<wchar_t>::emit_collection all_matches(
         _substring_trie.parse_text(canonical_form));
     aho_corasick::basic_trie<wchar_t>::emit_collection whole_words(
@@ -116,7 +116,7 @@ matcher::match_results matcher::all_matches_for_candidates(
       all_matches.insert(all_matches.end(), whole_words.cbegin(),
                          whole_words.cend());
     if (!all_matches.empty()) {
-      results.emplace_back(next.first, next.second, all_matches);
+      results.emplace_back(next, all_matches);
     }
   }
   return results;

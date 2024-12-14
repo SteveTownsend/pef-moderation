@@ -32,7 +32,7 @@ constexpr size_t QueueLimit = 10000;
 
 struct payload {
   std::string _json_msg;
-  matcher::match_results _matches;
+  match_results _matches;
 };
 
 template <typename T> class post_processor {
@@ -42,22 +42,27 @@ public:
         _matched_elements(metrics::instance().add_counter(
             "message_field_matches",
             "Number of matches within each field of message")) {
-    // prometheus::Counter &match_count = _matched_elements.Add({{"host",
-    // _host}}); prometheus::Counter &byte_count =
-    //     _input_message_bytes.Add({{"host", _host}});
     _thread = std::thread([&] {
       static size_t matches(0);
       while (true) {
         T my_payload;
         _queue.wait_dequeue(my_payload);
+        // Publish metrics for matches
         for (auto &result : my_payload._matches) {
           // this is the substring of the full JSON that matched one or more
           // desired strings
-          REL_INFO("Candidate {}/{}\nmatches {}\non message:{}",
-                   std::get<0>(result), std::get<1>(result),
-                   std::get<2>(result), my_payload._json_msg);
+          REL_INFO("Candidate {}/{}/{}\nmatches {}\non message:{}",
+                   result._candidate._type, result._candidate._field,
+                   result._candidate._value, result._matches,
+                   my_payload._json_msg);
+          for (auto const &match : result._matches) {
+            prometheus::Labels labels(
+                {{"type", result._candidate._type},
+                 {"field", result._candidate._field},
+                 {"filter", wstring_to_utf8(match.get_keyword())}});
+            _matched_elements.Get(labels).Increment();
+          }
         }
-        // TODO Handle the matches
         // TODO auto-report if rule indicates, ignoring dups
         // TODO avoid spam for automated posts
 

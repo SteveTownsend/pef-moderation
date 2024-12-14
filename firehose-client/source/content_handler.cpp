@@ -38,16 +38,16 @@ void content_handler::handle(beast::flat_buffer const &beast_data) {
   auto matches(_matcher.find_all_matches(beast_data));
   // confirm any matched rules with contingent string matches
   for (auto next_match = matches.begin(); next_match != matches.end();) {
-    for (auto rule_key = std::get<2>(*next_match).begin();
-         rule_key != std::get<2>(*next_match).end();) {
+    for (auto rule_key = next_match->_matches.begin();
+         rule_key != next_match->_matches.end();) {
       matcher::rule this_rule = _matcher.find_rule(rule_key->get_keyword());
-      if (!this_rule.matches_any_contingent(std::get<1>(*next_match))) {
-        rule_key = std::get<2>(*next_match).erase(rule_key);
+      if (!this_rule.matches_any_contingent(next_match->_candidate._value)) {
+        rule_key = next_match->_matches.erase(rule_key);
       } else {
         ++rule_key;
       }
     }
-    if (std::get<2>(*next_match).empty()) {
+    if (next_match->_matches.empty()) {
       next_match = matches.erase(next_match);
     } else {
       ++next_match;

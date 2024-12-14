@@ -20,9 +20,12 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include "helpers.hpp"
 #include "nlohmann/json.hpp"
 #include <boost/beast/core.hpp>
 #include <string_view>
+#include <tuple>
+
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;
@@ -31,10 +34,9 @@ class parser {
 public:
   parser() = default;
   ~parser() = default;
+
   // Extract UTF-8 string containing the material to be checked,  which is
   // context-dependent
-  typedef std::vector<std::pair<std::string, std::string>> candidate_list;
-
   candidate_list
   get_candidates_from_string(std::string const &full_content) const;
   candidate_list

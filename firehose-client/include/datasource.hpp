@@ -44,7 +44,7 @@ class datasource {
 public:
   datasource() = delete;
   ~datasource() = default;
-  datasource(config const &settings);
+  datasource(std::shared_ptr<config> &settings);
   void start();
 
 private:
@@ -53,7 +53,7 @@ private:
   std::string _port;
   std::string _subscription;
   content_handler _handler;
-  config const &_settings;
+  std::shared_ptr<config> _settings;
   prometheus::Family<prometheus::Counter> &_input_messages;
   prometheus::Family<prometheus::Counter> &_input_message_bytes;
 

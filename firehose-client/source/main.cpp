@@ -54,13 +54,14 @@ int main(int argc, char **argv) {
       // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
       return EXIT_FAILURE;
     }
-    config settings(argv[1]);
+    std::shared_ptr<config> settings(std::make_shared<config>(argv[1]));
+    metrics::instance().set_config(settings);
 
     std::string const log_file(
-        settings.get_config()[PROJECT_NAME]["logging"]["filename"]
+        settings->get_config()[PROJECT_NAME]["logging"]["filename"]
             .as<std::string>());
     spdlog::level::level_enum log_level(spdlog::level::from_str(
-        settings.get_config()[PROJECT_NAME]["logging"]["level"]
+        settings->get_config()[PROJECT_NAME]["logging"]["level"]
             .as<std::string>()));
     init_logging(log_file, log_level);
     log_ready = true;

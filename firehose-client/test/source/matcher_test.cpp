@@ -60,7 +60,10 @@ TEST(MatcherTest, Parse) {
         html << L"</i>";
     }
     html << L"</p></body></html>";
-    EXPECT_EQ(html.str(), L"<html><body><p>The Answer to the Great Question... Of Life, the Universe and Everything... Is... Forty-two, said Deep Thought, with infinite majesty and calm.</p></body></html>");
+    EXPECT_EQ(html.str(),
+              L"<html><body><p>The Answer to the Great Question... Of Life, "
+              L"the Universe and Everything... Is... Forty-two, said Deep "
+              L"Thought, with infinite majesty and calm.</p></body></html>");
   }
 }
 
@@ -69,19 +72,19 @@ TEST(MatcherTest, LoadFile) {
   decorated.append("filters");
   matcher my_matcher(decorated);
   {
-    parser::candidate_list candidate(
-        {{"description", "hate symbols include 卐"}});
-    EXPECT_TRUE(candidate.size() == 1);
+    candidate_list candidates(
+        {{"app.bsky.actor.profile", "description", "hate symbols include 卐"}});
+    EXPECT_TRUE(candidates.size() == 1);
   }
   {
-    parser::candidate_list candidate(
-        {{"description", "hate symbols include ☭"}});
-    EXPECT_TRUE(candidate.size() == 1);
+    candidate_list candidates(
+        {{"app.bsky.actor.profile", "description", "hate symbols include ☭"}});
+    EXPECT_TRUE(candidates.size() == 1);
   }
   {
-    parser::candidate_list candidate(
-        {{"description", "hate symbol ⚡⚡ represents the Nazi SS"}});
-    EXPECT_TRUE(candidate.size() == 1);
+    candidate_list candidates({{"app.bsky.actor.profile", "description",
+                                "hate symbol ⚡⚡ represents the Nazi SS"}});
+    EXPECT_TRUE(candidates.size() == 1);
   }
 }
 
@@ -109,9 +112,9 @@ TEST(MatcherTest, RuleErrors) {
 TEST(MatcherTest, Ukrainian) {
   matcher my_matcher;
   my_matcher.add_rule("Хохол|abusive|true|substring|");
-  parser::candidate_list expected = {
-      {"description", "russians use Хохол as a slur"},
-      {"displayName", "russian slur Хохол"}};
+  candidate_list expected = {
+      {"app.bsky.actor.profile", "description", "russians use Хохол as a slur"},
+      {"app.bsky.actor.profile", "displayName", "russian slur Хохол"}};
   EXPECT_TRUE(my_matcher.check_candidates(expected));
 }
 
@@ -119,7 +122,7 @@ TEST(MatcherTest, UkrainianRule) {
   matcher my_matcher;
   std::string rule("Хохол|abusive|false|substring|");
   my_matcher.add_rule(rule);
-  parser::candidate_list expected = {{"description", rule},
-                                     {"displayName", rule}};
+  candidate_list expected = {{"app.bsky.actor.profile", "description", rule},
+                             {"app.bsky.actor.profile", "displayName", rule}};
   EXPECT_FALSE(my_matcher.all_matches_for_candidates(expected).empty());
 }

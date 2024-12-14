@@ -77,4 +77,20 @@ struct std::formatter<aho_corasick::wtrie::emit_collection>
                                           ctx);
   }
 };
+
+// filter match candidate
+struct candidate {
+  std::string _type;
+  std::string _field;
+  std::string _value;
+};
+typedef std::vector<candidate> candidate_list;
+
+// Stores context that matched one or more filters, and the matches
+struct match_result {
+  candidate _candidate;
+  aho_corasick::wtrie::emit_collection _matches;
+};
+typedef std::vector<match_result> match_results;
+
 #endif

@@ -60,8 +60,8 @@ elseif(WIN32)
   # https://github.com/jupp0r/prometheus-cpp/issues/621
   FetchContent_Declare(
     prometheus-cpp
-    GIT_TAG v1.3.0
-    GIT_REPOSITORY https://github.com/jupp0r/prometheus-cpp
+    GIT_HASH cfc8ebee3e6dae78c578c88dfb60f2719c82d873
+    GIT_REPOSITORY https://github.com/SteveTownsend/prometheus-cpp
   )
   SET(ENABLE_PUSH OFF)
   SET(ENABLE_COMPRESSION OFF)

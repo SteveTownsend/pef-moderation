@@ -20,6 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include "config.hpp"
 #include <prometheus/counter.h>
 #include <prometheus/exposer.h>
 #include <prometheus/gauge.h>
@@ -28,9 +29,11 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/registry.h>
 #include <prometheus/summary.h>
 
+
 class metrics {
 public:
   static metrics &instance();
+  void set_config(std::shared_ptr<config> &settings);
 
   prometheus::Family<prometheus::Counter> &add_counter(std::string const &name,
                                                        std::string const &help);
@@ -39,7 +42,9 @@ private:
   metrics();
   ~metrics() = default;
 
-  prometheus::Exposer _exposer;
+  std::string _port;
+  std::shared_ptr<config> _settings;
+  std::unique_ptr<prometheus::Exposer> _exposer;
   std::shared_ptr<prometheus::Registry> _registry;
 };
 #endif

@@ -65,10 +65,10 @@ KYS|abusive,violent|false|word|
 ## very frequent
 retard|abusive|false|substring|
 ## Porn hashtags - removing for now
-## onlyfans|nsfw,engagementfarmer|false|substring|
-## #kink|nsfw,engagementfarmer|false|substring|
-## #porn|nsfw,engagementfarmer|false|substring|
-## #nsfw|nsfw,engagementfarmer|false|substring|
+onlyfans|nsfw,engagementfarmer|false|substring|
+#kink|nsfw,engagementfarmer|false|substring|
+#porn|nsfw,engagementfarmer|false|substring|
+#nsfw|nsfw,engagementfarmer|false|substring|
 ## October 7 2023 atrocity celebrants
 from the river to the sea|abusive,violent|false|substring|
 globalize the intifada|abusive,violent|false|substring|

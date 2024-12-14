@@ -19,16 +19,22 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "metrics.hpp"
+#include "firehost_client_config.hpp"
 
-metrics::metrics()
-    : _exposer("127.0.0.1:9090"), _registry(new prometheus::Registry) {
-  // ask the exposer to scrape the registry on incoming HTTP requests
-  _exposer.RegisterCollectable(_registry);
-}
+metrics::metrics() : _registry(new prometheus::Registry) {}
 
 metrics &metrics::instance() {
   static metrics my_instance;
   return my_instance;
+}
+
+void metrics::set_config(std::shared_ptr<config> &settings) {
+  _settings = settings;
+  _port = _settings->get_config()[PROJECT_NAME]["metrics"]["port"]
+              .as<std::string>();
+  _exposer = std::make_unique<prometheus::Exposer>("127.0.0.1:" + _port);
+  // ask the exposer to scrape the registry on incoming HTTP requests
+  _exposer->RegisterCollectable(_registry);
 }
 
 prometheus::Family<prometheus::Counter> &

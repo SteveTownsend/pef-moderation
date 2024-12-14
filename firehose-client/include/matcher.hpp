@@ -66,17 +66,11 @@ public:
   bool matches_any(std::string const &candidate) const;
   bool matches_any(beast::flat_buffer const &beast_data) const;
   bool add_rule(std::string const &match_rule);
-  bool check_candidates(parser::candidate_list const &candidates) const;
+  bool check_candidates(candidate_list const &candidates) const;
 
-  // Stores context and JSON substring that matched one or more desired strings,
-  // and the matches
-  typedef std::tuple<std::string, std::string,
-                     aho_corasick::wtrie::emit_collection>
-      match_result;
-  typedef std::vector<match_result> match_results;
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
   match_results
-  all_matches_for_candidates(parser::candidate_list const &candidates) const;
+  all_matches_for_candidates(candidate_list const &candidates) const;
 
   struct rule {
     rule(std::string const &rule_string);
