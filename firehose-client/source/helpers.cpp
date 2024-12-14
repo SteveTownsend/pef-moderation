@@ -115,10 +115,10 @@ std::string print_emits(const aho_corasick::wtrie::emit_collection &c) {
   bool first(true);
   for (auto const &emit : c) {
     if (!first)
-      oss << ',';
+      oss << L",";
     else
       first = false;
-    oss << '"' << emit.get_keyword() << '"';
+    oss << L"'" << emit.get_keyword() << L"'";
   }
   return wstring_to_utf8(oss.str());
 }

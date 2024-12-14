@@ -1,7 +1,7 @@
 firehose_client:
   logging:
     filename: "./logs/firehose_client.log"
-    level: "debug" # per spdlog values trace, debug, info, warn, error, critical, off
+    level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
   filters:
     filename: "./config/live_filters"
   datasource:
