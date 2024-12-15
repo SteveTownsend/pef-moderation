@@ -21,13 +21,16 @@ This service labels asymmetrically:
 - For offenders within the community, granular content labeling is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
 
 This approach helps with managing the load as the platform grows, and to ensure users are aware of content  
-violations before they engage with an account. Specifically, 60/40 propagandists mix fact with disnformation  
+violations before they engage with an account. Specifically, 60/40 propagandists mix fact with disinformation  
 to sow disruption in democracies.  A user innocently engaging with the account based on the factual content needs  
 to know the context.  
 There is no plan to act as a verifier of friendly accounts.  
-Send moderation appeals and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
+Send moderation **Appeals** and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
 are not justified in the service's immutable history will be automatically approved. Denial appeals will be supported by   
 provision of relevant moderation history, redacted to remove private information for the protection of moderators.  
+We do not use platform labels like _!warn_, _!hide_, ... Platform labels may be used for the very worst offenders like CSAM,  
+human or animal torture, which have been observed _ad hoc_ by the team and will presumably be removed once platform  
+catches up.
 Target SLA for report moderation and appeals is 24 hours.  
 As team grows, the goal is to do better. This may be revised based on real-world constraints and experience.  
 Costs and funding are public domain information available on request from [admin](mailto:admin@nafo-moderation.org).
@@ -74,6 +77,8 @@ but not required.
 The work is satisfying but monotonous and demands constant focus and critical thinking.  Prolonged exposure to toxic  
 internet content is well-known to damage mental health.  
 Self-care is more important than this work.  Take breaks often and for as long as needed.  
+If a team member sees content they cannot or don't want to moderate for any reason, they should **Escalate** with a  
+comment for the team
 **More volunteers can be found. Your mental health is precious, and needed so you can help.**  
 Moderators need a moderation account on Bluesky separate from their personal account to avoid conflicts of interest  
 and possible harassment on the platform.  
