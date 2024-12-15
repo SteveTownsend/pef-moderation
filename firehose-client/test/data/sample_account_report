@@ -1,0 +1,11 @@
+{
+  "id": 30222,
+  "createdAt": "2024-11-30T22:32:53.979Z",
+  "reasonType": "com.atproto.moderation.defs#reasonOther",
+  "reason": "Celebrating Hitler and rape",
+  "reportedBy": "did:plc:mv7rnemycyx4smyragqjtubf",
+  "subject": {
+    "$type": "com.atproto.admin.defs#repoRef",
+    "did": "did:plc:xujolssgzt5xnejkctu6h6jy"
+  }
+}

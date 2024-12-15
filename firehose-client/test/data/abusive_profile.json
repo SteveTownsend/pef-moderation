@@ -1,0 +1,34 @@
+{
+    "did": "did:plc:qyqrrmnk7fwmqmjcohot3cbe",
+    "time_us": 1732832502744436,
+    "kind": "commit",
+    "commit": {
+        "rev": "3lc242wad4a23",
+        "operation": "update",
+        "collection": "app.bsky.actor.profile",
+        "rkey": "self",
+        "record": {
+            "$type": "app.bsky.actor.profile",
+            "avatar": {
+                "$type": "blob",
+                "ref": {
+                    "$link": "bafkreib5iaobsweu2oar55nvhgyaotxgf4nwvyad3kmbovmb6asscqyw7y"
+                },
+                "mimeType": "image/jpeg",
+                "size": 22913
+            },
+            "banner": {
+                "$type": "blob",
+                "ref": {
+                    "$link": "bafkreiaooullxslhh4hxktydrmom7esyvapeuygrylaohcnybw3wd7btnu"
+                },
+                "mimeType": "image/jpeg",
+                "size": 686024
+            },
+            "createdAt": "2024-11-28T20:00:01.166Z",
+            "description": "russians use хохол as a slur",
+            "displayName": "russian slur хохол"
+        },
+        "cid": "bafyreih7lkz7wxg2cxoy7vmeoabsj7qkahgn3nhzvf2nq2kmeoxxdadchy"
+    }
+}

@@ -1,0 +1,28 @@
+firehose_client:
+  logging:
+    filename: "./logs/firehose_client.log"
+    level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
+  filters:
+    filename: "./config/live_filters"
+  datasource:
+    hosts:
+      "jetstream1.us-east.bsky.network"
+      # TODO support round robin use
+      # [
+      #   "jetstream1.us-east.bsky.network",
+      #   "jetstream2.us-east.bsky.network",
+      #   "jetstream3.us-east.bsky.network",
+      #   "jetstream4.us-east.bsky.network",
+      # ]
+    port: 443
+    subscription: "/subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post"
+    # for profile and post commits:
+    #   subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
+
+  datasink:
+    url: "https://ozone.nafo-moderation.org"
+    requestType: "POST"
+    path: "/xrpc/com.atproto.moderation.createReport"
+
+  metrics:
+    port: 9091

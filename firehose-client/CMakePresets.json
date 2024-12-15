@@ -1,0 +1,242 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 30,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "$env{PROJECT_PLATFORM_FLAGS} $env{PROJECT_TEXT_FLAGS} $env{PROJECT_COMPILER_FLAGS} $penv{CXX_FLAGS}"
+            },
+            "errors": {
+                "deprecated": false
+            },
+            "warnings": {
+                "deprecated": true,
+                "dev": true
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "$env{PROJECT_PLATFORM}-$env{PROJECT_COMPILER}-$env{PROJECT_ARCHITECTURE}",
+                    "enableMicrosoftCodeAnalysis": true,
+                    "enableClangTidyCodeAnalysis": true
+                }
+            }
+        },
+        {
+            "name": "architecture-x64",
+            "hidden": true,
+            "environment": {
+                "PROJECT_ARCHITECTURE": "x64"
+            }
+        },
+        {
+            "name": "packaging-vcpkg",
+            "hidden": true,
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "USE_VCPKG": "ON",
+                "VCPKG_HOST_TRIPLET": "$env{PROJECT_ARCHITECTURE}-$env{PROJECT_PLATFORM}-static-md",
+                "VCPKG_TARGET_TRIPLET": "$env{PROJECT_ARCHITECTURE}-$env{PROJECT_PLATFORM}-static-md"
+            }
+        },
+        {
+            "name": "platform-win32",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+            },
+            "environment": {
+                "PROJECT_PLATFORM_FLAGS": "-DWIN32_LEAN_AND_MEAN -DNOMINMAX",
+                "PROJECT_PLATFORM": "windows"
+            }
+        },
+        {
+            "name": "platform-win32-unicode",
+            "hidden": true,
+            "inherits": "platform-win32",
+            "environment": {
+                "PROJECT_TEXT_FLAGS": "-DUNICODE -D_UNICODE"
+            }
+        },
+        {
+            "name": "platform-linux",
+            "hidden": true,
+            "cacheVariables": {},
+            "environment": {
+                "PROJECT_PLATFORM": "linux"
+            }
+        },
+        {
+            "name": "generator-ninja",
+            "hidden": true,
+            "generator": "Ninja"
+        },
+        {
+            "name": "generator-visualstudio",
+            "hidden": true,
+            "generator": "Visual Studio 17 2022"
+        },
+        {
+            "name": "compiler-gcc",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            },
+            "environment": {
+                "PROJECT_COMPILER": "gcc",
+                "PROJECT_COMPILER_FLAGS": ""
+            }
+        },
+        {
+            "name": "compiler-msvc",
+            "hidden": true,
+            "environment": {
+                "PROJECT_COMPILER_FLAGS": "/permissive- /Zc:preprocessor /EHsc /MP /W4 /external:anglebrackets /external:W0 /bigobj",
+                "PROJECT_COMPILER": "msvc"
+            }
+        },
+        {
+            "name": "buildtype-debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "buildtype-release",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "buildtype-relwithdebinfo",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "Debug-MSVC",
+            "inherits": [
+                "buildtype-debug",
+                "architecture-x64",
+                "platform-win32-unicode",
+                "generator-visualstudio",
+                "compiler-msvc",
+                "common"
+            ],
+            "description": "Debug build for testing.",
+            "binaryDir": "${sourceDir}/debug-msvc"
+        },
+        {
+            "name": "Release-MSVC",
+            "inherits": [
+                "buildtype-release",
+                "architecture-x64",
+                "platform-win32-unicode",
+                "generator-visualstudio",
+                "compiler-msvc",
+                "common"
+            ],
+            "description": "Optimized release build.",
+            "binaryDir": "${sourceDir}/release-msvc"
+        },
+        {
+            "name": "Logging-MSVC",
+            "inherits": [
+                "buildtype-relwithdebinfo",
+                "architecture-x64",
+                "platform-win32-unicode",
+                "generator-visualstudio",
+                "compiler-msvc",
+                "common"
+            ],
+            "description": "Optimized release build with logging.",
+            "binaryDir": "${sourceDir}/logging-msvc"
+        },
+        {
+            "name": "Debug-GCC",
+            "inherits": [
+                "buildtype-debug",
+                "architecture-x64",
+                "platform-linux",
+                "generator-ninja",
+                "compiler-gcc",
+                "common"
+            ],
+            "description": "Debug build for testing.",
+            "binaryDir": "${sourceDir}/debug-gcc"
+        },
+        {
+            "name": "Release-GCC",
+            "inherits": [
+                "buildtype-release",
+                "architecture-x64",
+                "platform-linux",
+                "generator-ninja",
+                "compiler-gcc",
+                "common"
+            ],
+            "description": "Optimized release build.",
+            "binaryDir": "${sourceDir}/release-gcc"
+        },
+        {
+            "name": "Logging-GCC",
+            "inherits": [
+                "buildtype-relwithdebinfo",
+                "architecture-x64",
+                "platform-linux",
+                "generator-ninja",
+                "compiler-gcc",
+                "common"
+            ],
+            "description": "Optimized release build with logging.",
+            "binaryDir": "${sourceDir}/logging-gcc"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "rel-msvc",
+            "displayName": "Release (MSVC)",
+            "configurePreset": "Release-MSVC",
+            "description": "Optimized release build."
+        },
+        {
+            "name": "log-msvc",
+            "displayName": "Logging (MSVC)",
+            "configurePreset": "Logging-MSVC",
+            "description": "Optimized release build with logging."
+        },
+        {
+            "name": "deb-msvc",
+            "displayName": "Debug (MSVC)",
+            "configurePreset": "Debug-MSVC",
+            "description": "Debug build for testing."
+        },
+        {
+            "name": "rel-gcc",
+            "displayName": "Release (GCC)",
+            "configurePreset": "Release-GCC",
+            "description": "Optimized release build."
+        },
+        {
+            "name": "log-gcc",
+            "displayName": "Logging (GCC)",
+            "configurePreset": "Logging-GCC",
+            "description": "Optimized release build with logging."
+        },
+        {
+            "name": "deb-gcc",
+            "displayName": "Debug (GCC)",
+            "configurePreset": "Debug-GCC",
+            "description": "Debug build for testing."
+        }
+    ]
+}
