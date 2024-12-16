@@ -1,4 +1,4 @@
-name: build-and-push-ghcr
+name: build-and-push-ghcr-firehose-client
 on:
   push:
     branches:
