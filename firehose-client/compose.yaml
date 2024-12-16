@@ -5,6 +5,10 @@ services:
     container_name: firehose-client
     image: ghcr.io/SteveTownsend0/ozone:0.1
     network_mode: host
+    volumes:
+      - type: bind
+        source: /firehose-client/logs
+        target: /usr/src/firehose-client/logs
     restart: unless-stopped
     # depends_on:
     #   postgres:
