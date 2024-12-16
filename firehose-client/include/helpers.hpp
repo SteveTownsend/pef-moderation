@@ -83,6 +83,7 @@ struct candidate {
   std::string _type;
   std::string _field;
   std::string _value;
+  bool operator==(candidate const &rhs) const;
 };
 typedef std::vector<candidate> candidate_list;
 

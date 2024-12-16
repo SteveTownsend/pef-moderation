@@ -25,4 +25,4 @@ firehose_client:
     path: "/xrpc/com.atproto.moderation.createReport"
 
   metrics:
-    port: 9091
+    port: 59090

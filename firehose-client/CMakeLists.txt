@@ -137,9 +137,6 @@ endif()
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 
-include(CTest)
-enable_testing()
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
@@ -162,6 +159,8 @@ if (UNIX)
 endif()
 
 if (UNIT_TESTS_ENABLED)
+  include(CTest)
+  enable_testing()
   add_subdirectory(test)
 ENDIF()
 
