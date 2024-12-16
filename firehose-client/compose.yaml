@@ -5,12 +5,14 @@ services:
     container_name: firehose-client
     image: ghcr.io/SteveTownsend/firehose-client:0.1
     network_mode: host
+    ports:
+      - "59090:59090"
     volumes:
       - type: bind
         source: /firehose-client/logs
         target: /usr/src/firehose-client/logs
     restart: unless-stopped
-   labels:
+    labels:
       - 'com.centurylinklabs.watchtower.enable=true'
   watchtower:
     container_name: watchtower

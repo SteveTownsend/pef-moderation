@@ -32,7 +32,7 @@ void metrics::set_config(std::shared_ptr<config> &settings) {
   _settings = settings;
   _port = _settings->get_config()[PROJECT_NAME]["metrics"]["port"]
               .as<std::string>();
-  _exposer = std::make_unique<prometheus::Exposer>("127.0.0.1:" + _port);
+  _exposer = std::make_unique<prometheus::Exposer>("0.0.0.0:" + _port);
   // ask the exposer to scrape the registry on incoming HTTP requests
   _exposer->RegisterCollectable(_registry);
 }
