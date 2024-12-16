@@ -122,3 +122,7 @@ std::string print_emits(const aho_corasick::wtrie::emit_collection &c) {
   }
   return wstring_to_utf8(oss.str());
 }
+
+bool candidate::operator==(candidate const &rhs) const {
+  return _type == rhs._type && _field == rhs._field && _value == rhs._value;
+}

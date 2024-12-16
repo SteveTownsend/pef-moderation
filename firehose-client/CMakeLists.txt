@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 1.2.0 LANGUAGES C CXX)
+project(firehose_client VERSION 1.3.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -137,9 +137,6 @@ endif()
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 
-include(CTest)
-enable_testing()
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
@@ -162,6 +159,8 @@ if (UNIX)
 endif()
 
 if (UNIT_TESTS_ENABLED)
+  include(CTest)
+  enable_testing()
   add_subdirectory(test)
 ENDIF()
 
