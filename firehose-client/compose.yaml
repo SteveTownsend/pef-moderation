@@ -3,19 +3,14 @@ version: '3.9'
 services:
   firehose-client:
     container_name: firehose-client
-    image: ghcr.io/SteveTownsend0/firehose-client:0.1
+    image: ghcr.io/SteveTownsend/firehose-client:0.1
     network_mode: host
     volumes:
       - type: bind
         source: /firehose-client/logs
         target: /usr/src/firehose-client/logs
     restart: unless-stopped
-    # depends_on:
-    #   postgres:
-    #     condition: service_healthy
-    # env_file:
-    #   - /ozone/ozone.env
-    labels:
+   labels:
       - 'com.centurylinklabs.watchtower.enable=true'
   watchtower:
     container_name: watchtower
