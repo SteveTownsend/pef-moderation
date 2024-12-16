@@ -53,7 +53,7 @@ jobs:
           context: ./firehose-client
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          file: ./Dockerfile
+          file: ./firehose-client/Dockerfile
           tags: |
             ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
