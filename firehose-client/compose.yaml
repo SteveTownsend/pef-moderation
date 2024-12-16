@@ -3,7 +3,7 @@ version: '3.9'
 services:
   firehose-client:
     container_name: firehose-client
-    image: ghcr.io/steve6ownsend/firehose-client:0.1
+    image: ghcr.io/stevetownsend/firehose-client:0.1
     network_mode: host
     ports:
       - "59090:59090"
