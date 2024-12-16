@@ -11,7 +11,7 @@ env:
   PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: SteveTownsend/firehose-client
 
 jobs:
   firehose-client-container-ghcr:
