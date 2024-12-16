@@ -29,7 +29,7 @@ Ensure that you can ssh to your server and have root access.
 > [!TIP]
 > It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
 
-### Open your cloud firewall for HTTP and HTTPS
+### Open your cloud firewall for TCP
 
 One of the most common sources of misconfiguration is not opening firewall ports correctly. Please be sure to double check this step.
 
@@ -108,17 +108,17 @@ sudo docker run hello-world
 
 ```bash
 sudo mkdir /firehose-client
-sudo mkdir /ozone/config
-sudo mkdir /ozone/logs
+sudo mkdir /firehose-client/config
+sudo mkdir /firehose-client/logs
 ```
 
 #### Start the Firehose Client containers
 
 ##### Download the Docker compose file
 
-Download the `firehose-client/compose.yaml` to run your Firehose Ckient instance. The file includes the following containers:
+Download the `firehose-client/compose.yaml` to run your Firehose Client instance. The file includes the following containers:
 
-- `fierhose-client` is the BlueSky firehose Websocket client
+- `firehose-client` is the BlueSky Websocket firehose client
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
@@ -181,7 +181,7 @@ sudo docker ps
 
 ### Verify that Ozone is online
 
-You can check if your server is online and healthy by requesting the Prometheus metrics in browser at your server's IPv4 address w.x.y.z.
+You can check if your server is online and healthy by requesting the Prometheus metrics in browser at your server's IPv4 address w.x.y.z. You would instead use a domain name here if DNS is set up for your server's IP address.
 
 ```bash
 curl https://w.x.y.z:59090/metrics
