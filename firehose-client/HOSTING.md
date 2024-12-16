@@ -120,7 +120,7 @@ Download the `firehose-client/compose.yaml` to run your Firehose Client instance
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/SteveTownsend0/nafo-forum-moderation/main/firehose-client/compose.yaml | sudo tee /firehose-client/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/firehose-client/compose.yaml | sudo tee /firehose-client/compose.yaml
 ```
 
 ##### Create the systemd service
@@ -129,7 +129,7 @@ curl https://raw.githubusercontent.com/SteveTownsend0/nafo-forum-moderation/main
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/firehose-client.service
 [Unit]
 Description=NAFO Forum Firehose Client
-Documentation=https://github.com/SteveTownsend0/nafo-forum-moderation
+Documentation=https://github.com/SteveTownsend/nafo-forum-moderation
 Requires=docker.service
 After=docker.service
 
@@ -192,7 +192,7 @@ If you use use Docker `compose.yaml` file in this repo, the Firehose Client will
 **Pull the latest Firehose Client container image:**
 
 ```bash
-sudo docker pull ghcr.io/SteveTownsend0/firehose-client:latest
+sudo docker pull ghcr.io/SteveTownsend/firehose-client:latest
 ```
 
 **Restart Firehose Client with the new container image:**
