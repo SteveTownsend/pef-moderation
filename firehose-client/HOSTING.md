@@ -107,9 +107,7 @@ sudo docker run hello-world
 #### Set up the Ozone directory
 
 ```bash
-sudo mkdir /firehose-client
-sudo mkdir /firehose-client/config
-sudo mkdir /firehose-client/logs
+sudo mkdir --parents /firehose-client/logs
 ```
 
 #### Start the Firehose Client containers

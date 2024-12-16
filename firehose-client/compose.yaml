@@ -3,7 +3,7 @@ version: '3.9'
 services:
   firehose-client:
     container_name: firehose-client
-    image: ghcr.io/SteveTownsend0/ozone:0.1
+    image: ghcr.io/SteveTownsend0/firehose-client:0.1
     network_mode: host
     volumes:
       - type: bind
