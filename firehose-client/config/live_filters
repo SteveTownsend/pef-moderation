@@ -43,10 +43,19 @@ infobrics.org|disinfo,network|false|substring|
 /rumble.com|disinfo,network|false|substring|
 /lemediaen442.fr|disinfo,network|false|substring|
 /thelibertydaily.com|disinfo,network|false|substring|
+actfiles.org/|disinfo,network|false|substring|
+allatra|disinfo,network|false|substring|
+creativesociety.com|disinfo,network|false|substring|
+jeffsachs.org/|disinfo,network|false|substring|
 breitbart.com|disinfo,network|false|substring|
+moonofalabama.org|disinfo,network|false|substring|
 ukraine.today.co.uk|disinfo,disruptive|false|substring|
 breakthrough news|disinfo,disruptive|false|substring|
 mintpress news|disinfo,disruptive|false|substring|
+Richard Wolff|disinfo,network|false|substring|
+democracyatwork|disinfo,network|false|substring|
+# antisemitic, disinfo on YouTube 
+BreezyPolitics|disinfo,network|false|substring|
 Ivan Katchanovski|disinfo,disruptive|false|substring|
 ## "Ukraine proxy war" talking points
 /counterfire.org|disinfo,disruptive|false|substring|
@@ -98,3 +107,5 @@ bucha|abusive,violent,disinfo|false|word|
 false flag|abusive,violent,disinfo|false|substring|bucha,Izyum,Douma,Irpin
 ## 9/11 denialism and fearmongering
 9/11|disinfo|false|substring|dancing,Israelis,Jews,another
+uniparty|disinfo,disruptive|false|word|
+shitlib|abusive,disruptive|false|substring|
