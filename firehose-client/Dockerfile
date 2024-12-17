@@ -1,8 +1,10 @@
-#install build dependencies
-FROM ubuntu:latest AS dependencies
+# install dependencies and build
+FROM ubuntu:latest AS build
 
-RUN apt-get -y update && apt-get -y install sudo
-RUN sudo apt-get -y install libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build
+RUN apt-get -y update && apt-get -y install sudo && && rm -rf /var/lib/apt/lists/* 
+ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
+RUN sudo apt-get -y install $BUILD_DEPS --no-install-recommends && \
+  rm -rf /var/lib/apt/lists/* &&
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
@@ -14,29 +16,21 @@ RUN git submodule update
 RUN mkdir _build
 WORKDIR /usr/src/prometheus-cpp/_build
 
-# run cmake
-RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF
-
-# build
-RUN cmake --build . --parallel 4
-
-# install the libraries and headers
-RUN cmake --install .
-
-# build the firehose-client
-FROM dependencies AS build
+# run cmake, build, install the libraries and headers
+RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF && \
+  cmake --build . --parallel 4 && \
+  cmake --install .
 
 WORKDIR /usr/src/firehose-client
-
 COPY . .
-RUN sudo apt-get -y install ninja-build
-RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc
+RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
+  apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
 FROM ubuntu:latest
 
-RUN apt-get -y update && apt-get -y install sudo
-RUN sudo apt-get -y install libicu-dev libssl-dev cmake
+RUN apt-get -y update && apt-get -y install sudo && rm -rf /var/lib/apt/lists/* 
+RUN sudo apt-get -y install libicu-dev libssl-dev cmake && rm -rf /var/lib/apt/lists/* 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
@@ -47,7 +41,8 @@ COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/
 COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
 
 RUN rm -rf /usr/src/prometheus-cpp
-RUN sudo apt-get -y remove cmake
+RUN sudo apt-get purge -y --auto-remove cmake ninja-build
+
 RUN mkdir -p ./logs
 ENTRYPOINT ["/usr/src/firehose-client/firehose_client", "/usr/src/firehose-client/config/live_config.yml"]
 EXPOSE 59090
