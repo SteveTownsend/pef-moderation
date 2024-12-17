@@ -4,7 +4,7 @@ FROM ubuntu:latest AS build
 RUN apt-get -y update && apt-get -y install sudo && rm -rf /var/lib/apt/lists/* 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
 RUN sudo apt-get -y install $BUILD_DEPS --no-install-recommends && \
-  rm -rf /var/lib/apt/lists/* &&
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
