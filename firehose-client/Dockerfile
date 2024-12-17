@@ -31,7 +31,7 @@ FROM ubuntu:latest
 
 RUN apt-get -y update && apt-get -y install sudo && rm -rf /var/lib/apt/lists/* 
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
-RUN sudo apt-get -y install $RUNTIME_DEPS && rm -rf /var/lib/apt/lists/* 
+RUN sudo apt-get -y install $RUNTIME_DEPS --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
