@@ -24,7 +24,7 @@ WORKDIR /usr/src/firehose-client
 COPY . .
 RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
   rm -rf /var/lib/apt/lists/* && \
-  apt-get purge -y --auto-remove $buildDeps sudo
+  apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
 FROM ubuntu:24.10
