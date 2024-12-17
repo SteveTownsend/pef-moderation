@@ -3,7 +3,7 @@ FROM ubuntu:latest AS build
 
 RUN apt-get -y update && apt-get -y install sudo 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
-RUN sudo apt-get -y install $BUILD_DEPS --no-install-recommends --fix-missing
+RUN sudo apt-get -y install $BUILD_DEPS
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
@@ -31,7 +31,7 @@ FROM ubuntu:latest
 
 RUN apt-get -y update && apt-get -y install sudo 
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
-RUN sudo apt-get -y install $RUNTIME_DEPS --no-install-recommends --fix-missing 
+RUN sudo apt-get -y install $RUNTIME_DEPS 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
