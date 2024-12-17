@@ -30,7 +30,8 @@ RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
 FROM ubuntu:latest
 
 RUN apt-get -y update && apt-get -y install sudo && rm -rf /var/lib/apt/lists/* 
-RUN sudo apt-get -y install libicu-dev libssl-dev cmake && rm -rf /var/lib/apt/lists/* 
+ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
+RUN sudo apt-get -y install $RUNTIME_DEPS && rm -rf /var/lib/apt/lists/* 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
@@ -41,7 +42,7 @@ COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/
 COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
 
 RUN rm -rf /usr/src/prometheus-cpp
-RUN sudo apt-get purge -y --auto-remove cmake ninja-build
+RUN sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p ./logs
 ENTRYPOINT ["/usr/src/firehose-client/firehose_client", "/usr/src/firehose-client/config/live_config.yml"]
