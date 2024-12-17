@@ -72,9 +72,13 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     candidate_list results;
     if (record_fields != json::TargetFieldNames.cend()) {
       for (auto &field_name : record_fields->second) {
-        if (record.contains(field_name)) {
-          results.emplace_back(record_type, field_name,
-                               record[field_name].template get<std::string>());
+        try {
+          results.emplace_back(
+              record_type, field_name,
+              record.at(field_name).template get<std::string>());
+
+        } catch (const nlohmann::json::out_of_range &) {
+          // not an error
         }
       }
     }

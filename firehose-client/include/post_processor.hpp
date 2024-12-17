@@ -51,7 +51,7 @@ public:
         for (auto &result : my_payload._matches) {
           // this is the substring of the full JSON that matched one or more
           // desired strings
-          REL_INFO("Candidate {}/{}/{}\nmatches {}\non message:{}",
+          REL_INFO("Candidate {}|{}|{}\nmatches {}\non message:{}",
                    result._candidate._type, result._candidate._field,
                    result._candidate._value, result._matches,
                    my_payload._json_msg);

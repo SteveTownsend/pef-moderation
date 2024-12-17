@@ -54,7 +54,7 @@ breakthrough news|disinfo,disruptive|false|substring|
 mintpress news|disinfo,disruptive|false|substring|
 Richard Wolff|disinfo,network|false|substring|
 democracyatwork|disinfo,network|false|substring|
-# antisemitic, disinfo on YouTube 
+## antisemitic, disinfo on YouTube 
 BreezyPolitics|disinfo,network|false|substring|
 Ivan Katchanovski|disinfo,disruptive|false|substring|
 ## "Ukraine proxy war" talking points

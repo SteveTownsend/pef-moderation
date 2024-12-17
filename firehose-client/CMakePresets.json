@@ -77,11 +77,6 @@
             "generator": "Ninja"
         },
         {
-            "name": "generator-visualstudio",
-            "hidden": true,
-            "generator": "Visual Studio 17 2022"
-        },
-        {
             "name": "compiler-gcc",
             "hidden": true,
             "cacheVariables": {
@@ -128,7 +123,7 @@
                 "buildtype-debug",
                 "architecture-x64",
                 "platform-win32-unicode",
-                "generator-visualstudio",
+                "generator-ninja",
                 "compiler-msvc",
                 "common"
             ],
@@ -141,7 +136,7 @@
                 "buildtype-release",
                 "architecture-x64",
                 "platform-win32-unicode",
-                "generator-visualstudio",
+                "generator-ninja",
                 "compiler-msvc",
                 "common"
             ],
@@ -154,7 +149,7 @@
                 "buildtype-relwithdebinfo",
                 "architecture-x64",
                 "platform-win32-unicode",
-                "generator-visualstudio",
+                "generator-ninja",
                 "compiler-msvc",
                 "common"
             ],

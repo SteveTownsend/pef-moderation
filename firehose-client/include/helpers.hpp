@@ -30,7 +30,8 @@ http://www.fsf.org/licensing/licenses
 #include <vector>
 
 namespace json {
-extern std::map<std::string, std::vector<std::string>> TargetFieldNames;
+extern std::map<std::string, std::vector<nlohmann::json::json_pointer>>
+    TargetFieldNames;
 }
 
 // brute force to_lower, not locale-aware

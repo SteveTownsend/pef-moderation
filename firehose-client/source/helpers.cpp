@@ -25,9 +25,12 @@ http://www.fsf.org/licensing/licenses
 #include <unicode/ustring.h>
 
 namespace json {
-std::map<std::string, std::vector<std::string>> TargetFieldNames = {
-    {"app.bsky.feed.post", {"text"}},
-    {"app.bsky.actor.profile", {"description", "displayName"}}};
+std::map<std::string, std::vector<nlohmann::json::json_pointer>>
+    TargetFieldNames = {
+        {"app.bsky.feed.post",
+         {"/text"_json_pointer, "/embed/external/description"_json_pointer}},
+        {"app.bsky.actor.profile",
+         {"/description"_json_pointer, "/displayName"_json_pointer}}};
 }
 
 // convert UTF-8 input to canonical form where case differences are erased
