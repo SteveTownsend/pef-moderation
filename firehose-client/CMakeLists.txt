@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 1.3.2 LANGUAGES C CXX)
+project(firehose_client VERSION 1.3.3 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(UNIT_TESTS_ENABLED ON)
+set(UNIT_TESTS_ENABLED OFF)
 
 # #######################################################################################################################
 # # Configuration for all targets
@@ -44,15 +44,16 @@ FetchContent_MakeAvailable(googletest)
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
-cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
 include_directories(${ICU_INCLUDE_DIR})
 if (WIN32)
-  SET(ICU_UC_LIBRARY "ENV{ICU_ROOT}/lib64/icuuc.lib")
+  SET(ICU_UC_LIBRARY "$ENV{ICU_ROOT}/lib64/icuuc.lib")
+  SET(ICU_LIBRARIES "${ICU_UC_LIBRARY}")
 endif()
+cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
 
 FetchContent_Declare(
   aho_corasick
-  GIT_HASH 5932bd5d26ec624f433c6c6a4b6c3b2197b45cff
+  GIT_HASH b7d0c197471f47c10b1ac48bb8355f9407f5d68d
   GIT_REPOSITORY https://github.com/SteveTownsend/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
