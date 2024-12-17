@@ -25,9 +25,12 @@ http://www.fsf.org/licensing/licenses
 #include <unicode/ustring.h>
 
 namespace json {
-std::map<std::string, std::vector<std::string>> TargetFieldNames = {
-    {"app.bsky.feed.post", {"text"}},
-    {"app.bsky.actor.profile", {"description", "displayName"}}};
+std::map<std::string, std::vector<nlohmann::json::json_pointer>>
+    TargetFieldNames = {
+        {"app.bsky.feed.post",
+         {"/text"_json_pointer, "/embed/external/description"_json_pointer}},
+        {"app.bsky.actor.profile",
+         {"/description"_json_pointer, "/displayName"_json_pointer}}};
 }
 
 // convert UTF-8 input to canonical form where case differences are erased
@@ -80,8 +83,9 @@ std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (rc_string.empty())
     return std::string();
 
-  std::vector<UChar> buffer(rc_string.size() * 3, 0);
-  std::string result(rc_string.size() * 2, 0);
+  size_t output_max(rc_string.size() * 3);
+  std::vector<UChar> buffer(output_max, 0);
+  std::string result(output_max, 0);
 
   icu::ErrorCode error_code;
   int32_t len = 0;
