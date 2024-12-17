@@ -83,8 +83,9 @@ std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (rc_string.empty())
     return std::string();
 
-  std::vector<UChar> buffer(rc_string.size() * 3, 0);
-  std::string result(rc_string.size() * 2, 0);
+  size_t output_max(rc_string.size() * 3);
+  std::vector<UChar> buffer(output_max, 0);
+  std::string result(output_max, 0);
 
   icu::ErrorCode error_code;
   int32_t len = 0;
