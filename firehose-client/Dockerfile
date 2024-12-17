@@ -1,10 +1,9 @@
 # install dependencies and build
-FROM ubuntu:latest AS build
+FROM ubuntu:24.10 AS build
 
-RUN apt-get -y update && apt-get -y install sudo && && rm -rf /var/lib/apt/lists/* 
+RUN apt-get -y update && apt-get -y install sudo 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
-RUN sudo apt-get -y install $BUILD_DEPS --no-install-recommends && \
-  rm -rf /var/lib/apt/lists/* &&
+RUN sudo apt-get -y install $BUILD_DEPS
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
@@ -24,13 +23,15 @@ RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF &
 WORKDIR /usr/src/firehose-client
 COPY . .
 RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
+  rm -rf /var/lib/apt/lists/* && \
   apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
-FROM ubuntu:latest
+FROM ubuntu:24.10
 
-RUN apt-get -y update && apt-get -y install sudo && rm -rf /var/lib/apt/lists/* 
-RUN sudo apt-get -y install libicu-dev libssl-dev cmake && rm -rf /var/lib/apt/lists/* 
+RUN apt-get -y update && apt-get -y install sudo 
+ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
+RUN sudo apt-get -y install $RUNTIME_DEPS 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
@@ -41,7 +42,8 @@ COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/
 COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
 
 RUN rm -rf /usr/src/prometheus-cpp
-RUN sudo apt-get purge -y --auto-remove cmake ninja-build
+RUN  && rm -rf /var/lib/apt/lists/* && \
+  sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p ./logs
 ENTRYPOINT ["/usr/src/firehose-client/firehose_client", "/usr/src/firehose-client/config/live_config.yml"]
