@@ -42,9 +42,17 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Unicode support
+find_package(ICU REQUIRED COMPONENTS uc)
+cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
+include_directories(${ICU_INCLUDE_DIR})
+if (WIN32)
+  SET(ICU_UC_LIBRARY "ENV{ICU_ROOT}/lib64/icuuc.lib")
+endif()
+
 FetchContent_Declare(
   aho_corasick
-  GIT_HASH 93eb16ba2571f9e2bd05ae17681c62121cc436d1
+  GIT_HASH 5932bd5d26ec624f433c6c6a4b6c3b2197b45cff
   GIT_REPOSITORY https://github.com/SteveTownsend/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
@@ -70,11 +78,6 @@ elseif(WIN32)
   include_directories(${prometheus-cpp_SOURCE_DIR})
 endif()
 cmake_print_variables(prometheus-cpp_FOUND prometheus-cpp_SOURCE_DIR)
-
-# Unicode support
-find_package(ICU REQUIRED COMPONENTS uc)
-cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
-include_directories(${ICU_INCLUDE_DIR})
 
 # For Boost.Beast (REST, Websocket)
 SET(Boost_USE_STATIC_LIBS YES)
