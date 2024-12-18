@@ -20,9 +20,10 @@ services:
     network_mode: host
     volumes:
       - /firehose-client/promtail/positions/:/etc/promtail/positions/
+      - /firehose-client/config/promtail.yml/:/etc/promtail/prommtail.yml
     ports:
       - "9080:9080"
-    command: -config.file=/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/promtail.yml
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
