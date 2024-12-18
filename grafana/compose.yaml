@@ -37,6 +37,9 @@ services:
       - type: bind
         source: /grafana
         target: /var/lib/grafana
+      - type: bind
+        source: /grafana/log
+        target: /var/log/grafana
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
 
