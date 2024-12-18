@@ -204,6 +204,10 @@ WantedBy=default.target
 SYSTEMD_UNIT_FILE
 ```
 
+##### Set up HTTPS (recommended)
+
+Follow instructions [here](https://www.stefanproell.at/2018/10/12/grafana-and-influxdb-with-ssl-inside-a-docker-container/), LetsEncrypt version recommended. Edit /grafana/compose.yaml accordingly.
+
 ##### Start the service
 
 **Reload the systemd daemon to create the new service:**
