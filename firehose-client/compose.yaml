@@ -19,12 +19,12 @@ services:
     image: grafana/promtail:latest
     network_mode: host
     volumes:
-      - /firehose-client/logs/:/var/log/
-      - /firehose-client/promtail/config/:/etc/promtail/
+      - /firehose-client/logs/:/usr/src/firehose-client/logs/
+      - /firehose-client/promtail/config/config.yml:/etc/promtail/config.yml
       - /firehose-client/promtail/positions/:/etc/promtail/positions/
     ports:
       - "9080:9080"
-    command: -config.file=/etc/promtail/promtail.yaml
+    command: -config.file=/etc/promtail/config.yml
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
