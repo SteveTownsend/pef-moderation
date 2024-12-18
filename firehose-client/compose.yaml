@@ -9,8 +9,8 @@ services:
       - "59090:59090"
     volumes:
       - type: bind
-        source: /firehose-client/logs/
-        target: /usr/src/firehose-client/logs/
+        source: ./firehose-client/logs/
+        target: ./firehose-client/logs/
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
@@ -19,8 +19,8 @@ services:
     image: grafana/promtail:latest
     network_mode: host
     volumes:
-      - /firehose-client/promtail/positions/:/etc/promtail/positions/
-      - /firehose-client/config/promtail.yml/:/etc/promtail/prommtail.yml
+      - ./firehose-client/promtail/positions/:/etc/promtail/positions/
+      - ./firehose-client/config/promtail.yml/:/etc/promtail/prommtail.yml
     ports:
       - "9080:9080"
     command: -config.file=/etc/promtail/promtail.yml
