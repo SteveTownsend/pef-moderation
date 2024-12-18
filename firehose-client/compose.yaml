@@ -10,7 +10,7 @@ services:
     volumes:
       - type: bind
         source: ./firehose-client/logs/
-        target: ./firehose-client/logs/
+        target: /firehose-client/logs/
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
