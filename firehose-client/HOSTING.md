@@ -189,15 +189,6 @@ curl https://w.x.y.z:59090/metrics
 
 This requires promtail to run alongside the client, extracing logs for use by Loki and Grafana. The Docker `compose.yaml` file in this repo includes integration of this, and should be edited if you do not want to use it.
 
-```
-sudo apt-get install -y wget gpg
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
-sudo apt-get update && apt-get install -y promtail
-mkdir --parents /etc/promtail/positions
-cp /usr/src/firehose/config/config.yml /etc/promtail/config.yml
-```
-
 ### Manually updating Firehose Client
 
 If you use use Docker `compose.yaml` file in this repo, the Firehose Client will automatically update at midnight UTC when new releases are available. To manually update to the latest version use the following commands.

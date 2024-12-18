@@ -19,8 +19,6 @@ services:
     image: grafana/promtail:latest
     network_mode: host
     volumes:
-      - /firehose-client/logs/:/usr/src/firehose-client/logs/
-      - /firehose-client/promtail/config/config.yml:/etc/promtail/config.yml
       - /firehose-client/promtail/positions/:/etc/promtail/positions/
     ports:
       - "9080:9080"

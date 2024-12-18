@@ -29,7 +29,7 @@ RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
 # prepare the runtime environment
 FROM ubuntu:24.10
 
-RUN apt-get -y update && apt-get -y install sudo 
+RUN apt-get -y update && apt-get -y install sudo
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
 RUN sudo apt-get -y install $RUNTIME_DEPS 
 
