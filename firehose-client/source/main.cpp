@@ -56,6 +56,7 @@ int main(int argc, char **argv) {
     }
     std::shared_ptr<config> settings(std::make_shared<config>(argv[1]));
     metrics::instance().set_config(settings);
+    parser::set_config(settings);
 
     std::string const log_file(
         settings->get_config()[PROJECT_NAME]["logging"]["filename"]

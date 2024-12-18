@@ -24,6 +24,8 @@ http://www.fsf.org/licensing/licenses
 #include <boost/asio/buffers_iterator.hpp>
 #include <sstream>
 
+std::shared_ptr<config> parser::_settings;
+
 // Extract UTF-8 string containing the material to be checked,  which is
 // context-dependent
 candidate_list
@@ -35,9 +37,13 @@ parser::get_candidates_from_string(std::string const &full_content) const {
 candidate_list parser::get_candidates_from_flat_buffer(
     beast::flat_buffer const &beast_data) const {
   auto buffer(beast_data.data());
-  nlohmann::json full_json(
-      nlohmann::json::parse(buffers_begin(buffer), buffers_end(buffer)));
-  return get_candidates_from_json(full_json);
+  if (_settings->is_full()) {
+    return {};
+  } else {
+    nlohmann::json full_json(
+        nlohmann::json::parse(buffers_begin(buffer), buffers_end(buffer)));
+    return get_candidates_from_json(full_json);
+  }
 }
 
 // TODO Could use SAX parsing down the line
@@ -87,4 +93,8 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     REL_ERROR("Error {} processing JSON\n{}", exc.what(), dump_json(full_json));
   }
   return {};
+}
+
+void parser::set_config(std::shared_ptr<config> &settings) {
+  _settings = settings;
 }

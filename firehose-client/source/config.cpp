@@ -19,11 +19,16 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "config.hpp"
+#include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
 
 config::config(std::string const &filename) {
   try {
     _config = YAML::LoadFile(filename);
+    constexpr std::string_view jetstream = "jetstream";
+    _is_full = !_config[PROJECT_NAME]["datasource"]["hosts"]
+                    .as<std::string>()
+                    .contains(jetstream);
   } catch (std::exception const &exc) {
     REL_CRITICAL("Error processing config file {}:{}", filename, exc.what());
   }

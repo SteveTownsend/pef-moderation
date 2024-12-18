@@ -29,9 +29,12 @@ public:
 
   config(std::string const &filename);
   const YAML::Node &get_config() const;
+  inline bool is_full() { return _is_full; }
 
 private:
   YAML::Node _config;
+  // uss host to infer whether we are using Jetstream or full firehose
+  bool _is_full;
 };
 
 #endif
