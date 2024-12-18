@@ -177,7 +177,7 @@ sudo systemctl status firehose-client
 sudo docker ps
 ```
 
-### Verify that Ozone is online
+### Verify that Firehose Client is online
 
 You can check if your server is online and healthy by requesting the Prometheus metrics in browser at your server's IPv4 address w.x.y.z. You would instead use a domain name here if DNS is set up for your server's IP address.
 
@@ -185,7 +185,20 @@ You can check if your server is online and healthy by requesting the Prometheus 
 curl https://w.x.y.z:59090/metrics
 ```
 
-### Manually updating Ozone
+### Loki log scraping (Optional) ###
+
+This requires promtail to run alongside the client, extracing logs for use by Loki and Grafana. The Docker `compose.yaml` file in this repo includes integration of this, and should be edited if you do not want to use it.
+
+```
+sudo apt-get install -y wget gpg
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
+sudo apt-get update && apt-get install -y promtail
+mkdir --parents /etc/promtail/positions
+cp /usr/src/firehose/config/config.yml /etc/promtail/config.yml
+```
+
+### Manually updating Firehose Client
 
 If you use use Docker `compose.yaml` file in this repo, the Firehose Client will automatically update at midnight UTC when new releases are available. To manually update to the latest version use the following commands.
 
