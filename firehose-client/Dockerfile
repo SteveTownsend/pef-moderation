@@ -39,7 +39,7 @@ RUN cmake --install .
 
 WORKDIR /firehose-client
 COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /firehose-client
-COPY --from=build /firehose-client/config /firehose-client/config
+COPY --from=build /usr/src/firehose-client/config /firehose-client/config
 
 RUN rm -rf /usr/src/prometheus-cpp && \
   rm -rf /var/lib/apt/lists/* && \
