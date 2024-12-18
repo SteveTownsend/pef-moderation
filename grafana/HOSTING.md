@@ -132,16 +132,16 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 ```
 
-#### Set up the Ozone directory
+#### Set up the Grafana directory
 
 ```bash
-sudo mkdir /grafana
+sudo mkdir --parents /grafana/log
 sudo mkdir /grafana/postgres
 ```
 
 #### Create the Postgres env configuration file
 
-Configure Postgres with superuser credentials created at startup, and initial database name. Note that these credentials may be used to configure Ozone's `OZONE_DB_POSTGRES_URL` in the following step, or you may opt to setup a separate Postgres app user for running the Ozone service.
+Configure Postgres with superuser credentials created at startup, and initial database name.
 
 ```bash
 POSTGRES_PASSWORD="$(openssl rand --hex 16)"
@@ -155,14 +155,6 @@ POSTGRES_CONFIG
 
 #### Create the Grafana env configuration file
 
-You should fill in the first 6 values, but leave the rest untouched unless you have good reason to change it.
-
-See the Ozone environment variables section at the end of this README for explanations of each value
-
-Your Ozone instance will need a secp256k1 private key used to sign labels provided as a hex string. You can securely generate this key using `openssl` with the following command:
-
-**Note:**
-
 ```bash
 POSTGRES_PASSWORD="..." # Use password from postgres env setup
 cat <<GRAFANA_CONFIG | sudo tee /grafana/grafana.env
@@ -172,6 +164,7 @@ GF_DATABASE_NAME=grafana
 GF_DATABASE_USER=postgres
 GF_DATABASE_PASSWORD=my_grafana_pwd
 GF_DATABASE_SSL_MODE=require
+GF_LOG_MODE=file
 GRAFANA_CONFIG
 ```
 
@@ -179,7 +172,7 @@ GRAFANA_CONFIG
 
 ##### Download the Docker compose file
 
-Download the `compose.yaml` to run your Ozone instance, which includes the following containers:
+Download the `compose.yaml` to run your Grafana instance, which includes the following containers:
 
 - `grafana` Grafana server—both UI and backend—running on http://localhost:3000
 - `postgres` Postgres database used by the Grafana backend
@@ -211,6 +204,10 @@ WantedBy=default.target
 SYSTEMD_UNIT_FILE
 ```
 
+##### Set up HTTPS (recommended)
+
+Follow instructions [here](https://www.stefanproell.at/2018/10/12/grafana-and-influxdb-with-ssl-inside-a-docker-container/), LetsEncrypt version recommended. Edit /grafana/compose.yaml accordingly.
+
 ##### Start the service
 
 **Reload the systemd daemon to create the new service:**
@@ -225,7 +222,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable grafana
 ```
 
-**Start the ozone systemd service:**
+**Start the grafana systemd service:**
 
 ```bash
 sudo systemctl start grafana
@@ -246,11 +243,6 @@ sudo docker ps
 ### Verify that Grafana is online
 
 You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at https://grafana.example.com/.
-
-```bash
-curl https://ozone.EXAMPLE.COM/xrpc/_health
-{"version":"0.1.1"}
-```
 
 ### Updating Grafana
 
