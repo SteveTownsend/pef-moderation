@@ -37,16 +37,16 @@ COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
 WORKDIR /usr/src/prometheus-cpp/_build
 RUN cmake --install .
 
-WORKDIR /usr/src/firehose-client
-COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/firehose-client
-COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
+WORKDIR /firehose-client
+COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /firehose-client
+COPY --from=build /usr/src/firehose-client/config /firehose-client/config
 
 RUN rm -rf /usr/src/prometheus-cpp && \
   rm -rf /var/lib/apt/lists/* && \
   sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p ./logs
-ENTRYPOINT ["/usr/src/firehose-client/firehose_client", "/usr/src/firehose-client/config/live_config.yml"]
+ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/live_config.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
 # CMD ["./live_config.yml"]
