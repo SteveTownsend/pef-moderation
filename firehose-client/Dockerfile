@@ -29,7 +29,7 @@ RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
 # prepare the runtime environment
 FROM ubuntu:24.10
 
-RUN apt-get -y update && apt-get -y install sudo wget gpg
+RUN apt-get -y update && apt-get -y install sudo
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
 RUN sudo apt-get -y install $RUNTIME_DEPS 
 
@@ -40,12 +40,6 @@ RUN cmake --install .
 WORKDIR /usr/src/firehose-client
 COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/firehose-client
 COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
-
-RUN wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg && \
-  echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list && \
-  sudo apt-get update && apt-get install -y promtail && \
-  mkdir --parents /etc/promtail/positions &&
-cp /usr/src/firehose/config/config.yml /etc/promtail/config.yml
 
 RUN rm -rf /usr/src/prometheus-cpp && \
   rm -rf /var/lib/apt/lists/* && \
