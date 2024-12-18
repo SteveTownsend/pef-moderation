@@ -41,8 +41,8 @@ WORKDIR /usr/src/firehose-client
 COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /usr/src/firehose-client
 COPY --from=build /usr/src/firehose-client/config /usr/src/firehose-client/config
 
-RUN rm -rf /usr/src/prometheus-cpp
-RUN  && rm -rf /var/lib/apt/lists/* && \
+RUN rm -rf /usr/src/prometheus-cpp && \
+  rm -rf /var/lib/apt/lists/* && \
   sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p ./logs

@@ -1,8 +1,8 @@
 name: build-and-push-ghcr-firehose-client
 on:
   push:
-    branches:
-      - main
+#    branches:
+#      - main  too verbose, build is slow
     tags:
       - v*
 env:
