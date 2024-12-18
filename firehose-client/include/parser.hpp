@@ -20,6 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include "config.hpp"
 #include "helpers.hpp"
 #include "nlohmann/json.hpp"
 #include <boost/beast/core.hpp>
@@ -42,5 +43,10 @@ public:
   candidate_list
   get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) const;
   candidate_list get_candidates_from_json(nlohmann::json &full_json) const;
+
+  static void set_config(std::shared_ptr<config> &settings);
+
+private:
+  static std::shared_ptr<config> _settings;
 };
 #endif

@@ -6,6 +6,7 @@ firehose_client:
     filename: "./config/live_filters"
   datasource:
     hosts:
+      # Jetstream-adapted firehose
       "jetstream1.us-east.bsky.network"
       # TODO support round robin use
       # [

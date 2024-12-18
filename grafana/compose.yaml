@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  pg_grafana:
+    container_name: pg_grafana
+    image: postgres:17.2
+    restart: always
+    environment:
+      POSTGRES_DB: nafo-moderation-grafana
+      POSTGRES_USER: my_grafana_user
+      POSTGRES_PASSWORD: my_grafana_pwd
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: pg_isready -h localhost -U $$POSTGRES_USER
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - type: bind
+        source: /grafana/postgres
+        target: /var/lib/postgresql/data
+    env_file:
+      - /grafana/postgres.env
+      
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-enterprise:latest
+    user: "0:0"
+    env_file:
+      - /grafana/grafana.env
+    restart: unless-stopped
+    depends_on:
+        - pg_grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - type: bind
+        source: /grafana
+        target: /var/lib/grafana
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
+
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower:latest
+    network_mode: host
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_SCHEDULE: '@midnight'
+      WATCHTOWER_LABEL_ENABLE: true 
+
+volumes:
+  pg_grafana:
+    driver: local
+  grafana:
+    driver: local

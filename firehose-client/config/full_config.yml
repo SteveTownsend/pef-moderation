@@ -1,0 +1,20 @@
+firehose_client:
+  logging:
+    filename: "./logs/firehose_client_full.log"
+    level: "trace" # per spdlog values trace, debug, info, warn, error, critical, off
+  filters:
+    filename: "./config/live_filters"
+  datasource:
+    hosts:
+      # full firehose
+      "bsky.network"
+    port: 443
+    subscription: "/xrpc/com.atproto.sync.subscribeRepos"
+
+  datasink:
+    url: "https://ozone.nafo-moderation.org"
+    requestType: "POST"
+    path: "/xrpc/com.atproto.moderation.createReport"
+
+  metrics:
+    port: 59090
