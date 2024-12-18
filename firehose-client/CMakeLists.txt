@@ -4,7 +4,7 @@ project(firehose_client VERSION 1.3.6 LANGUAGES C CXX)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(UNIT_TESTS_ENABLED OFF)
+set(FIREHOSE_CLIENT_TEST OFF)
 
 # #######################################################################################################################
 # # Configuration for all targets
@@ -32,15 +32,16 @@ configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}
 SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_TAG v1.15.2
-  GIT_REPOSITORY https://github.com/google/googletest
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+if (FIREHOSE_CLIENT_TEST)
+  FetchContent_Declare(
+    googletest
+    GIT_TAG v1.15.2
+    GIT_REPOSITORY https://github.com/google/googletest
+  )
+  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(googletest)
+endif()
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -49,11 +50,10 @@ if (WIN32)
   SET(ICU_UC_LIBRARY "$ENV{ICU_ROOT}/lib64/icuuc.lib")
   SET(ICU_LIBRARIES "${ICU_UC_LIBRARY}")
 endif()
-cmake_print_variables(ICU_FOUND ICU_LIBRARIES)
 
 FetchContent_Declare(
   aho_corasick
-  GIT_HASH b7d0c197471f47c10b1ac48bb8355f9407f5d68d
+  GIT_HASH 3d2fb8ca0f8a024d9fec69dbaf3860f08cdd09a3
   GIT_REPOSITORY https://github.com/SteveTownsend/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
@@ -111,6 +111,7 @@ FetchContent_Declare(
   GIT_TAG        2.3.0
   OVERRIDE_FIND_PACKAGE
 )
+set(JSON_VALIDATOR_BUILD_TESTS OFF)
 FetchContent_MakeAvailable(nlohmann_json_schema_validator)
 find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 
@@ -162,7 +163,7 @@ if (UNIX)
   target_link_libraries(firehose_client stdc++)
 endif()
 
-if (UNIT_TESTS_ENABLED)
+if (FIREHOSE_CLIENT_TEST)
   include(CTest)
   enable_testing()
   add_subdirectory(test)
