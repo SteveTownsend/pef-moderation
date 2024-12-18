@@ -5,7 +5,7 @@ services:
     image: postgres:17.2
     restart: always
     environment:
-      POSTGRES_DB: nafo-moderation-grafana
+      POSTGRES_DB: grafana
       POSTGRES_USER: my_grafana_user
       POSTGRES_PASSWORD: my_grafana_pwd
     ports:
