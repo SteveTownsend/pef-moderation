@@ -163,8 +163,6 @@ Your Ozone instance will need a secp256k1 private key used to sign labels provid
 
 **Note:**
 
-- Replace `grafana.example.com` with your domain name.
-
 ```bash
 POSTGRES_PASSWORD="..." # Use password from postgres env setup
 cat <<GRAFANA_CONFIG | sudo tee /grafana/grafana.env
@@ -172,7 +170,7 @@ GF_DATABASE_TYPE=postgres
 GF_DATABASE_HOST=pg_grafana:5432
 GF_DATABASE_NAME=grafana
 GF_DATABASE_USER=postgres
-GF_DATABASE_PASSWORD: my_grafana_pwd
+GF_DATABASE_PASSWORD=my_grafana_pwd
 GF_DATABASE_SSL_MODE=require
 GRAFANA_CONFIG
 ```
