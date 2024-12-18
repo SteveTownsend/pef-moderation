@@ -135,7 +135,7 @@ sudo docker run hello-world
 #### Set up the Grafana directory
 
 ```bash
-sudo mkdir /grafana
+sudo mkdir --parents /grafana/log
 sudo mkdir /grafana/postgres
 ```
 
