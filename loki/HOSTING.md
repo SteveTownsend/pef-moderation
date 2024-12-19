@@ -1,8 +1,8 @@
-## Self-hosting Firehose Client
+## Self-hosting Loki
 
-Self-hosting Firehose Client enables you to participatedetect your preferred strings in posted content realtime. The Firehose Client consumes the public Jetstream firehose and uses a configured set of strings to filter posts and account or profile updates. Statistics on filter matches are published to Prometheus.
+Self-hosting Loki enables you to capture moderation logs. The software stack used consists of Grafana, Loki and Promtail.
 
-### Preparation for self-hosting Firehose Client
+### Preparation for self-hosting Loki
 
 #### Launch a server
 
@@ -14,7 +14,7 @@ Ensure that you can ssh to your server and have root access.
 
 - Public IPv4 address
 - Public DNS name
-- Public inbound internet access permitted on port 80/tcp and 443/tcp
+- Public inbound internet access permitted on port 80/tcp and 3000/tcp
 
 **Server Recommendations**
 
@@ -29,25 +29,27 @@ Ensure that you can ssh to your server and have root access.
 > [!TIP]
 > It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
 
-### Open your cloud firewall for TCP
+### Open your cloud firewall for HTTP and HTTPS
 
 One of the most common sources of misconfiguration is not opening firewall ports correctly. Please be sure to double check this step.
 
 In your cloud provider's console, the following ports should be open to inbound access from the public internet.
 
-- 59090/tcp (Used for Prometheus metric scraping)
+- 80/tcp (Used only for TLS certification verification)
+- 3100/tcp (Used to push log data to Loki)
 
 ### Installing on Ubuntu 24.04
 
 > [!TIP]
-> Ozone will run on other Linux distributions but will require different commands.
+> Loki will run on other Linux distributions but will require different commands.
 
 #### Open ports on your Linux firewall
 
 If your server is running a Linux firewall managed with `ufw`, you will need to open these ports:
 
 ```bash
-$ sudo ufw allow 59090/tcp
+$ sudo ufw allow 80/tcp
+$ sudo ufw allow 3100/tcp
 ```
 
 #### Install Docker
@@ -104,31 +106,32 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 ```
 
-#### Set up the Firehose Client directory
+#### Set up the Grafana directory
 
 ```bash
-sudo mkdir --parents /firehose-client/logs
+sudo mkdir --parents /loki
 ```
 
-#### Start the Firehose Client containers
+#### Start the Loki containers
 
-##### Download the Docker compose file
+##### Download the Docker compose file and Loki config
 
-Download the `firehose-client/compose.yaml` to run your Firehose Client instance. The file includes the following containers:
+Download the `compose.yaml` to run your Grafana instance, which includes the following containers:
 
-- `firehose-client` is the BlueSky Websocket firehose client
+- `loki` Loki middleware,  collcts logs from FIrehose CLient and makes them available for Grafana - running on http://localhost:3100
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/firehose-client/compose.yaml | sudo tee /firehose-client/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/loki/compose.yaml | sudo tee /loki/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/firehose-client/config/loki-config.yaml | sudo tee /loki/loki-config.yaml
 ```
 
 ##### Create the systemd service
 
 ```bash
-cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/firehose-client.service
+cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/loki.service
 [Unit]
-Description=NAFO Forum Firehose Client
+Description=NAFO Forum Moderation Loki Service
 Documentation=https://github.com/SteveTownsend/nafo-forum-moderation
 Requires=docker.service
 After=docker.service
@@ -136,9 +139,9 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/firehose-client
-ExecStart=/usr/bin/docker compose --file /firehose-client/compose.yaml up --detach
-ExecStop=/usr/bin/docker compose --file /firehose-client/compose.yaml down
+WorkingDirectory=/loki
+ExecStart=/usr/bin/docker compose --file /loki/compose.yaml up --detach
+ExecStop=/usr/bin/docker compose --file /loki/compose.yaml down
 
 [Install]
 WantedBy=default.target
@@ -156,51 +159,35 @@ sudo systemctl daemon-reload
 **Enable the systemd service:**
 
 ```bash
-sudo systemctl enable firehose-client
+sudo systemctl enable loki
 ```
 
-**Start the firehose-client systemd service:**
+**Start the grafana systemd service:**
 
 ```bash
-sudo systemctl start firehose-client
+sudo systemctl start loki
 ```
 
 **Ensure that containers are running**
 
-There should be a firehose-client and watchtower container running.
+There should be one each of loki and watchtower containers running.
 
 ```bash
-sudo systemctl status firehose-client
+sudo systemctl status loki
 ```
 
 ```bash
 sudo docker ps
 ```
 
-### Verify that Firehose Client is online
+### Verify that Loki is online
 
-You can check if your server is online and healthy by requesting the Prometheus metrics in browser at your server's IPv4 address w.x.y.z. You would instead use a domain name here if DNS is set up for your server's IP address.
-
-```bash
-curl https://w.x.y.z:59090/metrics
-```
-
-### Loki log scraping (Optional) ###
-
-This requires promtail to run alongside the client, extracting logs for use by Loki and Grafana. The Docker `compose.yaml` file in this repo includes integration of this, and should be edited if you do not want to use it.
-
-### Manually updating Firehose Client
-
-If you use the Docker `compose.yaml` file in this repo, the Firehose Client will automatically update at midnight UTC when new releases are available. To manually update to the latest version use the following commands.
-
-**Pull the latest Firehose Client container image:**
+You can check if your server is online and healthy by requesting the healthcheck endpoint.
 
 ```bash
-sudo docker pull ghcr.io/SteveTownsend/firehose-client:latest
+curl http://localhost:3100/ready
 ```
 
-**Restart Firehose Client with the new container image:**
+### Updating Loki
 
-```bash
-sudo systemctl restart firehose-client
-```
+If you use use Docker `compose.yaml` file in this repo, Loki will automatically update at midnight UTC when new releases are available.
