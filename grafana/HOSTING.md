@@ -247,3 +247,8 @@ You can check if your server is online and healthy by requesting the healthcheck
 ### Updating Grafana
 
 If you use use Docker `compose.yaml` file in this repo, Grafana will automatically update at midnight UTC when new releases are available.
+
+### Limiting access ###
+
+Allowing anonymous access is not recommended.
+Limited access for known users to kick the tires can be enabled as shown [here](https://grafana.com/docs/grafana/latest/administration/user-management/manage-dashboard-permissions/#enable-viewers-to-edit-but-not-save-dashboards-and-use-explore).
