@@ -16,15 +16,35 @@ scrape_configs:
           firstline: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}
           max_wait_time: 3s
       - regex:
-          expression: "^(?P<date_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\\.\\d{3}) (?P<log_level>\\S+) (?P<thread>\\S+) - (?P<log_entry>(?s:.*))$"
+          expression: "^(?P<date_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[.]\\d{3})\\s+(?P<log_level>\\S+)\\s+(?P<thread>\\S+) Candidate (?P<target>(?s:.*))\nmatches (?P<matched>.*)\non message:(?P<message>(?s:.*))$"
       - timestamp:
           source: date_time
           format: "2006-01-02 15:16:17.018"
+      - metrics:
+          log_lines_total:
+            type: Counter
+            description: "total number of log lines"
+            config:
+              match_all: true
+              action: inc
+          log_bytes_total:
+            type: Counter
+            description: "total bytes of log lines"
+            config:
+              match_all: true
+              count_entry_bytes: true
+              action: add
+          filter_match_lines:
+            type: Counter
+            description: "log lines matching any filter`"
+            source: message
+            config:
+              action: inc
 
     static_configs:
       - targets:
           - localhost
         labels:
           job: firehose-client
-          host: 64.227.114.82
+          host: 165.227.146.55
           __path__: /var/logs/*.log
