@@ -9,7 +9,7 @@ services:
       - "59090:59090"
     volumes:
       - type: bind
-        source: ./logs/
+        source: /firehose-client/logs/
         target: /firehose-client/logs/
 
     restart: unless-stopped
@@ -21,10 +21,10 @@ services:
     network_mode: host
     volumes:
       - type: bind
-        source: ./logs/
+        source: /firehose-client/logs/
         target: /var/logs/
-      - ./promtail/positions/:/etc/promtail/positions/
-      - ./config/promtail.yaml/:/etc/promtail/promtail.yaml
+      - /firehose-client/promtail/positions/:/etc/promtail/positions/
+      - /firehose-client/config/promtail.yaml/:/etc/promtail/promtail.yaml
     ports:
       - "9080:9080"
     command: -config.file=/etc/promtail/promtail.yaml
