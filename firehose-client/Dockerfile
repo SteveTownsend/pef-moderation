@@ -41,11 +41,11 @@ WORKDIR /firehose-client
 COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /firehose-client
 COPY --from=build /usr/src/firehose-client/config /firehose-client/config
 
-RUN rm -rf /usr/src/prometheus-cpp && \
+RUN rm -rf /usr/src && \
   rm -rf /var/lib/apt/lists/* && \
   sudo apt-get purge -y --auto-remove cmake
 
-RUN mkdir -p ./logs
+RUN mkdir -p /firehose-client/logs
 ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/live_config.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
