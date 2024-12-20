@@ -21,6 +21,7 @@ http://www.fsf.org/licensing/licenses
 #include "parser.hpp"
 #include "helpers.hpp"
 #include "log_wrapper.hpp"
+#include <algorithm>
 #include <boost/asio/buffers_iterator.hpp>
 #include <sstream>
 
@@ -34,10 +35,32 @@ parser::get_candidates_from_string(std::string const &full_content) const {
   return get_candidates_from_json(full_json);
 }
 
-candidate_list parser::get_candidates_from_flat_buffer(
-    beast::flat_buffer const &beast_data) const {
+candidate_list
+parser::get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) {
   auto buffer(beast_data.data());
   if (_settings->is_full()) {
+    bool parsed(false);
+    try {
+      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
+                         nlohmann::json & /*parsed*/)>
+          callback =
+              std::bind(&parser::cbor_callback, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+      parsed = nlohmann::json::from_cbor_sequence(
+          buffers_begin(buffer), buffers_end(buffer), callback, true,
+          nlohmann::json::cbor_tag_handler_t::store);
+
+    } catch (std::exception const &exc) {
+      REL_ERROR("from_cbor_sequence threw: {}", exc.what());
+    }
+    if (!parsed) {
+      std::ostringstream oss;
+      oss << std::hex;
+      auto os_iter = std::ostream_iterator<int>(oss);
+      std::ranges::copy(buffers_begin(buffer), buffers_end(buffer), os_iter);
+
+      REL_ERROR("from_cbor_sequence parse failed: {}", oss.str());
+    }
     return {};
   } else {
     nlohmann::json full_json(
@@ -93,6 +116,15 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     REL_ERROR("Error {} processing JSON\n{}", exc.what(), dump_json(full_json));
   }
   return {};
+}
+
+inline bool parser::cbor_callback(int depth,
+                                  nlohmann::json::parse_event_t event,
+                                  nlohmann::json &parsed) {
+  if (event == nlohmann::json::parse_event_t::result) {
+    _cbors.push_back(std::move(parsed));
+  }
+  return true;
 }
 
 void parser::set_config(std::shared_ptr<config> &settings) {

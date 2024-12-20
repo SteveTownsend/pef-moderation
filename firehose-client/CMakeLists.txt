@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 1.4.0 LANGUAGES C CXX)
+project(firehose_client VERSION 2.0.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -106,14 +106,10 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 ENDIF()
 
 FetchContent_Declare(
-  nlohmann_json_schema_validator
-  GIT_REPOSITORY https://github.com/pboettch/json-schema-validator
-  GIT_TAG        2.3.0
-  OVERRIDE_FIND_PACKAGE
-)
-set(JSON_VALIDATOR_BUILD_TESTS OFF)
-FetchContent_MakeAvailable(nlohmann_json_schema_validator)
-find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+  json
+  GIT_REPOSITORY https://github.com/stevetownsend/json
+  GIT_TAG 9409369e43842b699d4b52ee8f03e82e53c0c245)
+FetchContent_MakeAvailable(json)
 
 set(spdlog_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 FetchContent_Declare(
@@ -158,7 +154,7 @@ add_executable(firehose_client
   ./source/parser.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
-    nlohmann_json_schema_validator spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
+  nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
 if (UNIX)
   target_link_libraries(firehose_client stdc++)
 endif()

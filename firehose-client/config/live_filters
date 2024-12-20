@@ -52,6 +52,7 @@ moonofalabama.org|disinfo,network|false|substring|
 ukraine.today.co.uk|disinfo,disruptive|false|substring|
 breakthrough news|disinfo,disruptive|false|substring|
 mintpress news|disinfo,disruptive|false|substring|
+newsmax|disinfo,disruptive|false|substring|
 Richard Wolff|disinfo,network|false|substring|
 democracyatwork|disinfo,network|false|substring|
 ## antisemitic, disinfo on YouTube 
@@ -108,4 +109,7 @@ false flag|abusive,violent,disinfo|false|substring|bucha,Izyum,Douma,Irpin
 ## 9/11 denialism and fearmongering
 9/11|disinfo|false|substring|dancing,Israelis,Jews,another
 uniparty|disinfo,disruptive|false|word|
+## disinfo memes
 shitlib|abusive,disruptive|false|substring|
+woke|abusive,disruptive|false|word|mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt
+wokeness|abusive,disruptive|false|substring|Dems,Democrats,Grune,Grüne,trans,lgbt

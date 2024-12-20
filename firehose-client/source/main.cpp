@@ -44,7 +44,7 @@ http://www.fsf.org/licensing/licenses
 int main(int argc, char **argv) {
   bool log_ready(false);
 #if _DEBUG
-  std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
 #endif
   try {
     // Check command line arguments.

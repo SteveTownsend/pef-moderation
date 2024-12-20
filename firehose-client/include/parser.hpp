@@ -27,7 +27,6 @@ http://www.fsf.org/licensing/licenses
 #include <string_view>
 #include <tuple>
 
-
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;
 
@@ -41,12 +40,16 @@ public:
   candidate_list
   get_candidates_from_string(std::string const &full_content) const;
   candidate_list
-  get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) const;
+  get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data);
   candidate_list get_candidates_from_json(nlohmann::json &full_json) const;
 
   static void set_config(std::shared_ptr<config> &settings);
 
 private:
+  bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
+                     nlohmann::json &parsed);
+
+  std::vector<nlohmann::json> _cbors;
   static std::shared_ptr<config> _settings;
 };
 #endif
