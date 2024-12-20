@@ -30,11 +30,6 @@ http://www.fsf.org/licensing/licenses
 
 constexpr size_t QueueLimit = 10000;
 
-struct payload {
-  std::string _json_msg;
-  match_results _matches;
-};
-
 template <typename T> class post_processor {
 public:
   post_processor()
@@ -47,22 +42,7 @@ public:
       while (true) {
         T my_payload;
         _queue.wait_dequeue(my_payload);
-        // Publish metrics for matches
-        for (auto &result : my_payload._matches) {
-          // this is the substring of the full JSON that matched one or more
-          // desired strings
-          REL_INFO("Candidate {}|{}|{}\nmatches {}\non message:{}",
-                   result._candidate._type, result._candidate._field,
-                   result._candidate._value, result._matches,
-                   my_payload._json_msg);
-          for (auto const &match : result._matches) {
-            prometheus::Labels labels(
-                {{"type", result._candidate._type},
-                 {"field", result._candidate._field},
-                 {"filter", wstring_to_utf8(match.get_keyword())}});
-            _matched_elements.Get(labels).Increment();
-          }
-        }
+        my_payload.handle(*this);
         // TODO auto-report if rule indicates, ignoring dups
         // TODO avoid spam for automated posts
 
@@ -72,6 +52,9 @@ public:
   }
   ~post_processor() = default;
   void wait_enqueue(T &&value) { _queue.wait_enqueue(value); }
+  inline prometheus::Family<prometheus::Counter> &metrics() {
+    return _matched_elements;
+  }
 
 private:
   // Declare queue between websocket and match post-processing
@@ -81,6 +64,27 @@ private:
   //   (number of rules) times (number of elements - profile/post -
   //                            times number of fields per element)
   prometheus::Family<prometheus::Counter> &_matched_elements;
+};
+
+class jetstream_payload {
+public:
+  jetstream_payload();
+  jetstream_payload(std::string json_msg, match_results matches);
+  void handle(post_processor<jetstream_payload> &processor) const;
+
+private:
+  std::string _json_msg;
+  match_results _matches;
+};
+
+class firehose_payload {
+public:
+  firehose_payload();
+  firehose_payload(parser &my_parser);
+  void handle(post_processor<firehose_payload> &processor) const;
+
+private:
+  parser _parser;
 };
 
 #endif

@@ -145,13 +145,12 @@ include(CPack)
 add_executable(firehose_client
   ./source/main.cpp
   ./source/config.cpp
-  ./source/content_handler.cpp
-  ./source/datasource.cpp
   ./source/helpers.cpp
   ./source/log_wrapper.cpp
   ./source/matcher.cpp
   ./source/metrics.cpp
-  ./source/parser.cpp)
+  ./source/parser.cpp
+  ./source/post_processor.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
   nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
