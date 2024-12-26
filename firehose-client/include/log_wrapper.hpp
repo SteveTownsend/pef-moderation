@@ -42,13 +42,30 @@ extern std::shared_ptr<spdlog::logger> logger;
 #else
 // Debug build only
 #if _DEBUG || defined(_FULL_LOGGING)
-#define DBG_TRACE(a_fmt, ...) logger->trace(a_fmt __VA_OPT__(, ) __VA_ARGS__)
-#define DBG_DEBUG(a_fmt, ...) logger->debug(a_fmt __VA_OPT__(, ) __VA_ARGS__)
-#define DBG_INFO(a_fmt, ...) logger->info(a_fmt __VA_OPT__(, ) __VA_ARGS__)
-#define DBG_WARNING(a_fmt, ...) logger->warn(a_fmt __VA_OPT__(, ) __VA_ARGS__)
-#define DBG_ERROR(a_fmt, ...) logger->error(a_fmt __VA_OPT__(, ) __VA_ARGS__)
+#define DBG_TRACE(a_fmt, ...)                                                  \
+  if (logger->level() <= spdlog::level::trace) {                               \
+    logger->trace(a_fmt __VA_OPT__(, ) __VA_ARGS__);                           \
+  }
+#define DBG_DEBUG(a_fmt, ...)                                                  \
+  if (logger->level() <= spdlog::level::debug) {                               \
+    logger->debug(a_fmt __VA_OPT__(, ) __VA_ARGS__);                           \
+  }
+#define DBG_INFO(a_fmt, ...)                                                   \
+  if (logger->level() <= spdlog::level::info) {                                \
+    logger->info(a_fmt __VA_OPT__(, ) __VA_ARGS__);                            \
+  }
+#define DBG_WARNING(a_fmt, ...)                                                \
+  if (logger->level() <= spdlog::level::warn) {                                \
+    logger->warn(a_fmt __VA_OPT__(, ) __VA_ARGS__);                            \
+  }
+#define DBG_ERROR(a_fmt, ...)                                                  \
+  if (logger->level() <= spdlog::level::err) {                                 \
+    logger->error(a_fmt __VA_OPT__(, ) __VA_ARGS__);                           \
+  }
 #define DBG_CRITICAL(a_fmt, ...)                                               \
-  logger->critical(a_fmt __VA_OPT__(, ) __VA_ARGS__)
+  if (logger->level() <= spdlog::level::critical) {                            \
+    logger->critical(a_fmt __VA_OPT__(, ) __VA_ARGS__);                        \
+  }
 #else
 #define DBG_TRACE(a_fmt, ...)
 #define DBG_DEBUG(a_fmt, ...)

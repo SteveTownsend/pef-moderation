@@ -118,6 +118,25 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
     if (!all_matches.empty()) {
       results.emplace_back(next, all_matches);
     }
+    // Filter out any that also require but fail on contingent matching
+  }
+
+  // strip out matches which do not pass contingent string matching in rule
+  for (auto next_match = results.begin(); next_match != results.end();) {
+    for (auto rule_key = next_match->_matches.begin();
+         rule_key != next_match->_matches.end();) {
+      matcher::rule this_rule = find_rule(rule_key->get_keyword());
+      if (!this_rule.matches_any_contingent(next_match->_candidate._value)) {
+        rule_key = next_match->_matches.erase(rule_key);
+      } else {
+        ++rule_key;
+      }
+    }
+    if (next_match->_matches.empty()) {
+      next_match = results.erase(next_match);
+    } else {
+      ++next_match;
+    }
   }
   return results;
 }

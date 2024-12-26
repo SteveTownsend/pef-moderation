@@ -20,7 +20,6 @@ http://www.fsf.org/licensing/licenses
 
 #include "parser.hpp"
 #include "helpers.hpp"
-#include "log_wrapper.hpp"
 #include <boost/asio/buffers_iterator.hpp>
 #include <sstream>
 
@@ -34,16 +33,39 @@ parser::get_candidates_from_string(std::string const &full_content) const {
   return get_candidates_from_json(full_json);
 }
 
-candidate_list parser::get_candidates_from_flat_buffer(
-    beast::flat_buffer const &beast_data) const {
+candidate_list
+parser::get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) {
   auto buffer(beast_data.data());
   if (_settings->is_full()) {
+    bool parsed(json_from_cbor(buffers_begin(buffer), buffers_end(buffer)));
+    if (!parsed) {
+      // TODO error handling
+    }
     return {};
   } else {
     nlohmann::json full_json(
         nlohmann::json::parse(buffers_begin(buffer), buffers_end(buffer)));
     return get_candidates_from_json(full_json);
   }
+}
+
+candidate_list
+parser::get_candidates_from_record(nlohmann::json const &record) const {
+  auto record_type(record["$type"].template get<std::string>());
+  auto const record_fields(json::TargetFieldNames.find(record_type));
+  candidate_list results;
+  if (record_fields != json::TargetFieldNames.cend()) {
+    for (auto &field_name : record_fields->second) {
+      try {
+        results.emplace_back(record_type, field_name,
+                             record.at(field_name).template get<std::string>());
+
+      } catch (const nlohmann::json::out_of_range &) {
+        // not an error
+      }
+    }
+  }
+  return results;
 }
 
 // TODO Could use SAX parsing down the line
@@ -72,29 +94,67 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     if (commit["operation"] == "delete")
       return {};
 
-    nlohmann::json record(commit["record"]);
-    auto record_type(record["$type"].template get<std::string>());
-    auto const record_fields(json::TargetFieldNames.find(record_type));
-    candidate_list results;
-    if (record_fields != json::TargetFieldNames.cend()) {
-      for (auto &field_name : record_fields->second) {
-        try {
-          results.emplace_back(
-              record_type, field_name,
-              record.at(field_name).template get<std::string>());
-
-        } catch (const nlohmann::json::out_of_range &) {
-          // not an error
-        }
-      }
-    }
-    return results;
+    const nlohmann::json record(commit["record"]);
+    return get_candidates_from_record(record);
   } catch (std::exception const &exc) {
     REL_ERROR("Error {} processing JSON\n{}", exc.what(), dump_json(full_json));
   }
   return {};
 }
 
+inline bool parser::cbor_callback(int depth,
+                                  nlohmann::json::parse_event_t event,
+                                  nlohmann::json &parsed) {
+  if (event == nlohmann::json::parse_event_t::result) {
+    // Check for "roots" and decode embedded CIDs is found
+    if (parsed.contains("roots")) {
+      DBG_TRACE("JSON roots  {}", parsed.dump());
+    } else if (parsed.contains("digest")) {
+      DBG_TRACE("JSON root-cid {}", parsed.dump());
+    } else {
+      DBG_TRACE("JSON Result  {}", parsed.dump());
+      if (parsed.contains("$type")) {
+        // if this is a potential match source store it for scanning
+        // there ,ay be more than one per mmessage if user posted multiple
+        // replies to a post, or a new thread
+        std::string block_type(parsed["$type"].template get<std::string>());
+        if (json::TargetFieldNames.contains(block_type)) {
+          // block may contains string-matching content
+          _content_cbors.push_back(parsed);
+        }
+      }
+      _cbors.push_back(parsed);
+    }
+  } else if (event == nlohmann::json::parse_event_t::key) {
+    DBG_TRACE("JSON Key     {}", parsed.dump());
+  } else if (event == nlohmann::json::parse_event_t::value) {
+    DBG_TRACE("JSON Value   {}", parsed.dump());
+  } else if (event == nlohmann::json::parse_event_t::object_start) {
+    DBG_TRACE("JSON Object Start");
+  } else if (event == nlohmann::json::parse_event_t::object_end) {
+    DBG_TRACE("JSON Object End");
+  } else if (event == nlohmann::json::parse_event_t::array_start) {
+    DBG_TRACE("JSON Array Start");
+  } else if (event == nlohmann::json::parse_event_t::array_end) {
+    DBG_TRACE("JSON Array End");
+  }
+
+  return true;
+}
+
 void parser::set_config(std::shared_ptr<config> &settings) {
   _settings = settings;
+}
+
+std::string parser::dump_parse_results() const {
+  bool first(true);
+  std::ostringstream oss;
+  for (auto const &cbor : _cbors) {
+    if (!first) {
+      oss << '\n';
+    }
+    first = false;
+    oss << dump_json(cbor);
+  }
+  return oss.str();
 }

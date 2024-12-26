@@ -29,7 +29,6 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/registry.h>
 #include <prometheus/summary.h>
 
-
 class metrics {
 public:
   static metrics &instance();
@@ -37,6 +36,8 @@ public:
 
   prometheus::Family<prometheus::Counter> &add_counter(std::string const &name,
                                                        std::string const &help);
+  prometheus::Family<prometheus::Gauge> &add_gauge(std::string const &name,
+                                                   std::string const &help);
 
 private:
   metrics();

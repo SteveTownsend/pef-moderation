@@ -36,5 +36,9 @@ void init_logging(std::string const &log_file,
   } catch (const spdlog::spdlog_ex &) {
   }
   logger->set_level(log_level); // Set mod's log level
-  spdlog::flush_every(std::chrono::seconds(15));
+#if _DEBUG || defined(_FULL_LOGGING)
+  logger->flush_on(spdlog::level::level_enum::trace);
+#else
+  spdlog::flush_every(std::chrono::seconds(3));
+#endif
 }

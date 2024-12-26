@@ -50,10 +50,9 @@ inline std::string to_lower(std::string const &input) {
 // convert UTF-8 input to canonical form where case differences are erased
 std::wstring to_canonical(std::string_view const input);
 
-inline std::string dump_json(nlohmann::json &full_json) {
-  std::ostringstream ostr;
-  ostr << std::setw(4) << full_json << std::endl;
-  return ostr.str();
+inline std::string dump_json(nlohmann::json const &full_json,
+                             bool indent = false) {
+  return full_json.dump(indent ? 2 : -1);
 }
 
 // convert wstring to UTF-8 string

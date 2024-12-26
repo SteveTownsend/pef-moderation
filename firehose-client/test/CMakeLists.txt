@@ -4,7 +4,6 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/source/helpers.cpp
   ${PROJECT_SOURCE_DIR}/source/log_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/source/matcher.cpp
-  ${PROJECT_SOURCE_DIR}/source/matcher.cpp
   ${PROJECT_SOURCE_DIR}/source/parser.cpp
   ./source/matcher_test.cpp
   ./source/parser_test.cpp
@@ -14,7 +13,7 @@ target_compile_definitions(firehose_client_tests PUBLIC DISABLE_LOGGING)
 target_include_directories(firehose_client_tests PUBLIC ${MAIN_BINARY_DIR} ${PROJECT_SOURCE_DIR}/include ./include)
 target_link_libraries(
   firehose_client_tests
-  nlohmann_json_schema_validator
+  nlohmann_json::nlohmann_json
   GTest::gtest_main
   GTest::gmock_main
   spdlog
