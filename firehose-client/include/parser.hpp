@@ -22,7 +22,9 @@ http://www.fsf.org/licensing/licenses
 
 #include "config.hpp"
 #include "helpers.hpp"
+#include "log_wrapper.hpp"
 #include "nlohmann/json.hpp"
+#include <algorithm>
 #include <boost/beast/core.hpp>
 #include <string_view>
 #include <tuple>
@@ -42,14 +44,314 @@ public:
   candidate_list
   get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data);
   candidate_list get_candidates_from_json(nlohmann::json &full_json) const;
+  candidate_list get_candidates_from_record(nlohmann::json const &record) const;
+
+  template <typename IteratorType>
+  bool json_from_cbor(IteratorType first, IteratorType last) {
+    bool parsed(false);
+    try {
+      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
+                         nlohmann::json & /*parsed*/)>
+          callback =
+              std::bind(&parser::cbor_callback, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+      parsed = nlohmann::json::from_cbor_sequence(
+          first, last, callback, true,
+          nlohmann::json::cbor_tag_handler_t::ignore);
+
+    } catch (std::exception const &exc) {
+      REL_ERROR("from_cbor_sequence threw: {}", exc.what());
+    }
+    if (!parsed) {
+      std::ostringstream oss;
+      oss << std::hex;
+      auto os_iter = std::ostream_iterator<int>(oss);
+      std::ranges::copy(first, last, os_iter);
+
+      REL_ERROR("from_cbor_sequence parse failed: {}", oss.str());
+    }
+    return parsed;
+  }
+
+  template <typename BasicJsonType, typename InputAdapterType,
+            typename SAX = nlohmann::detail::json_sax_dom_parser<
+                BasicJsonType, InputAdapterType>>
+  class car_reader
+      : public nlohmann::detail::binary_reader<BasicJsonType, InputAdapterType,
+                                               SAX> {
+  public:
+    using nlohmann::detail::binary_reader<BasicJsonType, InputAdapterType,
+                                          SAX>::binary_reader;
+    using char_int_type = typename nlohmann::detail::char_traits<
+        typename InputAdapterType::char_type>::int_type;
+
+    template <typename IteratorType>
+    bool
+    parse_car(IteratorType first, IteratorType last,
+              nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
+              const bool allow_exceptions = true, const bool strict = true,
+              const nlohmann::detail::cbor_tag_handler_t tag_handler =
+                  nlohmann::detail::cbor_tag_handler_t::error) {
+      nlohmann::basic_json result;
+      _tag_handler = tag_handler;
+      _callback = cb;
+      auto ia =
+          nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      nlohmann::detail::json_sax_dom_callback_parser<BasicJsonType,
+                                                     decltype(ia)>
+          sax(result, cb, allow_exceptions);
+      return sax_parse_car(&sax, strict);
+    }
+
+    template <typename IteratorType>
+    bool parse_cid_sequence(
+        IteratorType first, IteratorType last,
+        nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
+        const bool allow_exceptions = true, const bool strict = true,
+        const nlohmann::detail::cbor_tag_handler_t tag_handler =
+            nlohmann::detail::cbor_tag_handler_t::error) {
+      nlohmann::basic_json result;
+      _tag_handler = tag_handler;
+      _callback = cb;
+      auto ia =
+          nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      nlohmann::detail::json_sax_dom_callback_parser<BasicJsonType,
+                                                     decltype(ia)>
+          sax(result, cb, allow_exceptions);
+      return sax_parse_cid_sequence(&sax, strict);
+    }
+
+  protected:
+    uint64_t read_u64_leb128(const bool get_char = true) {
+      unsigned char uchar(0);
+      uint32_t shift(0);
+      uint64_t result(0);
+      bool first(true);
+      while (true) {
+        uchar = (first && !get_char) ? this->current : this->get();
+        first = false;
+        if (!(uchar & 0x80)) {
+          result |= (uchar << shift);
+          return result;
+        } else {
+          result |= ((uchar & 0x7F) << shift);
+        }
+      }
+    }
+
+    // Decode CAR header
+    bool parse_car_header() {
+      // header length
+      uint64_t header_length(read_u64_leb128());
+      // decode DAG-CBOR
+      nlohmann::basic_json result;
+      SAX this_pass_sax(result, _callback, _allow_exceptions);
+      this->sax = &this_pass_sax;
+      if (this->parse_cbor_internal(true, _tag_handler)) {
+        // check callback for top-level object parse completion
+        return _callback(0, nlohmann::detail::parse_event_t::result, result);
+      }
+      return false;
+    }
+
+    /*!
+    @param[in] sax_    a SAX event processor
+    @param[in] strict  whether to expect the input to be consumed completed
+    @param[in] tag_handler  how to treat CBOR tags
+    @return whether parsing was successful
+
+    Logic per https://ipld.io/specs/transport/car/carv1/
+    */
+    bool sax_parse_cid_sequence(SAX *sax_, const bool strict = true) {
+      bool result(true);
+      while (result) {
+        // decode the rest of the blocks.  Only supporting DG-CBOR data at this
+        // time
+        // check for empty stream, or end of well-formed object at EOF
+        char_int_type next_char(this->get());
+        if (next_char == nlohmann::detail::char_traits<
+                             typename InputAdapterType::char_type>::eof())
+          return true;
+        result = parse_car_cid(false);
+      }
+      return result;
+    }
+
+    // decode CID
+    bool parse_car_cid(const bool get_char = true) {
+      uint64_t version(read_u64_leb128(get_char));
+      // TODO account for two unexplained bytes
+      version = read_u64_leb128(true);
+      version = read_u64_leb128(true);
+      uint64_t codec(read_u64_leb128());
+      uint64_t digest_length(0);
+      if (version == 0x12 && codec == 0x20) {
+        // handle v0 CID - digest is always 32 bytes
+        digest_length = 32;
+        version = 0;
+      } else {
+        // read Multihash
+        digest_length = read_u64_leb128();
+      }
+      std::vector<unsigned char> digest(digest_length);
+      for (auto next = digest.begin(); next != digest.end(); ++next) {
+        *next = this->get();
+      }
+      // Caller needs to process according to context
+      nlohmann::json result({{"digest", nlohmann::json::binary_t(digest)},
+                             {"version", version},
+                             {"codec", codec}});
+      return _callback(0, nlohmann::detail::parse_event_t::result, result);
+      // unsupported at this time
+      return false;
+    }
+
+    bool parse_car_block(const bool get_char) {
+      uint64_t block_length(read_u64_leb128(get_char));
+      if (!parse_car_cid())
+        return false;
+      // decode DAG-CBOR block
+      nlohmann::basic_json result;
+      SAX this_pass_sax(result, _callback, _allow_exceptions);
+      this->sax = &this_pass_sax;
+      if (this->parse_cbor_internal(true, _tag_handler)) {
+        // check callback for top-level object parse completion
+        return _callback(0, nlohmann::detail::parse_event_t::result, result);
+      }
+      return false;
+    }
+
+    /*!
+    @param[in] sax_    a SAX event processor
+    @param[in] strict  whether to expect the input to be consumed completed
+    @param[in] tag_handler  how to treat CBOR tags
+    @return whether parsing was successful
+
+    Logic per https://ipld.io/specs/transport/car/carv1/
+    */
+    bool sax_parse_car(SAX *sax_, const bool strict = true) {
+      bool result(false);
+      this->sax = sax_;
+      result = parse_car_header();
+      while (true) {
+        // decode the rest of the blocks.  Only supporting DAG-CBOR data at this
+        // time
+        // check for empty stream, or end of well-formed object at EOF
+        char_int_type next_char(this->get());
+        if (next_char == nlohmann::detail::char_traits<
+                             typename InputAdapterType::char_type>::eof())
+          return true;
+        result = parse_car_block(false);
+      }
+
+      // strict mode: next byte must be EOF
+      if (result && strict) {
+        this->get();
+
+        if (this->current != nlohmann::detail::char_traits<
+                                 typename InputAdapterType::char_type>::eof()) {
+          return this->sax->parse_error(
+              this->chars_read, this->get_token_string(),
+              nlohmann::detail::parse_error::create(
+                  110, this->chars_read,
+                  this->exception_message(
+                      this->input_format,
+                      nlohmann::detail::concat(
+                          "expected end of input; last byte: 0x",
+                          this->get_token_string()),
+                      "value"),
+                  nullptr));
+        }
+      }
+
+      return result;
+    }
+
+    nlohmann::detail::cbor_tag_handler_t _tag_handler;
+    // callback function
+    nlohmann::detail::parser_callback_t<BasicJsonType> _callback = nullptr;
+    bool _allow_exceptions;
+  };
+
+  template <typename IteratorType>
+  bool json_from_car(IteratorType first, IteratorType last) {
+    bool parsed(false);
+    try {
+      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
+                         nlohmann::json & /*parsed*/)>
+          callback =
+              std::bind(&parser::cbor_callback, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+      auto ia =
+          ::nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      return car_reader<typename ::nlohmann::json, decltype(ia),
+                        ::nlohmann::detail::json_sax_dom_callback_parser<
+                            typename ::nlohmann::json, decltype(ia)>>(
+                 std::move(ia), nlohmann::detail::input_format_t::cbor)
+          .parse_car(first, last, callback, true, true,
+                     nlohmann::detail::cbor_tag_handler_t::ignore);
+    } catch (std::exception const &exc) {
+      REL_ERROR("CAR parse threw: {}", exc.what());
+    }
+    if (!parsed) {
+      std::ostringstream oss;
+      oss << std::hex;
+      auto os_iter = std::ostream_iterator<int>(oss);
+      std::ranges::copy(first, last, os_iter);
+
+      REL_ERROR("CAR parse failed: {}", oss.str());
+    } else {
+      DBG_INFO("CAR parse success");
+    }
+    return parsed;
+  }
+
+  template <typename IteratorType>
+  bool json_from_cids(IteratorType first, IteratorType last) {
+    bool parsed(false);
+    try {
+      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
+                         nlohmann::json & /*parsed*/)>
+          callback =
+              std::bind(&parser::cbor_callback, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+      auto ia =
+          ::nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      return car_reader<typename ::nlohmann::json, decltype(ia),
+                        ::nlohmann::detail::json_sax_dom_callback_parser<
+                            typename ::nlohmann::json, decltype(ia)>>(
+                 std::move(ia), nlohmann::detail::input_format_t::cbor)
+          .parse_cid_sequence(first, last, callback, true, true,
+                              nlohmann::detail::cbor_tag_handler_t::ignore);
+    } catch (std::exception const &exc) {
+      REL_ERROR("CAR parse threw: {}", exc.what());
+    }
+    if (!parsed) {
+      std::ostringstream oss;
+      oss << std::hex;
+      auto os_iter = std::ostream_iterator<int>(oss);
+      std::ranges::copy(first, last, os_iter);
+
+      REL_ERROR("CAR parse failed: {}", oss.str());
+    } else {
+      DBG_INFO("CAR parse success");
+    }
+    return parsed;
+  }
 
   static void set_config(std::shared_ptr<config> &settings);
+  const std::vector<nlohmann::json> &cbors() const { return _cbors; }
+  const std::vector<nlohmann::json> &content_cbors() const {
+    return _content_cbors;
+  }
+  std::string dump_parse_results() const;
 
 private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
                      nlohmann::json &parsed);
 
   std::vector<nlohmann::json> _cbors;
+  std::vector<nlohmann::json> _content_cbors;
   static std::shared_ptr<config> _settings;
 };
 #endif

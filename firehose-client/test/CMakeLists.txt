@@ -4,7 +4,6 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/source/helpers.cpp
   ${PROJECT_SOURCE_DIR}/source/log_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/source/matcher.cpp
-  ${PROJECT_SOURCE_DIR}/source/matcher.cpp
   ${PROJECT_SOURCE_DIR}/source/parser.cpp
   ./source/matcher_test.cpp
   ./source/parser_test.cpp

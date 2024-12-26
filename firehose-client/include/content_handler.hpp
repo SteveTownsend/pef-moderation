@@ -30,13 +30,14 @@ namespace beast = boost::beast; // from <boost/beast.hpp>
 
 template <typename PAYLOAD> class content_handler {
 public:
-  content_handler() : _is_ready(false) {}
+  content_handler() : _is_ready(false), _matcher(new matcher) {}
   ~content_handler() = default;
 
   void set_filter(std::string const &filter_file) {
     _filter_file = filter_file;
-    _matcher.set_filter(_filter_file);
+    _matcher->set_filter(_filter_file);
     _is_ready = true;
+    _post_processor.set_matcher(_matcher);
   }
 
   std::string get_filter() const { return _filter_file; }
@@ -44,25 +45,8 @@ public:
   void handle(beast::flat_buffer const &beast_data) {
     if (!_is_ready)
       return;
-    auto matches(_matcher.find_all_matches(beast_data));
-    // confirm any matched rules with contingent string matches
-    for (auto next_match = matches.begin(); next_match != matches.end();) {
-      for (auto rule_key = next_match->_matches.begin();
-           rule_key != next_match->_matches.end();) {
-        matcher::rule this_rule = _matcher.find_rule(rule_key->get_keyword());
-        if (!this_rule.matches_any_contingent(next_match->_candidate._value)) {
-          rule_key = next_match->_matches.erase(rule_key);
-        } else {
-          ++rule_key;
-        }
-      }
-      if (next_match->_matches.empty()) {
-        next_match = matches.erase(next_match);
-      } else {
-        ++next_match;
-      }
-    }
-    // No match, or all eliminated
+    auto matches(_matcher->find_all_matches(beast_data));
+    // No match, or all eliminated by contingent match processing
     if (matches.empty()) {
       return;
     }
@@ -74,7 +58,7 @@ public:
 private:
   bool _is_ready;
   std::string _filter_file;
-  matcher _matcher;
+  std::shared_ptr<matcher> _matcher;
   post_processor<PAYLOAD> _post_processor;
 };
 

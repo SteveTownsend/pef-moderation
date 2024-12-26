@@ -4,6 +4,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ios>
+
 #if 0
 // Detection logic for switching
 TEST(ParseTest, DetectPostInJSON) {
@@ -82,3 +83,14 @@ TEST(ParseTest, DetectUkrainian) {
   }
 }
 #endif
+TEST(ParseTest, JSONFromCAR) {
+  const auto commit = load_json_from_file("raw_firehose_commit.json");
+  ASSERT_TRUE(commit.contains("blocks"));
+  ASSERT_TRUE(commit["blocks"].is_object());
+  ASSERT_TRUE(commit["blocks"].contains("bytes"));
+  ASSERT_TRUE(commit["blocks"]["bytes"].is_array());
+
+  auto blocks(
+      commit["blocks"]["bytes"].template get<std::vector<unsigned char>>());
+  ASSERT_TRUE(parser().json_from_car(blocks.cbegin(), blocks.cend()));
+}

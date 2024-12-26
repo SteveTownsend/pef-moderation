@@ -4,7 +4,6 @@ project(firehose_client VERSION 2.0.0 LANGUAGES C CXX)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(FIREHOSE_CLIENT_TEST OFF)
 
 # #######################################################################################################################
 # # Configuration for all targets
@@ -16,14 +15,20 @@ if(WIN32)
                 NOMINMAX
                 _AMD64_
                 WIN32_LEAN_AND_MEAN)
-        if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-                add_compile_definitions(
-                        _FULL_LOGGING
-                        NDEBUG
-                )
-        endif()
-elseif(UNIX)
-	# add_compile_definitions(std=gnu++23)
+endif()
+if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+  add_compile_definitions(
+          _FULL_LOGGING
+          NDEBUG
+  )
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
+  add_compile_definitions(
+          NDEBUG
+  )
+elseif(${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
+  add_compile_definitions(
+          _DEBUG
+  )
 endif()
 
 include(CMakePrintHelpers)
@@ -32,16 +37,14 @@ configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}
 SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 include(FetchContent)
-if (FIREHOSE_CLIENT_TEST)
-  FetchContent_Declare(
-    googletest
-    GIT_TAG v1.15.2
-    GIT_REPOSITORY https://github.com/google/googletest
-  )
-  # For Windows: Prevent overriding the parent project's compiler/linker settings
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(googletest)
-endif()
+FetchContent_Declare(
+  googletest
+  GIT_TAG v1.15.2
+  GIT_REPOSITORY https://github.com/google/googletest
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -108,7 +111,7 @@ ENDIF()
 FetchContent_Declare(
   json
   GIT_REPOSITORY https://github.com/stevetownsend/json
-  GIT_TAG 9409369e43842b699d4b52ee8f03e82e53c0c245)
+  GIT_TAG 13b6b8878d161ee1efe56237c62afa45abb54772)
 FetchContent_MakeAvailable(json)
 
 set(spdlog_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
@@ -158,9 +161,7 @@ if (UNIX)
   target_link_libraries(firehose_client stdc++)
 endif()
 
-if (FIREHOSE_CLIENT_TEST)
-  include(CTest)
-  enable_testing()
-  add_subdirectory(test)
-ENDIF()
+include(CTest)
+enable_testing()
+add_subdirectory(test)
 

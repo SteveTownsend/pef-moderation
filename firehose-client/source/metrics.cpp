@@ -41,3 +41,8 @@ prometheus::Family<prometheus::Counter> &
 metrics::add_counter(std::string const &name, std::string const &help) {
   return prometheus::BuildCounter().Name(name).Help(help).Register(*_registry);
 }
+
+prometheus::Family<prometheus::Gauge> &
+metrics::add_gauge(std::string const &name, std::string const &help) {
+  return prometheus::BuildGauge().Name(name).Help(help).Register(*_registry);
+}
