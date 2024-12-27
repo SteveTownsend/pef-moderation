@@ -46,10 +46,9 @@ RUN rm -rf /usr/src && \
   sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p /firehose-client/logs
-ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/live_config.yml"]
+ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/full_config.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
-# CMD ["./live_config.yml"]
 
 LABEL org.opencontainers.image.source=https://github.com/SteveTownsend/nafo-forum-moderation
 LABEL org.opencontainers.image.description="NAFO Moderation Firehose Client"
