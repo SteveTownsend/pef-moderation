@@ -340,7 +340,9 @@ public:
   }
 
   static void set_config(std::shared_ptr<config> &settings);
-  const std::vector<nlohmann::json> &cbors() const { return _cbors; }
+  const std::vector<nlohmann::json> &other_cbors() const {
+    return _other_cbors;
+  }
   const std::vector<nlohmann::json> &content_cbors() const {
     return _content_cbors;
   }
@@ -350,7 +352,7 @@ private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
                      nlohmann::json &parsed);
 
-  std::vector<nlohmann::json> _cbors;
+  std::vector<nlohmann::json> _other_cbors;
   std::vector<nlohmann::json> _content_cbors;
   static std::shared_ptr<config> _settings;
 };

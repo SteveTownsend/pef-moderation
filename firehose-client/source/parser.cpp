@@ -56,12 +56,9 @@ parser::get_candidates_from_record(nlohmann::json const &record) const {
   candidate_list results;
   if (record_fields != json::TargetFieldNames.cend()) {
     for (auto &field_name : record_fields->second) {
-      try {
+      if (record.contains(field_name)) {
         results.emplace_back(record_type, field_name,
-                             record.at(field_name).template get<std::string>());
-
-      } catch (const nlohmann::json::out_of_range &) {
-        // not an error
+                             record[field_name].template get<std::string>());
       }
     }
   }
@@ -120,10 +117,11 @@ inline bool parser::cbor_callback(int depth,
         std::string block_type(parsed["$type"].template get<std::string>());
         if (json::TargetFieldNames.contains(block_type)) {
           // block may contains string-matching content
-          _content_cbors.push_back(parsed);
+          _content_cbors.push_back(std::move(parsed));
         }
+      } else {
+        _other_cbors.push_back(std::move(parsed));
       }
-      _cbors.push_back(parsed);
     }
   } else if (event == nlohmann::json::parse_event_t::key) {
     DBG_TRACE("JSON Key     {}", parsed.dump());
@@ -149,7 +147,7 @@ void parser::set_config(std::shared_ptr<config> &settings) {
 std::string parser::dump_parse_results() const {
   bool first(true);
   std::ostringstream oss;
-  for (auto const &cbor : _cbors) {
+  for (auto const &cbor : _other_cbors) {
     if (!first) {
       oss << '\n';
     }

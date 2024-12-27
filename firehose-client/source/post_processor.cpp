@@ -49,17 +49,17 @@ firehose_payload::firehose_payload() {}
 firehose_payload::firehose_payload(parser &my_parser)
     : _parser(std::move(my_parser)) {}
 void firehose_payload::handle(post_processor<firehose_payload> &processor) {
-  auto &cbors(_parser.cbors());
-  if (cbors.size() != 2) {
+  auto const &other_cbors(_parser.other_cbors());
+  if (other_cbors.size() != 2) {
     std::ostringstream oss;
-    for (auto &cbor : _parser.cbors()) {
+    for (auto const &cbor : _parser.other_cbors()) {
       oss << cbor.dump();
     }
     REL_ERROR("Malformed firehose message {}", oss.str());
     return;
   }
-  auto header(cbors.front());
-  auto message(cbors.back());
+  auto const &header(other_cbors.front());
+  auto const &message(other_cbors.back());
   REL_DEBUG("Firehose header:  {}", dump_json(header));
   REL_DEBUG("         message: {}", dump_json(message));
   int op(header["op"].template get<int>());
@@ -81,11 +81,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         bool parsed(block_parser.json_from_car(blocks.cbegin(), blocks.cend()));
         if (parsed) {
           DBG_DEBUG("Commit blocks: {}", block_parser.dump_parse_results());
-          auto const content_cbors(block_parser.content_cbors());
+          auto const &content_cbors(block_parser.content_cbors());
           for (auto const &cbor : content_cbors) {
             auto candidates(block_parser.get_candidates_from_record(cbor));
-            _candidates.insert(_candidates.end(), candidates.cbegin(),
-                               candidates.cend());
+            if (!candidates.empty()) {
+              _candidates.insert(_candidates.end(), candidates.cbegin(),
+                                 candidates.cend());
+            }
           }
         } else {
           // TODO error handling
@@ -145,12 +147,12 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           processor.get_matcher().all_matches_for_candidates(_candidates));
       if (!matches.empty()) {
         // Publish metrics for matches
-        for (auto &result : matches) {
+        for (auto const &result : matches) {
           // this is the substring of the full JSON that matched one or more
           // desired strings
-          REL_INFO("Candidate {}|{}|{}|{}\nmatches {}\non message:{}", repo,
+          REL_INFO("{} matched candidate {}|{}|{}|{}", result._matches, repo,
                    result._candidate._type, result._candidate._field,
-                   result._candidate._value, result._matches, message.dump());
+                   result._candidate._value);
           for (auto const &match : result._matches) {
             prometheus::Labels labels(
                 {{"type", result._candidate._type},
@@ -159,6 +161,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             processor.metrics().Get(labels).Increment();
           }
         }
+        // only log message once - might be interleaved with other thread output
+        REL_INFO("in message: {}", message.dump());
       }
     }
   }
