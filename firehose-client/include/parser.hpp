@@ -346,7 +346,8 @@ public:
   const std::vector<nlohmann::json> &content_cbors() const {
     return _content_cbors;
   }
-  std::string dump_parse_results() const;
+  std::string dump_parse_content() const;
+  std::string dump_parse_other() const;
 
 private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,

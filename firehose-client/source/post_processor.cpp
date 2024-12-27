@@ -72,15 +72,17 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         .Get({{"op", "message"}, {"type", op_type}})
         .Increment();
     std::string repo;
+    parser block_parser;
     if (op_type == firehose::OpTypeCommit) {
       repo = message["repo"].template get<std::string>();
       if (message.contains("blocks")) {
         // CAR file - nested in-situ parse to extract as JSON
         auto blocks(message["blocks"].template get<nlohmann::json::binary_t>());
-        parser block_parser;
         bool parsed(block_parser.json_from_car(blocks.cbegin(), blocks.cend()));
         if (parsed) {
-          DBG_DEBUG("Commit blocks: {}", block_parser.dump_parse_results());
+          DBG_DEBUG("Commit content blocks: {}",
+                    block_parser.dump_parse_content());
+          DBG_DEBUG("Commit other blocks: {}", block_parser.dump_parse_other());
           auto const &content_cbors(block_parser.content_cbors());
           for (auto const &cbor : content_cbors) {
             auto candidates(block_parser.get_candidates_from_record(cbor));
@@ -93,10 +95,10 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           // TODO error handling
         }
       }
-      for (auto const &op : message["ops"]) {
+      for (auto const &oper : message["ops"]) {
         size_t count = 0;
-        auto path(op["path"].template get<std::string>());
-        auto kind(op["action"].template get<std::string>());
+        auto path(oper["path"].template get<std::string>());
+        auto kind(oper["action"].template get<std::string>());
         for (const auto token : std::views::split(path, '/')) {
           // with string_view's C++23 range constructor:
           std::string field(token.cbegin(), token.cend());
@@ -162,7 +164,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           }
         }
         // only log message once - might be interleaved with other thread output
-        REL_INFO("in message: {}", message.dump());
+        if (op_type == firehose::OpTypeCommit) {
+          // curate a smaller version of the full message for correlation
+          REL_INFO("in message: {} {} {}", repo, dump_json(message["ops"]),
+                   block_parser.dump_parse_content());
+        } else {
+          REL_INFO("in message: {} {}", repo, dump_json(message));
+        }
       }
     }
   }
