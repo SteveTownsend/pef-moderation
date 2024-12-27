@@ -144,7 +144,20 @@ void parser::set_config(std::shared_ptr<config> &settings) {
   _settings = settings;
 }
 
-std::string parser::dump_parse_results() const {
+std::string parser::dump_parse_content() const {
+  bool first(true);
+  std::ostringstream oss;
+  for (auto const &cbor : _content_cbors) {
+    if (!first) {
+      oss << '\n';
+    }
+    first = false;
+    oss << dump_json(cbor);
+  }
+  return oss.str();
+}
+
+std::string parser::dump_parse_other() const {
   bool first(true);
   std::ostringstream oss;
   for (auto const &cbor : _other_cbors) {
