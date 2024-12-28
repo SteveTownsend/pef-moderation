@@ -16,7 +16,7 @@ scrape_configs:
           firstline: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}
           max_wait_time: 3s
       - match:
-          selector: '".* matched candidate .*"'
+          selector: '{job="firehose-client"} |= " matched candidate "'
           stages:
             - regex:
                 expression: "^(?P<date_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[.]\\d{3})\\s+(?P<log_level>\\S+)\\s+(?P<thread>\\S+) (?P<matched>.*) matched candidate (?P<target>(?s:.*))$"
@@ -24,7 +24,7 @@ scrape_configs:
                 source: date_time
                 format: "2006-01-02 15:16:17.018"
       - match:
-          selector: '".* in message: .*"'
+          selector: '{job="firehose-client"} |= " in message: "'
           stages:
             - regex:
                 expression: "^(?P<date_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[.]\\d{3})\\s+(?P<log_level>\\S+)\\s+(?P<thread>\\S+) in message: (?P<message>.*)$"
