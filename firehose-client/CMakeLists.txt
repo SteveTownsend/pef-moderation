@@ -66,7 +66,7 @@ include_directories(${aho_corasick_SOURCE_DIR}/src)
 # https://github.com/jupp0r/prometheus-cpp/issues/621
 FetchContent_Declare(
   prometheus-cpp
-  GIT_HASH 1d869e74183a6dd17205a5b2e1fc393bf6797d39
+  GIT_HASH adb553e865c917fa1c00323209b2de2dfcb94270
   GIT_REPOSITORY https://github.com/SteveTownsend/prometheus-cpp
 )
 SET(ENABLE_PUSH OFF)
