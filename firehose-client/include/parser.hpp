@@ -346,6 +346,9 @@ public:
   const std::vector<nlohmann::json> &content_cbors() const {
     return _content_cbors;
   }
+  const std::vector<nlohmann::json> &matchable_cbors() const {
+    return _matchable_cbors;
+  }
   std::string dump_parse_content() const;
   std::string dump_parse_other() const;
 
@@ -355,6 +358,7 @@ private:
 
   std::vector<nlohmann::json> _other_cbors;
   std::vector<nlohmann::json> _content_cbors;
+  std::vector<nlohmann::json> _matchable_cbors;
   static std::shared_ptr<config> _settings;
 };
 #endif

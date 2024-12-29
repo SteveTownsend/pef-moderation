@@ -29,8 +29,38 @@ http://www.fsf.org/licensing/licenses
 #include <string>
 #include <vector>
 
+namespace bsky {
+constexpr std::string_view AppBskyFeedPost = "app.bsky.feed.post";
+
+constexpr std::string_view AppBskyActorProfile = "app.bsky.actor.profile";
+
+constexpr std::string_view AppBskyEmbedExternal = "app.bsky.embed.external";
+constexpr std::string_view AppBskyEmbedImages = "app.bsky.embed.images";
+constexpr std::string_view AppBskyEmbedRecord = "app.bsky.embed.record";
+constexpr std::string_view AppBskyEmbedRecordWithMedia =
+    "app.bsky.embed.recordWithMedia";
+constexpr std::string_view AppBskyEmbedVideo = "app.bsky.embed.video";
+
+constexpr std::string_view AppBskyRichtextFacetLink =
+    "app.bsky.richtext.facet#link";
+constexpr std::string_view AppBskyRichtextFacetMention =
+    "app.bsky.richtext.facet#mention";
+constexpr std::string_view AppBskyRichtextFacetTag =
+    "app.bsky.richtext.facet#tag";
+
+constexpr size_t PushyTagCount = 4;
+constexpr size_t PushyMentionCount = 4;
+constexpr size_t PushyTotalCount = 6;
+} // namespace bsky
+
+namespace atproto {
+constexpr std::string_view SyncSubscribeReposOpCreate = "create";
+constexpr std::string_view SyncSubscribeReposOpDelete = "delete";
+constexpr std::string_view SyncSubscribeReposOpUpdate = "update";
+} // namespace atproto
+
 namespace json {
-extern std::map<std::string, std::vector<nlohmann::json::json_pointer>>
+extern std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
     TargetFieldNames;
 }
 

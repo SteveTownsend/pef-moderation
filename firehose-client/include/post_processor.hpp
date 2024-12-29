@@ -27,6 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include "queue/readerwritercircularbuffer.h"
 #include <prometheus/counter.h>
 #include <prometheus/gauge.h>
+#include <prometheus/histogram.h>
 #include <thread>
 
 constexpr size_t QueueLimit = 10000;
@@ -101,8 +102,24 @@ public:
             "Number of matches within each field of message")),
         _firehose_stats(metrics::instance().add_counter(
             "firehose", "Statistics about received firehose data")),
+        _firehose_facets(metrics::instance().add_histogram(
+            "firehose_facets", "Statistics about received firehose facets")),
         _operational_stats(metrics::instance().add_gauge(
             "operational_stats", "Statistics about client internals")) {
+    // Histogram metrics have to be added by hand, on-deman instantiation is not
+    // possible
+    prometheus::Histogram::BucketBoundaries boundaries = {
+        0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,
+        9.0,  10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0,
+        18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0};
+    _firehose_facets.Add(
+        {{"facet", std::string(bsky::AppBskyRichtextFacetLink)}}, boundaries);
+    _firehose_facets.Add(
+        {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}},
+        boundaries);
+    _firehose_facets.Add(
+        {{"facet", std::string(bsky::AppBskyRichtextFacetTag)}}, boundaries);
+    _firehose_facets.Add({{"facet", "total"}}, boundaries);
     _thread = std::thread([&] {
       static size_t matches(0);
       while (true) {
@@ -129,6 +146,9 @@ public:
   inline prometheus::Family<prometheus::Counter> &firehose_stats() {
     return _firehose_stats;
   }
+  inline prometheus::Family<prometheus::Histogram> &firehose_facets() {
+    return _firehose_facets;
+  }
   inline prometheus::Family<prometheus::Gauge> &operational_stats() {
     return _operational_stats;
   }
@@ -147,6 +167,7 @@ private:
   prometheus::Family<prometheus::Counter> &_matched_elements;
   prometheus::Family<prometheus::Counter> &_firehose_stats;
   prometheus::Family<prometheus::Gauge> &_operational_stats;
+  prometheus::Family<prometheus::Histogram> &_firehose_facets;
   std::shared_ptr<matcher> _matcher;
 };
 
@@ -168,6 +189,9 @@ public:
   void handle(post_processor<firehose_payload> &processor);
 
 private:
+  void handle_content(post_processor<firehose_payload> &processor,
+                      nlohmann::json const &content);
+
   parser _parser;
   candidate_list _candidates;
 };

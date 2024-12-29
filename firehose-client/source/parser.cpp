@@ -62,6 +62,7 @@ parser::get_candidates_from_record(nlohmann::json const &record) const {
       }
     }
   }
+
   return results;
 }
 
@@ -91,8 +92,7 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     if (commit["operation"] == "delete")
       return {};
 
-    const nlohmann::json record(commit["record"]);
-    return get_candidates_from_record(record);
+    return get_candidates_from_record(commit["record"]);
   } catch (std::exception const &exc) {
     REL_ERROR("Error {} processing JSON\n{}", exc.what(), dump_json(full_json));
   }
@@ -112,11 +112,14 @@ inline bool parser::cbor_callback(int depth,
       DBG_TRACE("JSON Result  {}", parsed.dump());
       if (parsed.contains("$type")) {
         // if this is a potential match source store it for scanning
-        // there ,ay be more than one per mmessage if user posted multiple
-        // replies to a post, or a new thread
+        // There may be more than one per message if user posted multiple
+        // replies to a post, or a new thread.
         std::string block_type(parsed["$type"].template get<std::string>());
         if (json::TargetFieldNames.contains(block_type)) {
           // block may contains string-matching content
+          _matchable_cbors.push_back(std::move(parsed));
+        } else {
+          // Also store other typed CBORs.
           _content_cbors.push_back(std::move(parsed));
         }
       } else {
