@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.0.6 LANGUAGES C CXX)
+project(firehose_client VERSION 2.0.7 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -62,26 +62,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(aho_corasick)
 include_directories(${aho_corasick_SOURCE_DIR}/src)
 
-if (UNIX)
-  find_package(prometheus-cpp CONFIG REQUIRED)
-  if(NOT DEFINED prometheus-cpp_VERSION)
-    message(FATAL_ERROR "prometheus-cpp_VERSION is not defined")
-  endif()
-elseif(WIN32)
-  # inline the package to avoid memory model mismatch
-  # https://github.com/jupp0r/prometheus-cpp/issues/621
-  FetchContent_Declare(
-    prometheus-cpp
-    GIT_HASH cfc8ebee3e6dae78c578c88dfb60f2719c82d873
-    GIT_REPOSITORY https://github.com/SteveTownsend/prometheus-cpp
-  )
-  SET(ENABLE_PUSH OFF)
-  SET(ENABLE_COMPRESSION OFF)
-  SET(ENABLE_TESTING OFF)
-  FetchContent_MakeAvailable(prometheus-cpp)
-  include_directories(${prometheus-cpp_SOURCE_DIR})
-endif()
-cmake_print_variables(prometheus-cpp_FOUND prometheus-cpp_SOURCE_DIR)
+# inline the package to avoid memory model mismatch
+# https://github.com/jupp0r/prometheus-cpp/issues/621
+FetchContent_Declare(
+  prometheus-cpp
+  GIT_HASH 1d869e74183a6dd17205a5b2e1fc393bf6797d39
+  GIT_REPOSITORY https://github.com/SteveTownsend/prometheus-cpp
+)
+SET(ENABLE_PUSH OFF)
+SET(ENABLE_COMPRESSION OFF)
+SET(ENABLE_TESTING OFF)
+FetchContent_MakeAvailable(prometheus-cpp)
+include_directories(${prometheus-cpp_SOURCE_DIR})
 
 # For Boost.Beast (REST, Websocket)
 SET(Boost_USE_STATIC_LIBS YES)

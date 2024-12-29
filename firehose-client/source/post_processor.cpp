@@ -83,8 +83,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           DBG_DEBUG("Commit content blocks: {}",
                     block_parser.dump_parse_content());
           DBG_DEBUG("Commit other blocks: {}", block_parser.dump_parse_other());
-          auto const &content_cbors(block_parser.content_cbors());
-          for (auto const &cbor : content_cbors) {
+          auto const &matchable_cbors(block_parser.matchable_cbors());
+          for (auto const &cbor : matchable_cbors) {
             auto candidates(block_parser.get_candidates_from_record(cbor));
             if (!candidates.empty()) {
               _candidates.insert(_candidates.end(), candidates.cbegin(),
@@ -144,6 +144,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       // no-op
     }
     REL_TRACE("{} {}", header.dump(), message.dump());
+    // handle all the CBORs with content, metrics, checking
+    for (auto const &content_cbor : block_parser.content_cbors()) {
+      handle_content(processor, content_cbor);
+    }
+    for (auto const &matchable_cbor : block_parser.matchable_cbors()) {
+      handle_content(processor, matchable_cbor);
+    }
     if (!_candidates.empty()) {
       auto matches(
           processor.get_matcher().all_matches_for_candidates(_candidates));
@@ -172,6 +179,103 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           REL_INFO("in message: {} {}", repo, dump_json(message));
         }
       }
+    }
+  }
+}
+
+void firehose_payload::handle_content(
+    post_processor<firehose_payload> &processor,
+    nlohmann::json const &content) {
+  auto collection(content["$type"].template get<std::string>());
+  if (collection == bsky::AppBskyFeedPost) {
+    // Post create/update
+    // Check facets
+    // 1. look for Matryoshka post - embed video/images, multiple facet
+    // mentions/tags
+    // https://github.com/SteveTownsend/nafo-forum-moderation/issues/68
+    // 2. check URIs for toxic content
+    size_t tags(0);
+    if (content.contains("tags")) {
+      tags = content["tags"].size();
+    }
+    if (content.contains("embed") && content.contains("facets")) {
+      size_t mentions(0);
+      size_t links(0);
+      auto const &embed(content["embed"]);
+      auto const &embed_type(embed["$type"].template get<std::string>());
+      if (embed_type == bsky::AppBskyEmbedVideo && embed.contains("langs")) {
+        // count languages in video
+        auto langs(embed["langs"].template get<std::vector<std::string>>());
+        for (auto const &lang : langs) {
+          processor.firehose_stats()
+              .Get({{"embed", std::string(bsky::AppBskyEmbedVideo)},
+                    {"language", lang}})
+              .Increment();
+        }
+      }
+      // bool is_media(embed_type == bsky::AppBskyEmbedImages ||
+      //               embed_type == bsky::AppBskyEmbedVideo);
+      bool has_facets(false);
+      for (auto const &facet : content["facets"]) {
+        has_facets = true;
+        for (auto const &feature : facet["features"]) {
+          auto const &facet_type(feature["$type"].template get<std::string>());
+          // if (is_media) {
+          if (facet_type == bsky::AppBskyRichtextFacetMention) {
+            ++mentions;
+          } else if (facet_type == bsky::AppBskyRichtextFacetTag) {
+            ++tags;
+            // }
+          } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
+            _candidates.emplace_back(
+                collection, std::string(bsky::AppBskyRichtextFacetLink),
+                feature["uri"].template get<std::string>());
+            ++links;
+          }
+        }
+      }
+      if (mentions > 0) {
+        processor.firehose_facets()
+            .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetMention)}})
+            .Observe(static_cast<double>(mentions));
+      }
+      if (links > 0) {
+        processor.firehose_facets()
+            .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
+            .Observe(static_cast<double>(links));
+      }
+      if (tags > 0) {
+        processor.firehose_facets()
+            .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
+            .Observe(static_cast<double>(tags));
+      }
+      if (has_facets) {
+        processor.firehose_facets()
+            .GetAt({{"facet", "total"}})
+            .Observe(static_cast<double>(mentions + tags + links));
+      }
+      if (content.contains("langs")) {
+        auto langs(content["langs"].template get<std::vector<std::string>>());
+        for (auto const &lang : langs) {
+          processor.firehose_stats()
+              .Get({{"collection", collection}, {"language", lang}})
+              .Increment();
+        }
+      }
+      // if (mentions == 0 && tags >= bsky::PushyTagCount) {
+      //   REL_INFO("pushy_tag ({}) {}|{}", tags, repo, dump_json(record));
+      // } else if (tags == 0 && mentions >= bsky::PushyMentionCount) {
+      //   REL_INFO("pushy_mention ({}) matched candidate {}|{}", mentions,
+      //   repo,
+      //            dump_json(record));
+      // } else if (mentions + tags >= bsky::PushyTotalCount) {
+      //   // arbitrary threshold combined tags and mentions, with at least one
+      //   // mention
+      //   REL_INFO("pushy_mention_tag ({},{}) matched candidate {}|{}",
+      //   mentions,
+      //            tags, repo, dump_json(record));
+      // }
+      // record metrics for facet types by embed type
     }
   }
 }

@@ -25,25 +25,27 @@ http://www.fsf.org/licensing/licenses
 #include <unicode/ustring.h>
 
 namespace json {
-std::map<std::string, std::vector<nlohmann::json::json_pointer>> TargetFieldNames =
-    {{"app.bsky.feed.post",
-      {
-          // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/post.json
-          // and
-          // https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky/embed
-          "/text"_json_pointer, "/embed/external/description"_json_pointer,
-          "/embed/external/title"_json_pointer,
-          "/embed/external/uri"_json_pointer,
-          "/embed/images/0/alt"_json_pointer,
-          "/embed/images/1/alt"_json_pointer,
-          "/embed/images/2/alt"_json_pointer,
-          "/embed/images/3/alt"_json_pointer, "/embed/video/alt"_json_pointer,
-          // TODO handle "app.bsky.embed.video" captions blobs
-          // TODO handle "app.bsky.embed.record"
-          // TODO handle "app.bsky.embed.recordWithMedia"
-      }},
-     {"app.bsky.actor.profile",
-      {"/description"_json_pointer, "/displayName"_json_pointer}}};
+std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
+    TargetFieldNames = {
+        {bsky::AppBskyFeedPost,
+         {
+             // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/post.json
+             // and
+             // https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky/embed
+             "/text"_json_pointer, "/embed/external/description"_json_pointer,
+             "/embed/external/title"_json_pointer,
+             "/embed/external/uri"_json_pointer,
+             "/embed/images/0/alt"_json_pointer,
+             "/embed/images/1/alt"_json_pointer,
+             "/embed/images/2/alt"_json_pointer,
+             "/embed/images/3/alt"_json_pointer,
+             "/embed/video/alt"_json_pointer,
+             // TODO handle "app.bsky.embed.video" captions blobs
+             // TODO handle "app.bsky.embed.record"
+             // TODO handle "app.bsky.embed.recordWithMedia"
+         }},
+        {bsky::AppBskyActorProfile,
+         {"/description"_json_pointer, "/displayName"_json_pointer}}};
 }
 
 // convert UTF-8 input to canonical form where case differences are erased
