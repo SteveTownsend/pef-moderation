@@ -1,187 +1,207 @@
-## target,labels,report,qualifier,contingent
+## target,labels,track,qualifier,contingent
 ## "scope" e.g. "only profiles"
 ## future - complex queries to narrow the matches
 ## Soviet and other hammer-sickle genocide celebrants
-☭|abusive,violent|false|substring|
-Stalin|abusive,violent|false|word|
-Stalinist|abusive,violent|false|word|
+☭|abusive,violent|true|substring|
+Stalin|abusive,violent|true|word|
+Stalinist|abusive,violent|true|word|
 ## slurs
-troon|abusive|false|word|
-nigger|abusive|false|word|
-nogger|abusive|false|word|
-mudshark|abusive|false|substring|
+troon|abusive|true|word|
+nigger|abusive|true|word|
+nogger|abusive|true|word|
+mudshark|abusive|true|substring|
 ## Nazism
 ## very frequent
-## Hitler|abusive,violent|false|substring|
-Heil Hitler|abusive,violent|false|substring|
-Holohoax|abusive,violent|false|substring|
-Führer Friday|abusive,violent|false|substring|
-Fuehrer Friday|abusive,violent|false|substring|
-## \o|abusive,violent|false|substring|
+## Hitler|abusive,violent|true|substring|
+Heil Hitler|abusive,violent|true|substring|
+Holohoax|abusive,violent|true|substring|
+Führer Friday|abusive,violent|true|substring|
+Fuehrer Friday|abusive,violent|true|substring|
+## \o|abusive,violent|true|substring|
 ## URLs are a problem
-## o/|abusive,violent|false|substring|
+## o/|abusive,violent|true|substring|
 ## unclear if helpful
-## 1488|abusive,violent|false|substring|
+## 1488|abusive,violent|true|substring|
 ## review for legitimate Hindu usage
-卐|abusive,violent|false|substring|
+卐|abusive,violent|true|substring|
 ## coded, SS
-⚡⚡|abusive,evasion,violent|false|substring|
+⚡⚡|abusive,evasion,violent|true|word|
 ## networks
-mintcat|abusive,engagementfarmer,network,disruptive|false|substring|
-KiwiFarms|abusive,network|false|substring|
-ꗪꜞ⒲ꜞẝშ┌ෆ𝐬|abusive,network|false|substring|
-groyp|abusive,network|false|substring|
-/allstaredge.info|abusive,disinfo,engagementfarmer,network|false|substring|
-/orbitjunction.com|abusive,disinfo,engagementfarmer,network|false|substring|
-.ukcolumn.org|abusive,disinfo,engagementfarmer,network|false|substring|
-/privatevid.vercel.app|abusive,network,nsfw,engagementfarmer|false|substring|
-preetyliv.llc|abusive,network,nsfw,engagementfarmer|false|substring|
-pleniiixa.blogspot.com|abusive,network,nsfw,engagementfarmer|false|substring|
-vanillasky.click|disinfo,network|false|substring|
-infobrics.org|disinfo,network|false|substring|
-/rt.com|disinfo,network|false|substring|
-/rumble.com|disinfo,network|false|substring|
-/lemediaen442.fr|disinfo,network|false|substring|
-/thelibertydaily.com|disinfo,network|false|substring|
-actfiles.org/|disinfo,network|false|substring|
-allatra|disinfo,network|false|substring|
-creativesociety.com|disinfo,network|false|substring|
-allatra.tv|disinfo,network|false|substring|
-jeffsachs.org/|disinfo,network|false|substring|
-breitbart.com|disinfo,network|false|substring|
-moonofalabama.org|disinfo,network|false|substring|
-ukraine.today.co.uk|disinfo,disruptive|false|substring|
-breakthrough news|disinfo,disruptive|false|substring|
-mintpress news|disinfo,disruptive|false|substring|
-newsmax|disinfo,disruptive|false|substring|
-Richard Wolff|disinfo,network|false|substring|
-democracyatwork|disinfo,network|false|substring|
-thealtworld.com|disinfo,network|false|substring|
-thegatewaypundit.com|disinfo,network|false|substring|
-revolver.news|disinfo,network|false|substring|
-citizenfreepress.com|disinfo,network|false|substring|
-thealtworld.com|disinfo,network|false|substring|
-theepochtimes.|disinfo,network|false|substring|
-thefederalist.com|disinfo,network|false|substring|
-tierrapura.org|disinfo,network|false|substring|
-truthandtradition.news|disinfo,network|false|substring|
-gnews.org|disinfo,network|false|substring|
-lewrockwell.com|disinfo,network|false|substring|
-loomered.com|disinfo,network|false|substring|
-oann.com|disinfo,network|false|substring|
-patriotpost.us|disinfo,network|false|substring|
-truthfeed.com|disinfo,network|false|substring|
-texasscorecard.com|disinfo,network|false|substring|
-townhall.com|disinfo,network|false|substring|
-visiontimes.com|disinfo,network|false|substring|
-washingtontimes.com|disinfo,network|false|substring|
-westernjournal.com|disinfo,network|false|substring|
-zerohedge.com|disinfo,network|false|substring|
-thealtworld.com|disinfo,network|false|substring|
-thefederalist.com|disinfo,network|false|substring|
-animallovers2024.foundation|disinfo,network|false|substring|
-realityslaststand.com|disinfo,network|false|substring|
-thegrayzone.com|disinfo,network|false|substring|
-gbnews.com|disinfo,network|false|substring|
-Trama Internacional|disinfo,network|false|substring|
-/noticiaspia.com|disinfo,network|false|substring|
-pressecop24.com/|disinfo,network|false|substring|
-dst_podcast/|disinfo,network|false|substring|
-by FORGOTTEN HISTORY|disinfo,network|false|substring|
-dailycaller.com/|disinfo,network|false|substring|
-hotair.com/|disinfo,network|false|substring|
-americanthinker.com/|disinfo,network|false|substring|
-amgreatness.com/|disinfo,network|false|substring|
-legalinsurrection.com/|disinfo,network|false|substring|
-independentsentinel.com/|disinfo,network|false|substring|
-trump2024.film/|disinfo,network|false|substring|
-headlineusa.com/|disinfo,network|false|substring|
-pjmedia.com/|disinfo,network|false|substring|
-childrenshealthdefense.org/|disinfo,network|false|substring|
-alt-market.us/|disinfo,network|false|substring|
-/amren.com/|disinfo,network|false|substring|
-.amren.com/|disinfo,network|false|substring|
-.san.com/|disinfo,network|false|substring|
-/san.com/|disinfo,network|false|substring|
-modernity.news/|disinfo,network|false|substring|
-toddstarnes.com/|disinfo,network|false|substring|
-justthenews.com/|disinfo,network|false|substring|
-brownstone.org/|disinfo,network|false|substring|
-harbingersdaily.com/|disinfo,network|false|substring|
-libertynation.com/|disinfo,network|false|substring|
-conservativeinstitute.org/|disinfo,network|false|substring|
-gellerreport.com/|disinfo,network|false|substring|
-by QuickPolitics|disinfo,network|false|substring|
-vigilantnews.com/|disinfo,network|false|substring|
-americafirstreport.com|disinfo,network|false|substring|
-mercola.com/|disinfo,network|false|substring|
-dossier.today/|disinfo,network|false|substring|
+mintcat|abusive,engagementfarmer,network,disruptive|true|substring|
+KiwiFarms|abusive,network|true|substring|
+ꗪꜞ⒲ꜞẝშ┌ෆ𝐬|abusive,network|true|substring|
+groyp|abusive,network|true|substring|
+/allstaredge.info|abusive,disinfo,engagementfarmer,network|true|substring|
+/orbitjunction.com|abusive,disinfo,engagementfarmer,network|true|substring|
+.ukcolumn.org|abusive,disinfo,engagementfarmer,network|true|substring|
+/privatevid.vercel.app|abusive,network,nsfw,engagementfarmer|true|substring|
+preetyliv.llc|abusive,network,nsfw,engagementfarmer|true|substring|
+pleniiixa.blogspot.com|abusive,network,nsfw,engagementfarmer|true|substring|
+vanillasky.click|disinfo,network|true|substring|
+infobrics.org|disinfo,network|true|substring|
+/rt.com|disinfo,network|true|substring|
+/rumble.com|disinfo,network|true|substring|
+/lemediaen442.fr|disinfo,network|true|substring|
+/thelibertydaily.com|disinfo,network|true|substring|
+actfiles.org/|disinfo,network|true|substring|
+allatra|disinfo,network|true|substring|
+creativesociety.com|disinfo,network|true|substring|
+allatra.tv|disinfo,network|true|substring|
+jeffsachs.org/|disinfo,network|true|substring|
+breitbart.com|disinfo,network|true|substring|
+moonofalabama.org|disinfo,network|true|substring|
+ukraine.today.co.uk|disinfo,disruptive|true|substring|
+breakthrough news|disinfo,disruptive|true|substring|
+mintpress news|disinfo,disruptive|true|substring|
+newsmax|disinfo,disruptive|true|substring|
+Richard Wolff|disinfo,network|true|substring|
+democracyatwork|disinfo,network|true|substring|
+thealtworld.com|disinfo,network|true|substring|
+thegatewaypundit.com|disinfo,network|true|substring|
+revolver.news|disinfo,network|true|substring|
+citizenfreepress.com|disinfo,network|true|substring|
+thealtworld.com|disinfo,network|true|substring|
+theepochtimes.|disinfo,network|true|substring|
+thefederalist.com|disinfo,network|true|substring|
+tierrapura.org|disinfo,network|true|substring|
+truthandtradition.news|disinfo,network|true|substring|
+gnews.org|disinfo,network|true|substring|
+lewrockwell.com|disinfo,network|true|substring|
+loomered.com|disinfo,network|true|substring|
+oann.com|disinfo,network|true|substring|
+patriotpost.us|disinfo,network|true|substring|
+truthfeed.com|disinfo,network|true|substring|
+texasscorecard.com|disinfo,network|true|substring|
+townhall.com|disinfo,network|true|substring|
+visiontimes.com|disinfo,network|true|substring|
+washingtontimes.com|disinfo,network|true|substring|
+westernjournal.com|disinfo,network|true|substring|
+zerohedge.com|disinfo,network|true|substring|
+thealtworld.com|disinfo,network|true|substring|
+thefederalist.com|disinfo,network|true|substring|
+animallovers2024.foundation|disinfo,network|true|substring|
+realityslaststand.com|disinfo,network|true|substring|
+thegrayzone.com|disinfo,network|true|substring|
+gbnews.com|disinfo,network|true|substring|
+Trama Internacional|disinfo,network|true|substring|
+/noticiaspia.com|disinfo,network|true|substring|
+pressecop24.com/|disinfo,network|true|substring|
+dst_podcast/|disinfo,network|true|substring|
+by FORGOTTEN HISTORY|disinfo,network|true|substring|
+dailycaller.com/|disinfo,network|true|substring|
+hotair.com/|disinfo,network|true|substring|
+americanthinker.com/|disinfo,network|true|substring|
+amgreatness.com/|disinfo,network|true|substring|
+legalinsurrection.com/|disinfo,network|true|substring|
+independentsentinel.com/|disinfo,network|true|substring|
+trump2024.film/|disinfo,network|true|substring|
+headlineusa.com/|disinfo,network|true|substring|
+pjmedia.com/|disinfo,network|true|substring|
+childrenshealthdefense.org/|disinfo,network|true|substring|
+alt-market.us/|disinfo,network|true|substring|
+/amren.com/|disinfo,network|true|substring|
+.amren.com/|disinfo,network|true|substring|
+.san.com/|disinfo,network|true|substring|
+/san.com/|disinfo,network|true|substring|
+modernity.news/|disinfo,network|true|substring|
+toddstarnes.com/|disinfo,network|true|substring|
+justthenews.com/|disinfo,network|true|substring|
+brownstone.org/|disinfo,network|true|substring|
+harbingersdaily.com/|disinfo,network|true|substring|
+libertynation.com/|disinfo,network|true|substring|
+conservativeinstitute.org/|disinfo,network|true|substring|
+gellerreport.com/|disinfo,network|true|substring|
+by QuickPolitics|disinfo,network|true|substring|
+vigilantnews.com/|disinfo,network|true|substring|
+americafirstreport.com|disinfo,network|true|substring|
+mercola.com/|disinfo,network|true|substring|
+dossier.today/|disinfo,network|true|substring|
+thecradle.co/|disinfo,network|true|substring|
+bidenlaptopmedia.com/|disinfo,network|true|substring|
+reformparty.uk/|abusive,disinfo,disruptive,network|true|substring|
+steadfastandloyal.com/|abusive,disinfo,disruptive,network|true|substring|
+jihadwatch.org/|abusive,disinfo,disruptive,network|true|substring|
+realclearpolitics.com/|abusive,disinfo,disruptive,network|true|substring|
+politibrawl.substack.com|abusive,disinfo,disruptive,network|true|substring|
+notthebee.com/|abusive,disinfo,disruptive,network|true|substring|
+freebeacon.com/|abusive,disinfo,disruptive,network|true|substring|
+.cf.org|abusive,disinfo,disruptive,network|true|substring|
+tenthamendmentcenter.com/|abusive,disinfo,disruptive,network|true|substring|
+babylonbee.com/|abusive,disinfo,disruptive,network|true|substring|
+truthpress.com/|abusive,disinfo,disruptive,network|true|substring|
+bizpacreview.com/|abusive,disinfo,disruptive,network|true|substring|
+dailywire.com|abusive,disinfo,disruptive,network|true|substring|
+gatewayhispanic.com/|abusive,disinfo,disruptive,network|true|substring|
+shattertheswarm.com|abusive,disinfo,disruptive,network|true|substring|
+truthfreedomhealth.com|abusive,disinfo,disruptive,network|true|substring|
+## Porn bots
+getallmylinks.com/|disruptive,engagementfarmer,network|true|substring
 ## antisemitic, disinfo on YouTube 
-BreezyPolitics|disinfo,network|false|substring|
-Ivan Katchanovski|disinfo,disruptive|false|substring|
-Korybko|disinfo,disruptive|false|substring|
+BreezyPolitics|disinfo,network|true|substring|
+Ivan Katchanovski|disinfo,disruptive|true|substring|
+Korybko|disinfo,disruptive|true|substring|
 ## "Ukraine proxy war" talking points
-/counterfire.org|disinfo,disruptive|false|substring|
+/counterfire.org|disinfo,disruptive|true|substring|
 ## Gaza phishers
-Gaza|engagementfarmer,abusive|false|word|gofundme.com/,chuffed.org/
+Gaza|engagementfarmer,abusive|true|word|gofundme.com/,chuffed.org/
 ## violent speech
-woodChipper|abusive,violent|false|substring|
+woodChipper|abusive,violent|true|substring|
 ## rapist/rape come up a lot in legitimage usage
-## rapist|abusive,violent|false|word|
-## rape|abusive,violent|false|word|
-TND|abusive,violent|false|word|
-TKD|abusive,violent|false|word|
-BNRAN|abusive,violent|false|word|
+## rapist|abusive,violent|true|word|
+## rape|abusive,violent|true|word|
+TND|abusive,violent|true|word|
+TKD|abusive,violent|true|word|
+BNRAN|abusive,violent|true|word|
 ## coded - kill yourself
-KYS|abusive,violent|false|word|
+KYS|abusive,violent|true|word|
 ## very frequent
-retard|abusive|false|substring|
-## Porn hashtags
-onlyfans|nsfw,engagementfarmer|false|substring|
-#kink|nsfw,engagementfarmer|false|substring|
-#porn|nsfw,engagementfarmer|false|substring|
-#nsfw|nsfw,engagementfarmer|false|substring|
+retard|abusive|true|substring|
 ## common spam domain suffix
-.xyz/|engagementfarmer|false|substring|
+.xyz/|engagementfarmer|true|substring|
 ## October 7 2023 atrocity celebrants
-from the river to the sea|abusive,violent|false|substring|
-globalize the intifada|abusive,violent|false|substring|
-🔻|abusive,violent|false|substring|
+from the river to the sea|abusive,violent|true|substring|
+globalize the intifada|abusive,violent|true|substring|
+🔻|abusive,violent|true|substring|
 ## deadnaming - however, this is also a frequent typo
-Isreal|abusive|false|word|
-Israhell|abusive|false|word|
+Isreal|abusive|true|word|
+Israhell|abusive|true|word|
 ## anti-Ukraine slurs and talking points
 ## total hoh*l death, birthday is a problem for substring matching
-THD|abusive,violent|false|word|
-Хохол|abusive|false|substring|
-Banderite|abusive|false|substring|
-banderowskie|abusive|false|word|
-ukronazi|abusive|false|word|
-ukranazi|abusive|false|word|
-Kiev|disinfo,abusive|false|word|regime
-coup|disinfo,abusive|false|word|Maidan,Georgia,CIA,Tbilisi
-Nuland|disinfo,abusive|false|word|
-proxy war|disinfo,abusive|false|word|Ukraine,Syria
-Zelensky|disinfo,abusive|false|word|coke,puppet,cocaine,crook,launder
-Ukraine|disinfo,abusive|false|word|corrupt,Nazi,launder,billions,tax dollars,expansion
-Ukrainian|disinfo,abusive|false|substring|corrupt,Nazi,launder,billions,tax dollars,expansion
-biolabs|disinfo,abusive|false|word|Ukraine,Ukrainian
-color revolution|disinfo,abusive|false|substring|Ukraine,Syria,Georgia
-colour revolution|disinfo,abusive|false|substring|Ukraine,Syria,Georgia
+THD|abusive,violent|true|word|
+Хохол|abusive|true|substring|
+Banderite|abusive|true|substring|
+banderowskie|abusive|true|word|
+ukronazi|abusive|true|word|
+ukranazi|abusive|true|word|
+Kiev|disinfo,abusive|true|word|regime
+coup|disinfo,abusive|true|word|Maidan,Georgia,CIA,Tbilisi
+Nuland|disinfo,abusive|true|word|
+proxy war|disinfo,abusive|true|word|Ukraine,Syria
+Zelensky|disinfo,abusive|true|word|coke,puppet,cocaine,crook,launder
+Ukraine|disinfo,abusive|true|word|corrupt,Nazi,launder,billions,tax dollars,expansion
+Ukrainian|disinfo,abusive|true|substring|corrupt,Nazi,launder,billions,tax dollars,expansion
+biolabs|disinfo,abusive|true|word|Ukraine,Ukrainian
+color revolution|disinfo,abusive|true|substring|Ukraine,Syria,Georgia
+colour revolution|disinfo,abusive|true|substring|Ukraine,Syria,Georgia
 ## denialism
-bucha|abusive,violent,disinfo|false|word|
-false flag|abusive,violent,disinfo|false|substring|bucha,Izyum,Douma,Irpin
+bucha|abusive,violent,disinfo|true|word|
+false flag|abusive,violent,disinfo|true|substring|bucha,Izyum,Douma,Irpin
 ## 9/11 denialism and fearmongering
-9/11|disinfo|false|substring|dancing,Israelis,Jews,another
-uniparty|disinfo,disruptive|false|word|
+9/11|disinfo|true|substring|dancing,Israelis,Jews,another
+uniparty|disinfo,disruptive|true|word|
 ## disinfo memes
-shitlib|abusive,disruptive|false|substring|
-woke|abusive,disruptive|false|word|mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt
-wokeness|abusive,disruptive|false|substring|Dems,Democrats,Grune,Grüne,trans,lgbt
-#pureblood|disinfo,disruptive|false|word|
-## bot network profile templates
+shitlib|abusive,disruptive|true|substring|
+woke|abusive,disruptive|true|word|mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt
+wokeness|abusive,disruptive|true|substring|Dems,Democrats,Grune,Grüne,trans,lgbt
+#pureblood|disinfo,disruptive|true|word|
+## bot network profile templates - currently not useful
 lover of|disruptive|false|substring|always curious about
 devoted to|disruptive|false|substring|while learning more
 passionate about|disruptive|false|substring|and exploring
 inspired by |disruptive|false|substring|art,reading,sports,writing,design,photography
 A dedicated |disruptive|false|substring|always seeking to
+## Porn hashtags - disabled for graph and event tracking
+onlyfans|nsfw,engagementfarmer|false|substring|
+#kink|nsfw,engagementfarmer|false|substring|
+#porn|nsfw,engagementfarmer|false|substring|
+#nsfw|nsfw,engagementfarmer|false|substring|

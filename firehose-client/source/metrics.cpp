@@ -20,8 +20,36 @@ http://www.fsf.org/licensing/licenses
 
 #include "metrics.hpp"
 #include "firehost_client_config.hpp"
+#include "helpers.hpp"
 
-metrics::metrics() : _registry(new prometheus::Registry) {}
+metrics::metrics()
+    : _registry(new prometheus::Registry),
+      _matched_elements(
+          add_counter("message_field_matches",
+                      "Number of matches within each field of message")),
+      _firehose_stats(
+          add_counter("firehose", "Statistics about received firehose data")),
+      _firehose_facets(add_histogram(
+          "firehose_facets", "Statistics about received firehose facets")),
+      _operational_stats(
+          add_gauge("operational_stats", "Statistics about client internals")),
+      _realtime_alerts(
+          add_counter("realtime_alerts",
+                      "Alerts generated for possibly suspect activity")) {
+  // Histogram metrics have to be added by hand, on-deman instantiation is not
+  // possible
+  prometheus::Histogram::BucketBoundaries boundaries = {
+      0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0,
+      11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0,
+      22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0};
+  _firehose_facets.Add({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}},
+                       boundaries);
+  _firehose_facets.Add(
+      {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}}, boundaries);
+  _firehose_facets.Add({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}},
+                       boundaries);
+  _firehose_facets.Add({{"facet", "total"}}, boundaries);
+}
 
 metrics &metrics::instance() {
   static metrics my_instance;

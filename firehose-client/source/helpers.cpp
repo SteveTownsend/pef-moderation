@@ -48,6 +48,168 @@ std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
          {"/description"_json_pointer, "/displayName"_json_pointer}}};
 }
 
+namespace bsky {
+down_reason down_reason_from_string(std::string_view down_reason_str) {
+  if (down_reason_str == DownReasonDeactivated) {
+    return down_reason::deactivated;
+  }
+  if (down_reason_str == DownReasonDeleted) {
+    return down_reason::deleted;
+  }
+  if (down_reason_str == DownReasonSuspended) {
+    return down_reason::suspended;
+  }
+  if (down_reason_str == DownReasonTakenDown) {
+    return down_reason::taken_down;
+  }
+  if (down_reason_str == DownReasonTombstone) {
+    return down_reason::tombstone;
+  }
+  if (down_reason_str == DownReasonDeactivated) {
+    return down_reason::deactivated;
+  }
+  return down_reason::invalid;
+}
+
+// best guess from JSON $type, may be corrected later e.g. Post -> Reply
+tracked_event event_type_from_collection(std::string const &collection) {
+  if (collection == AppBskyFeedLike) {
+    return tracked_event::like;
+  }
+  if (collection == AppBskyGraphFollow) {
+    return tracked_event::follow;
+  }
+  if (collection == AppBskyFeedRepost) {
+    return tracked_event::repost;
+  }
+  if (collection == AppBskyGraphBlock) {
+    return tracked_event::block;
+  }
+  if (collection == AppBskyActorProfile) {
+    return tracked_event::profile;
+  }
+  if (collection == AppBskyFeedPost) {
+    return tracked_event::post;
+  }
+  return tracked_event::invalid;
+}
+
+embed_type embed_type_from_string(std::string_view embed_type_str) {
+  if (embed_type_str == AppBskyEmbedExternal) {
+    return embed_type::external;
+  }
+  if (embed_type_str == AppBskyEmbedImages) {
+    return embed_type::images;
+  }
+  if (embed_type_str == AppBskyEmbedRecord) {
+    return embed_type::record;
+  }
+  if (embed_type_str == AppBskyEmbedRecordWithMedia) {
+    return embed_type::record_with_media;
+  }
+  if (embed_type_str == AppBskyEmbedVideo) {
+    return embed_type::video;
+  }
+  return embed_type::invalid;
+}
+
+// Parse ISO8601 time permissively
+bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
+  std::istringstream is(date_time);
+  bsky::parse_time_stamp tp;
+  // optimize for UTC offset 'Z'
+  is >> date::parse("%FT%TZ", tp);
+  if (!is.fail()) {
+    return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+  }
+  // fix and parse for invalid +00:00
+  constexpr std::string_view bad_zero = "+00:00";
+  constexpr std::string_view good_zero = "Z";
+  if (ends_with(date_time, bad_zero)) {
+    std::string date_time_new(date_time);
+    date_time_new.replace(date_time_new.cend() - bad_zero.length(),
+                          date_time_new.cend(), good_zero);
+    std::istringstream is_new(date_time_new);
+    is_new >> date::parse("%FT%TZ", tp);
+    if (!is_new.fail()) {
+      return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+    }
+  }
+  // fix and parse for alternate form of UTC offset -03:00
+  constexpr char alt_utc_marker = ':';
+  if (date_time.length() >= 3 &&
+      (*(date_time.rbegin() + 2) == alt_utc_marker)) {
+    std::string date_time_new(date_time);
+    date_time_new.erase(date_time_new.length() - 3, 1);
+    std::istringstream is_new(date_time_new);
+    is_new >> date::parse("%FT%T%z", tp);
+    if (!is_new.fail()) {
+      return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+    }
+  }
+
+  REL_WARNING("Failed to parse {} as ISO8601 date-time", date_time);
+  return current_time();
+}
+
+} // namespace bsky
+
+namespace atproto {
+
+at_uri::at_uri(std::string const &uri_str) {
+  if (!starts_with(uri_str, URIPrefix)) {
+    REL_ERROR("Malformed at-uri {}", uri_str);
+    return;
+  }
+  std::string_view uri_view(uri_str.cbegin() + URIPrefix.length(),
+                            uri_str.cend());
+  size_t count(0);
+  for (const auto token : std::views::split(uri_view, '/')) {
+    // with string_view's C++23 range constructor:
+    std::string field(token.cbegin(), token.cend());
+    switch (count) {
+    case 0:
+      if (token.empty()) {
+        REL_ERROR("Blank authority in at-uri {}", uri_str);
+        return;
+      }
+      _authority.assign(token.cbegin(), token.cend());
+      break;
+    case 1:
+      if (token.empty()) {
+        REL_ERROR("Blank collection in at-uri {}", uri_str);
+        return;
+      }
+      _collection.assign(token.cbegin(), token.cend());
+      break;
+    case 2:
+      if (token.empty()) {
+        REL_ERROR("Blank rkey in at-uri {}", uri_str);
+        return;
+      }
+      _rkey.assign(token.cbegin(), token.cend());
+      break;
+    }
+    ++count;
+  }
+}
+
+at_uri::at_uri(at_uri const &uri)
+    : _authority(uri._authority), _collection(uri._collection),
+      _rkey(uri._rkey) {}
+at_uri &at_uri::operator=(at_uri const &uri) {
+  _authority = uri._authority;
+  _collection = uri._collection;
+  _rkey = uri._rkey;
+  return *this;
+}
+
+at_uri::at_uri(at_uri &&uri)
+    : _authority(std::move(uri._authority)),
+      _collection(std::move(uri._collection)), _rkey(std::move(uri._rkey)) {}
+
+} // namespace atproto
+
 // convert UTF-8 input to canonical form where case differences are erased
 std::wstring to_canonical(std::string_view const input) {
   int32_t capacity((static_cast<int32_t>(input.length()) * 3));

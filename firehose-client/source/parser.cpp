@@ -107,23 +107,38 @@ inline bool parser::cbor_callback(int depth,
     if (parsed.contains("roots")) {
       DBG_TRACE("JSON roots  {}", parsed.dump());
     } else if (parsed.contains("digest")) {
-      DBG_TRACE("JSON root-cid {}", parsed.dump());
+      DBG_TRACE("JSON block cid {}", parsed.dump());
+      _block_cid = parsed["digest"].template get<std::string>();
     } else {
       DBG_TRACE("JSON Result  {}", parsed.dump());
       if (parsed.contains("$type")) {
+        if (_block_cid.empty()) {
+          REL_ERROR("Block CID empty, block={}", parsed.dump());
+          return false;
+        }
         // if this is a potential match source store it for scanning
         // There may be more than one per message if user posted multiple
         // replies to a post, or a new thread.
         std::string block_type(parsed["$type"].template get<std::string>());
         if (json::TargetFieldNames.contains(block_type)) {
           // block may contains string-matching content
-          _matchable_cbors.push_back(std::move(parsed));
+          if (!_cids.insert(_block_cid).second) {
+            REL_ERROR("Matchable Block CID {} already stored, block={}",
+                      _block_cid, parsed.dump());
+            return false;
+          }
+          _matchable_cbors.emplace_back(_block_cid, std::move(parsed));
         } else {
           // Also store other typed CBORs.
-          _content_cbors.push_back(std::move(parsed));
+          if (!_cids.insert(_block_cid).second) {
+            REL_ERROR("Content Block CID {} already stored, block={}",
+                      _block_cid, parsed.dump());
+            return false;
+          }
+          _content_cbors.emplace_back(_block_cid, std::move(parsed));
         }
       } else {
-        _other_cbors.push_back(std::move(parsed));
+        _other_cbors.emplace_back(_block_cid, std::move(parsed));
       }
     }
   } else if (event == nlohmann::json::parse_event_t::key) {
@@ -143,6 +158,17 @@ inline bool parser::cbor_callback(int depth,
   return true;
 }
 
+bool parser::cid_callback(int depth, nlohmann::json::parse_event_t event,
+                          nlohmann::json &parsed) {
+  if (event == nlohmann::json::parse_event_t::result) {
+    if (parsed.contains("digest")) {
+      DBG_TRACE("JSON cid-link {}", parsed.dump());
+      _block_cid = parsed["digest"].template get<std::string>();
+    }
+  }
+  return true;
+}
+
 void parser::set_config(std::shared_ptr<config> &settings) {
   _settings = settings;
 }
@@ -155,7 +181,20 @@ std::string parser::dump_parse_content() const {
       oss << '\n';
     }
     first = false;
-    oss << dump_json(cbor);
+    oss << dump_json(cbor.second);
+  }
+  return oss.str();
+}
+
+std::string parser::dump_parse_matched() const {
+  bool first(true);
+  std::ostringstream oss;
+  for (auto const &cbor : _matchable_cbors) {
+    if (!first) {
+      oss << '\n';
+    }
+    first = false;
+    oss << dump_json(cbor.second);
   }
   return oss.str();
 }
@@ -168,7 +207,7 @@ std::string parser::dump_parse_other() const {
       oss << '\n';
     }
     first = false;
-    oss << dump_json(cbor);
+    oss << dump_json(cbor.second);
   }
   return oss.str();
 }

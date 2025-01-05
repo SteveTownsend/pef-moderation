@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.0.7 LANGUAGES C CXX)
+project(firehose_client VERSION 2.1.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -45,6 +45,25 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+# activity caching (header-only)
+set(BUILD_TEST OFF)
+FetchContent_Declare(
+  caching
+  GIT_TAG 3fc9e07d49ac46272a583de0555a9cf376cdf316
+  GIT_REPOSITORY https://github.com/vpetrigo/caches
+)
+FetchContent_MakeAvailable(caching)
+include_directories(${caching_SOURCE_DIR}/include)
+
+# ISO8601 date-time parse (header-only)
+FetchContent_Declare(
+  datetime
+  GIT_TAG 28b7b232521ace2c8ef3f2ad4126daec3569c14f
+  GIT_REPOSITORY https://github.com/HowardHinnant/date
+)
+FetchContent_MakeAvailable(datetime)
+include_directories(${datetime_SOURCE_DIR}/include)
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -145,10 +164,13 @@ add_executable(firehose_client
   ./source/matcher.cpp
   ./source/metrics.cpp
   ./source/parser.cpp
-  ./source/post_processor.cpp)
+  ./source/post_processor.cpp
+  ./source/activity/account_events.cpp
+  ./source/activity/event_cache.cpp
+  ./source/activity/event_recorder.cpp)
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
-  nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
+nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
 if (UNIX)
   target_link_libraries(firehose_client stdc++)
 endif()
