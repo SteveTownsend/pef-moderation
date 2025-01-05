@@ -20,17 +20,38 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "aho_corasick/aho_corasick.hpp"
+#include "date/date.h"
+#include "log_wrapper.hpp"
 #include "nlohmann/json.hpp"
 #include <algorithm>
+#include <boost/functional/hash.hpp>
 #include <format>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 
+inline bool ends_with(std::string const &value, std::string_view ending) {
+  if (ending.size() > value.size())
+    return false;
+  return std::equal(ending.crbegin(), ending.crend(), value.crbegin());
+}
+
+inline bool starts_with(std::string const &value, std::string_view start) {
+  if (start.size() > value.size())
+    return false;
+  return std::equal(start.cbegin(), start.cend(), value.cbegin());
+}
+
 namespace bsky {
+constexpr std::string_view AppBskyFeedLike = "app.bsky.feed.like";
 constexpr std::string_view AppBskyFeedPost = "app.bsky.feed.post";
+constexpr std::string_view AppBskyFeedRepost = "app.bsky.feed.repost";
+
+constexpr std::string_view AppBskyGraphBlock = "app.bsky.graph.block";
+constexpr std::string_view AppBskyGraphFollow = "app.bsky.graph.follow";
 
 constexpr std::string_view AppBskyActorProfile = "app.bsky.actor.profile";
 
@@ -48,16 +69,146 @@ constexpr std::string_view AppBskyRichtextFacetMention =
 constexpr std::string_view AppBskyRichtextFacetTag =
     "app.bsky.richtext.facet#tag";
 
-constexpr size_t PushyTagCount = 4;
-constexpr size_t PushyMentionCount = 4;
-constexpr size_t PushyTotalCount = 6;
+constexpr std::string_view DownReasonDeactivated = "deactivated";
+constexpr std::string_view DownReasonDeleted = "deleted";
+constexpr std::string_view DownReasonSuspended = "suspended";
+constexpr std::string_view DownReasonTakenDown = "takendown";
+constexpr std::string_view DownReasonTombstone = "#tombstone";
+
+enum class down_reason {
+  invalid = -1,
+  unknown,
+  deactivated,
+  deleted,
+  suspended,
+  taken_down,
+  tombstone
+};
+down_reason down_reason_from_string(std::string_view down_reason_str);
+
+enum class tracked_event {
+  invalid = -1,
+  post,
+  repost,
+  quote,
+  reply,
+  like,
+  follow,
+  block,
+  activate,
+  deactivate,
+  handle,
+  profile
+};
+
+tracked_event event_type_from_collection(std::string const &collection);
+
+enum class embed_type {
+  invalid = -1,
+  external,
+  images,
+  record,
+  record_with_media,
+  video
+};
+
+embed_type embed_type_from_string(std::string_view embed_type_str);
+
+// Compact internal representation
+typedef date::sys_time<std::chrono::milliseconds> time_stamp;
+// Permissive parse based on real-world observation
+typedef date::sys_time<std::chrono::nanoseconds> parse_time_stamp;
+
+inline bsky::time_stamp current_time() {
+  return std::chrono::time_point_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now());
+}
+
+// Parse ISO8601 time
+bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time);
+
+template <typename T>
+inline bool alert_needed(const T count, const size_t factor) {
+  std::div_t divide_result(std::div(int(count), int(factor)));
+  return (divide_result.rem == 0) &&
+         !(divide_result.quot & (divide_result.quot - 1));
+}
+
 } // namespace bsky
 
 namespace atproto {
+
 constexpr std::string_view SyncSubscribeReposOpCreate = "create";
 constexpr std::string_view SyncSubscribeReposOpDelete = "delete";
 constexpr std::string_view SyncSubscribeReposOpUpdate = "update";
+
+// URI holder per https://atproto.com/specs/at-uri-scheme
+constexpr std::string_view URIPrefix = "at://";
+inline std::string make_at_uri(std::string const &authority,
+                               std::string const &collection,
+                               std::string const &rkey = {}) {
+  std::string uri(std::string(URIPrefix) + authority + '/' + collection);
+  if (rkey.empty()) {
+    return std::string(URIPrefix) + authority + '/' + collection;
+  } else {
+    return std::string(URIPrefix) + authority + '/' + collection + '/' + rkey;
+  }
+}
+struct at_uri {
+  at_uri(std::string const &uri_str);
+  at_uri(at_uri const &uri);
+  at_uri &operator=(at_uri const &uri);
+  at_uri(at_uri &&uri);
+  std::string _authority; // in practice, this is a DID
+  std::string _collection;
+  std::string _rkey; // optional
+  operator std::string() const {
+    return make_at_uri(_authority, _collection, _rkey);
+  }
+};
+
+struct at_uri_hash {
+  std::size_t operator()(const at_uri &uri) const {
+    size_t result(0);
+    boost::hash_combine(result, std::hash<std::string>()(uri._authority));
+    boost::hash_combine(result, std::hash<std::string>()(uri._collection));
+    if (!uri._rkey.empty()) {
+      boost::hash_combine(result, std::hash<std::string>()(uri._rkey));
+    }
+    return result;
+  }
+};
+
+struct at_uri_less {
+  bool operator()(const at_uri &lhs, const at_uri &rhs) const {
+    if (lhs._authority == rhs._authority) {
+      if (lhs._collection == rhs._collection) {
+        return lhs._rkey < rhs._rkey;
+      }
+      return lhs._collection < rhs._collection;
+    }
+    return lhs._authority < rhs._authority;
+  }
+};
+
+inline bool operator==(const at_uri &lhs, const at_uri &rhs) {
+  return lhs._authority == rhs._authority &&
+         lhs._collection == rhs._collection && lhs._rkey == rhs._rkey;
+}
+
 } // namespace atproto
+
+template <> struct std::less<atproto::at_uri> {
+  bool operator()(const atproto::at_uri &lhs, const atproto::at_uri &rhs) {
+    if (lhs._authority == rhs._authority) {
+      if (lhs._collection == rhs._collection) {
+        return lhs._rkey < rhs._rkey;
+      }
+      return lhs._collection < rhs._collection;
+    }
+    return lhs._authority < rhs._authority;
+  }
+};
 
 namespace json {
 extern std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>

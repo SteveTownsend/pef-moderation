@@ -28,6 +28,7 @@ http://www.fsf.org/licensing/licenses
 #include <boost/beast/core.hpp>
 #include <string_view>
 #include <tuple>
+#include <unordered_set>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;
@@ -121,6 +122,24 @@ public:
       return sax_parse_cid_sequence(&sax, strict);
     }
 
+    template <typename IteratorType>
+    bool
+    parse_cid(IteratorType first, IteratorType last,
+              nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
+              const bool allow_exceptions = true, const bool strict = true,
+              const nlohmann::detail::cbor_tag_handler_t tag_handler =
+                  nlohmann::detail::cbor_tag_handler_t::error) {
+      nlohmann::basic_json result;
+      _tag_handler = tag_handler;
+      _callback = cb;
+      auto ia =
+          nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      nlohmann::detail::json_sax_dom_callback_parser<BasicJsonType,
+                                                     decltype(ia)>
+          sax(result, cb, allow_exceptions);
+      return parse_car_cid(true);
+    }
+
   protected:
     uint64_t read_u64_leb128(const bool get_char = true) {
       unsigned char uchar(0);
@@ -198,12 +217,11 @@ public:
         *next = this->get();
       }
       // Caller needs to process according to context
-      nlohmann::json result({{"digest", nlohmann::json::binary_t(digest)},
-                             {"version", version},
-                             {"codec", codec}});
+      nlohmann::json result(
+          {{"digest", std::string(digest.cbegin(), digest.cend())},
+           {"version", version},
+           {"codec", codec}});
       return _callback(0, nlohmann::detail::parse_event_t::result, result);
-      // unsupported at this time
-      return false;
     }
 
     bool parse_car_block(const bool get_char) {
@@ -324,7 +342,7 @@ public:
           .parse_cid_sequence(first, last, callback, true, true,
                               nlohmann::detail::cbor_tag_handler_t::ignore);
     } catch (std::exception const &exc) {
-      REL_ERROR("CAR parse threw: {}", exc.what());
+      REL_ERROR("CIDs parse threw: {}", exc.what());
     }
     if (!parsed) {
       std::ostringstream oss;
@@ -332,33 +350,71 @@ public:
       auto os_iter = std::ostream_iterator<int>(oss);
       std::ranges::copy(first, last, os_iter);
 
-      REL_ERROR("CAR parse failed: {}", oss.str());
+      REL_ERROR("CIDs parse failed: {}", oss.str());
     } else {
-      DBG_INFO("CAR parse success");
+      DBG_INFO("CIDs parse success");
+    }
+    return parsed;
+  }
+
+  template <typename IteratorType>
+  bool json_from_cid(IteratorType first, IteratorType last) {
+    bool parsed(false);
+    try {
+      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
+                         nlohmann::json & /*parsed*/)>
+          callback =
+              std::bind(&parser::cid_callback, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+      auto ia =
+          ::nlohmann::detail::input_adapter(std::move(first), std::move(last));
+      return car_reader<typename ::nlohmann::json, decltype(ia),
+                        ::nlohmann::detail::json_sax_dom_callback_parser<
+                            typename ::nlohmann::json, decltype(ia)>>(
+                 std::move(ia), nlohmann::detail::input_format_t::cbor)
+          .parse_cid(first, last, callback, true, true,
+                     nlohmann::detail::cbor_tag_handler_t::ignore);
+    } catch (std::exception const &exc) {
+      REL_ERROR("CID parse threw: {}", exc.what());
+    }
+    if (!parsed) {
+      std::ostringstream oss;
+      oss << std::hex;
+      auto os_iter = std::ostream_iterator<int>(oss);
+      std::ranges::copy(first, last, os_iter);
+
+      REL_ERROR("CID parse failed: {}", oss.str());
+    } else {
+      DBG_INFO("CID parse success");
     }
     return parsed;
   }
 
   static void set_config(std::shared_ptr<config> &settings);
-  const std::vector<nlohmann::json> &other_cbors() const {
-    return _other_cbors;
-  }
-  const std::vector<nlohmann::json> &content_cbors() const {
-    return _content_cbors;
-  }
-  const std::vector<nlohmann::json> &matchable_cbors() const {
-    return _matchable_cbors;
-  }
+
+  // CAR file in "blocks" contains atproto content indexed by CIDs
+  typedef std::vector<std::pair<std::string, nlohmann::json>> indexed_cbors;
+  const indexed_cbors &other_cbors() const { return _other_cbors; }
+  const indexed_cbors &content_cbors() const { return _content_cbors; }
+  const indexed_cbors &matchable_cbors() const { return _matchable_cbors; }
   std::string dump_parse_content() const;
+  std::string dump_parse_matched() const;
   std::string dump_parse_other() const;
+
+  inline std::string block_cid() const { return _block_cid; }
 
 private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
                      nlohmann::json &parsed);
+  bool cid_callback(int depth, nlohmann::json::parse_event_t event,
+                    nlohmann::json &parsed);
 
-  std::vector<nlohmann::json> _other_cbors;
-  std::vector<nlohmann::json> _content_cbors;
-  std::vector<nlohmann::json> _matchable_cbors;
+  // CAR file in "blocks" contains atproto content indexed by CIDs
+  std::string _block_cid;
+  std::unordered_set<std::string> _cids;
+  indexed_cbors _other_cbors;
+  indexed_cbors _content_cbors;
+  indexed_cbors _matchable_cbors;
   static std::shared_ptr<config> _settings;
 };
 #endif

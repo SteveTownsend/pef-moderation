@@ -52,7 +52,7 @@ void matcher::set_filter(std::string const &filename) {
     }
 
     if (!add_rule(str)) {
-      REL_WARNING("Duplicate rule at line {}: '{}'", line, str);
+      REL_WARNING("Skipped rule at line {}: '{}'", line, str);
     } else {
       REL_INFO("Stored rule at line {}: '{}'", line, str);
     }
@@ -62,6 +62,10 @@ void matcher::set_filter(std::string const &filename) {
 
 bool matcher::add_rule(std::string const &match_rule) {
   rule new_rule(match_rule);
+  // Check for intentionally-skipped rule
+  if (!new_rule._track) {
+    return false;
+  }
   std::wstring canonical_form(to_canonical(new_rule._target));
   // use ICU canonical form for multilanguage support
   if (new_rule._match_type == match_type::substring)
@@ -163,7 +167,7 @@ matcher::rule::rule(std::string const &rule_string) {
       _labels = field;
       break;
     case 2:
-      _report = report_from_string(field);
+      _track = report_from_string(field);
       break;
     case 3:
       _match_type = match_type_from_string(field);
@@ -194,7 +198,7 @@ matcher::rule::rule(std::string const &rule_string) {
 }
 
 matcher::rule::rule(matcher::rule const &rhs)
-    : _target(rhs._target), _labels(rhs._labels), _report(rhs._report),
+    : _target(rhs._target), _labels(rhs._labels), _track(rhs._track),
       _match_type(rhs._match_type), _contingent(rhs._contingent) {
   // make a trie that is used to confirm the rule match
   for (const auto subtoken : std::views::split(_contingent, ',')) {

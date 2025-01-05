@@ -77,7 +77,7 @@ public:
     rule(rule const &);
     std::string _target;
     std::string _labels;
-    bool _report;
+    bool _track;
     match_type _match_type;
     std::string _contingent;
 
