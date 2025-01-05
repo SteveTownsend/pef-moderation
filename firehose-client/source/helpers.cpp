@@ -118,7 +118,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
   std::istringstream is(date_time);
   bsky::parse_time_stamp tp;
   // optimize for UTC offset 'Z'
-  constexpr const char *UtcDefault = "%FT%TZ";
+  static const std::string UtcDefault("%FT%TZ");
   is >> date::parse(UtcDefault, tp);
   if (!is.fail()) {
     return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
@@ -138,7 +138,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
   }
   // fix and parse for alternate form of UTC offset -03:00
   constexpr char alt_utc_marker = ':';
-  constexpr const char *UtcWithOffset = "%FT%T%z";
+  static const std::string UtcWithOffset("%FT%T%z");
   if (date_time.length() >= 3 &&
       (*(date_time.rbegin() + 2) == alt_utc_marker)) {
     std::string date_time_new(date_time);

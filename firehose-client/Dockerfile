@@ -1,5 +1,5 @@
 # install dependencies and build
-FROM ubuntu:24.04 AS build
+FROM ubuntu:24.10 AS build
 
 RUN apt-get -y update && apt-get -y install sudo 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
@@ -27,7 +27,7 @@ RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
   apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
-FROM ubuntu:24.04
+FROM ubuntu:24.10
 
 RUN apt-get -y update && apt-get -y install sudo
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
