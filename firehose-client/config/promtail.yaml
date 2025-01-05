@@ -54,6 +54,14 @@ scrape_configs:
             - timestamp:
                 source: date_time
                 format: "2006-01-02 15:16:17.018"
+      - match:
+          selector: '{job="firehose-client"} |= " Content-item evicted "'
+          stages:
+            - regex:
+                expression: "^(?P<date_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[.]\\d{3})\\s+(?P<log_level>\\S+)\\s+(?P<thread>\\S+) Content-item evicted (?P<uri>.*) with (?P<alerts>.*) alerts (?P<events>.*) events$"
+            - timestamp:
+                source: date_time
+                format: "2006-01-02 15:16:17.018"
       - metrics:
           log_lines_total:
             type: Counter
