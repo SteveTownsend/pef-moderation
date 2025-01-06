@@ -32,7 +32,7 @@ void init_logging(std::string const &log_file,
   try {
     std::string fileName(logPath.generic_string());
     logger = spdlog::daily_logger_mt(PROJECT_NAME, log_file, 3, 0);
-    logger->set_pattern("%Y-%m-%d %T.%e %8l %6t %v");
+    logger->set_pattern("%Y-%m-%d %T.%F %8l %6t %v");
   } catch (const spdlog::spdlog_ex &) {
   }
   logger->set_level(log_level); // Set mod's log level
