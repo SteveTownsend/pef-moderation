@@ -56,15 +56,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(caching)
 include_directories(${caching_SOURCE_DIR}/include)
 
-# ISO8601 date-time parse (header-only)
-FetchContent_Declare(
-  datetime
-  GIT_TAG 28b7b232521ace2c8ef3f2ad4126daec3569c14f
-  GIT_REPOSITORY https://github.com/HowardHinnant/date
-)
-FetchContent_MakeAvailable(datetime)
-include_directories(${datetime_SOURCE_DIR}/include)
-
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
 include_directories(${ICU_INCLUDE_DIR})

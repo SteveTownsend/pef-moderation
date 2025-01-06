@@ -20,7 +20,6 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "aho_corasick/aho_corasick.hpp"
-#include "date/date.h"
 #include "log_wrapper.hpp"
 #include "nlohmann/json.hpp"
 #include <algorithm>
@@ -115,9 +114,9 @@ enum class embed_type {
 embed_type embed_type_from_string(std::string_view embed_type_str);
 
 // Compact internal representation
-typedef date::sys_time<std::chrono::milliseconds> time_stamp;
+typedef std::chrono::sys_time<std::chrono::milliseconds> time_stamp;
 // Permissive parse based on real-world observation
-typedef date::sys_time<std::chrono::nanoseconds> parse_time_stamp;
+typedef std::chrono::sys_time<std::chrono::nanoseconds> parse_time_stamp;
 
 inline bsky::time_stamp current_time() {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(
