@@ -119,12 +119,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
   bsky::parse_time_stamp tp;
   // optimize for UTC offset 'Z'
   constexpr const char *UtcDefault = "%FT%TZ";
-  is >> date::parse(UtcDefault, tp
-#if defined(__unix__) || defined(__unix)
-                    ,
-                    nullptr, nullptr
-#endif
-        );
+  is >> date::parse(UtcDefault, tp);
   if (!is.fail()) {
     return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
   }
@@ -136,12 +131,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
     date_time_new.replace(date_time_new.cend() - bad_zero.length(),
                           date_time_new.cend(), good_zero);
     std::istringstream is_new(date_time_new);
-    is_new >> date::parse(UtcDefault, tp
-#if defined(__unix__) || defined(__unix)
-                          ,
-                          nullptr, nullptr
-#endif
-              );
+    is_new >> date::parse(UtcDefault, tp);
     if (!is_new.fail()) {
       return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
     }
@@ -154,12 +144,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
     std::string date_time_new(date_time);
     date_time_new.erase(date_time_new.length() - 3, 1);
     std::istringstream is_new(date_time_new);
-    is_new >> date::parse(UtcWithOffset, tp
-#if defined(__unix__) || defined(__unix)
-                          ,
-                          nullptr, nullptr
-#endif
-              );
+    is_new >> date::parse(UtcWithOffset, tp);
     if (!is_new.fail()) {
       return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
     }
