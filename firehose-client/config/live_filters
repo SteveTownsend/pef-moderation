@@ -134,6 +134,10 @@ dailywire.com|abusive,disinfo,disruptive,network|true|substring|
 gatewayhispanic.com/|abusive,disinfo,disruptive,network|true|substring|
 shattertheswarm.com|abusive,disinfo,disruptive,network|true|substring|
 truthfreedomhealth.com|abusive,disinfo,disruptive,network|true|substring|
+felastory.com/|abusive,disinfo,disruptive,network|true|substring|
+infosannio.com/|abusive,disinfo,disruptive,network|true|substring|
+ezone57.net/|abusive,disinfo,disruptive,network|true|substring|
+swentr.site/|abusive,disinfo,disruptive,network|true|substring|
 ## Porn bots
 getallmylinks.com/|disruptive,engagementfarmer,network|true|substring
 ## antisemitic, disinfo on YouTube 
@@ -183,6 +187,7 @@ Ukrainian|disinfo,abusive|true|substring|corrupt,Nazi,launder,billions,tax dolla
 biolabs|disinfo,abusive|true|word|Ukraine,Ukrainian
 color revolution|disinfo,abusive|true|substring|Ukraine,Syria,Georgia
 colour revolution|disinfo,abusive|true|substring|Ukraine,Syria,Georgia
+bio|disinfo,disruptive|true|substring|biowarfare,biolab,bioterror,bioweapon,Ukraine,Africa,russia
 ## denialism
 bucha|abusive,violent,disinfo|true|word|
 false flag|abusive,violent,disinfo|true|substring|bucha,Izyum,Douma,Irpin
