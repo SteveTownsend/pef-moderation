@@ -117,7 +117,7 @@ typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
 // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
-constexpr size_t MaxContentItems = 100;
+constexpr size_t MaxContentItems = 60;
 struct content_hit_count {
   int32_t _likes = 0;
   int32_t _reposts = 0;
