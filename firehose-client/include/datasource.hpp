@@ -68,34 +68,44 @@ public:
   }
 
   void start() {
-    REL_INFO("client startup for {}:{} at {}, filters {}", _host, _port,
-             _subscription, _handler.get_filter());
+    _thread = std::thread([&] {
+      REL_INFO("client startup for {}:{} at {}, filters {}", _host, _port,
+               _subscription, _handler.get_filter());
 
-    // The io_context is required for all I/O
-    net::io_context ioc;
+      while (true) {
+        // The io_context is required for all I/O
+        net::io_context ioc;
 
-    // The SSL context is required, and holds certificates
-    ssl::context ctx{ssl::context::tlsv12_client};
+        // The SSL context is required, and holds certificates
+        ssl::context ctx{ssl::context::tlsv12_client};
 
-    // Launch the asynchronous operation
-    boost::asio::spawn(ioc,
-                       std::bind(&datasource::do_work, this, std::ref(ioc),
-                                 std::ref(ctx), std::placeholders::_1),
-                       // on completion, spawn will call this function
-                       [](std::exception_ptr ex) {
-                         // if an exception occurred in the coroutine,
-                         // it's something critical, e.g. out of memory
-                         // we capture normal errors in the ec
-                         // so we just rethrow the exception here,
-                         // which will cause `ioc.run()` to throw
-                         if (ex)
-                           std::rethrow_exception(ex);
-                       });
+        // Launch the asynchronous operation
+        boost::asio::spawn(ioc,
+                           std::bind(&datasource::do_work, this, std::ref(ioc),
+                                     std::ref(ctx), std::placeholders::_1),
+                           // on completion, spawn will call this function
+                           [](std::exception_ptr ex) {
+                             // if an exception occurred in the coroutine,
+                             // it's something critical, e.g. out of memory
+                             // we capture normal errors in the ec
+                             // so we just rethrow the exception here,
+                             // which will cause `ioc.run()` to throw
+                             if (ex)
+                               std::rethrow_exception(ex);
+                           });
 
-    // Run the I/O service. The call will return when
-    // the socket is closed.
-    ioc.run();
+        // Run the I/O service. The call will return when
+        // the socket is closed.
+        ioc.run();
+
+        // we should run forever unless killed. Try to reconnect in a little
+        // while.
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+      }
+    });
   }
+
+  void wait_for_end_thread() { _thread.join(); }
 
 private:
   // TODO support round robin if needed
@@ -106,6 +116,7 @@ private:
   std::shared_ptr<config> _settings;
   prometheus::Family<prometheus::Counter> &_input_messages;
   prometheus::Family<prometheus::Counter> &_input_message_bytes;
+  std::thread _thread;
 
   void do_work(net::io_context &ioc, ssl::context &ctx,
                net::yield_context yield) {

@@ -20,9 +20,9 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "content_handler.hpp"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
+#include "moderation/action_router.hpp"
 #include "post_processor.hpp"
 #include <boost/beast/core.hpp>
 
@@ -38,6 +38,7 @@ public:
     _matcher->set_filter(_filter_file);
     _is_ready = true;
     _post_processor.set_matcher(_matcher);
+    action_router::instance().set_matcher(_matcher);
   }
 
   std::string get_filter() const { return _filter_file; }

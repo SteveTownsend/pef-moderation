@@ -35,3 +35,19 @@ config::config(std::string const &filename) {
 }
 
 YAML::Node const &config::get_config() const { return _config; }
+
+std::string config::build_moderation_db_connection_string() const {
+  bool first(true);
+  std::ostringstream oss;
+  for (auto field : _config[PROJECT_NAME]["moderation_data"]) {
+    // TODO Log this once the password is obfuscated via Hashicorp
+    if (!first) {
+      oss << ' ';
+    } else {
+      first = false;
+    }
+    oss << field.first.as<std::string>() << '='
+        << field.second.as<std::string>();
+  }
+  return oss.str();
+}

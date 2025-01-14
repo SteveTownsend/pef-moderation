@@ -1,5 +1,5 @@
-#ifndef __activity_account_hpp__
-#define __activity_account_hpp__
+#ifndef __account_events_hpp__
+#define __account_events_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -117,7 +117,7 @@ typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
 // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
-constexpr size_t MaxContentItems = 60;
+constexpr size_t MaxContentItems = 50;
 struct content_hit_count {
   int32_t _likes = 0;
   int32_t _reposts = 0;

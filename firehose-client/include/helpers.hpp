@@ -22,6 +22,9 @@ http://www.fsf.org/licensing/licenses
 #include "aho_corasick/aho_corasick.hpp"
 #include "log_wrapper.hpp"
 #include "nlohmann/json.hpp"
+#include "restc-cpp/RequestBody.h"
+#include "restc-cpp/SerializeJson.h"
+#include "restc-cpp/restc-cpp.h"
 #include <algorithm>
 #include <boost/functional/hash.hpp>
 #include <format>
@@ -31,6 +34,16 @@ http://www.fsf.org/licensing/licenses
 #include <sstream>
 #include <string>
 #include <vector>
+
+inline bool bool_from_string(std::string_view str) {
+  if (str == "false")
+    return false;
+  if (str == "true")
+    return true;
+  std::ostringstream err;
+  err << "Bad bool value " << str;
+  throw std::invalid_argument(err.str());
+}
 
 inline bool ends_with(std::string const &value, std::string_view ending) {
   if (ending.size() > value.size())
@@ -51,6 +64,10 @@ constexpr std::string_view AppBskyFeedRepost = "app.bsky.feed.repost";
 
 constexpr std::string_view AppBskyGraphBlock = "app.bsky.graph.block";
 constexpr std::string_view AppBskyGraphFollow = "app.bsky.graph.follow";
+constexpr std::string_view AppBskyGraphList = "app.bsky.graph.list";
+constexpr std::string_view AppBskyGraphListItem = "app.bsky.graph.listitem";
+constexpr std::string_view AppBskyGraphDefsModlist =
+    "app.bsky.graph.defs#modlist";
 
 constexpr std::string_view AppBskyActorProfile = "app.bsky.actor.profile";
 
@@ -67,6 +84,11 @@ constexpr std::string_view AppBskyRichtextFacetMention =
     "app.bsky.richtext.facet#mention";
 constexpr std::string_view AppBskyRichtextFacetTag =
     "app.bsky.richtext.facet#tag";
+
+namespace moderation {
+constexpr std::string_view ReasonOther =
+    "com.atproto.moderation.defs#reasonOther";
+} // namespace moderation
 
 constexpr std::string_view DownReasonDeactivated = "deactivated";
 constexpr std::string_view DownReasonDeleted = "deleted";
@@ -118,6 +140,9 @@ typedef std::chrono::sys_time<std::chrono::milliseconds> time_stamp;
 // Permissive parse based on real-world observation
 typedef std::chrono::sys_time<std::chrono::nanoseconds> parse_time_stamp;
 
+// optimal format for UTC offset 'Z'
+constexpr const char *UtcDefault = "%FT%TZ";
+
 inline bsky::time_stamp current_time() {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now());
@@ -137,6 +162,12 @@ inline bool alert_needed(const T count, const size_t factor) {
 
 namespace atproto {
 
+constexpr std::string_view RepoStrongRef = "com.atproto.repo.strongRef";
+constexpr std::string_view AdminDefsRepoRef = "com.atproto.admin.defs#repoRef";
+constexpr std::string_view ProxyLabelerSuffix = "#atproto_labeler";
+constexpr std::string_view AcceptLabelersPrefix =
+    "did:plc:ar7c4by46qjdydhdevvrndac;redact, ";
+
 constexpr std::string_view SyncSubscribeReposOpCreate = "create";
 constexpr std::string_view SyncSubscribeReposOpDelete = "delete";
 constexpr std::string_view SyncSubscribeReposOpUpdate = "update";
@@ -144,10 +175,11 @@ constexpr std::string_view SyncSubscribeReposOpUpdate = "update";
 // URI holder per https://atproto.com/specs/at-uri-scheme
 constexpr std::string_view URIPrefix = "at://";
 inline std::string make_at_uri(std::string const &authority,
-                               std::string const &collection,
+                               std::string const &collection = {},
                                std::string const &rkey = {}) {
-  std::string uri(std::string(URIPrefix) + authority + '/' + collection);
-  if (rkey.empty()) {
+  if (collection.empty()) {
+    return std::string(URIPrefix) + authority;
+  } else if (rkey.empty()) {
     return std::string(URIPrefix) + authority + '/' + collection;
   } else {
     return std::string(URIPrefix) + authority + '/' + collection + '/' + rkey;
@@ -161,9 +193,18 @@ struct at_uri {
   std::string _authority; // in practice, this is a DID
   std::string _collection;
   std::string _rkey; // optional
-  operator std::string() const {
+  bool _empty = false;
+  inline operator std::string() const {
     return make_at_uri(_authority, _collection, _rkey);
   }
+  inline operator bool() const { return !_empty; }
+  static inline at_uri &empty() {
+    static at_uri empty_uri("");
+    return empty_uri;
+  }
+
+private:
+  inline at_uri() : _empty(true) {}
 };
 
 struct at_uri_hash {
@@ -210,9 +251,10 @@ template <> struct std::less<atproto::at_uri> {
 };
 
 namespace json {
+extern restc_cpp::JsonFieldMapping TypeFieldMapping;
 extern std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
     TargetFieldNames;
-}
+} // namespace json
 
 // brute force to_lower, not locale-aware
 inline std::string to_lower(std::string_view const input) {
@@ -265,7 +307,9 @@ struct candidate {
   std::string _value;
   bool operator==(candidate const &rhs) const;
 };
+// Path->candidate association
 typedef std::vector<candidate> candidate_list;
+typedef std::vector<std::pair<std::string, candidate_list>> path_candidate_list;
 
 // Stores context that matched one or more filters, and the matches
 struct match_result {
@@ -273,5 +317,5 @@ struct match_result {
   aho_corasick::wtrie::emit_collection _matches;
 };
 typedef std::vector<match_result> match_results;
-
+typedef std::vector<std::pair<std::string, match_results>> path_match_results;
 #endif

@@ -2,8 +2,10 @@ firehose_client:
   logging:
     filename: "./logs/firehose_client_full.log"
     level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
+
   filters:
     filename: "./config/live_filters"
+
   datasource:
     hosts:
       # full firehose
@@ -11,7 +13,35 @@ firehose_client:
     port: 443
     subscription: "/xrpc/com.atproto.sync.subscribeRepos"
 
-  datasink:
+  moderation_data:
+    host: "localhost"
+    port: 5432
+    dbname: "ozone"
+    user: "the-client"
+    password: "the-password"
+
+  auto_reporter:
+    handle: "the-handle"
+    password: "the-password"
+    # this has to be the home PDS of the reporting account - using bsky.social sends reports to the platform
+    # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
+    host: "the-pds"
+    port: 443
+    # nafo forum moderation service
+    service_did: "service-did"
+    dry_run: true
+
+  list_manager:
+    handle: "the-handle"
+    password: "the-password"
+    client_did: "client-did"
+    # this has to be the home PDS of the reporting account for authenticated requests
+    # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
+    host: "the-pds"
+    port: 443
+    dry_run: true
+
+  report_sink:
     url: "https://ozone.nafo-moderation.org"
     requestType: "POST"
     path: "/xrpc/com.atproto.moderation.createReport"
