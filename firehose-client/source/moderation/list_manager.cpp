@@ -410,7 +410,7 @@ list_manager::add_account_to_list(std::string const &did,
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
           exc.code().category() == boost::asio::error::get_misc_category()) {
-        REL_WARNING("IoReaderImpl::ReadSome: asio eof, retry");
+        REL_WARNING("IoReaderImpl::ReadSome(createListItem): asio eof, retry");
         ++retries;
       } else {
         // unrecoverable error

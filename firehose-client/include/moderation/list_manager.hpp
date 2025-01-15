@@ -197,7 +197,7 @@ private:
     auto const &reasons(_block_reasons.find(list_name));
     if (reasons != _block_reasons.cend()) {
       for (auto const &reason : reasons->second) {
-        oss << ' ' << reason;
+        oss << ' \'' << reason << '\'';
       }
       return oss.str();
     }
