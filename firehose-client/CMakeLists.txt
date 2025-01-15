@@ -166,7 +166,7 @@ else()
   else()
     SET(REST_CPP_LIBRARY $ENV{rest-cpp_DIR}/lib/Release/restc-cpp.lib)
   endif()
-  SET(ZLIB_LIBRARY $ENV{ZLIB_ROOT}/lib/zlibstatic)
+  SET(ZLIB_LIBRARY $ENV{ZLIB_ROOT}/lib/zlibstatic.lib)
 endif()
 
 # JSON Web Token handling
