@@ -37,6 +37,9 @@ http://www.fsf.org/licensing/licenses
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
+#include "moderation/action_router.hpp"
+#include "moderation/list_manager.hpp"
+#include "moderation/ozone_adapter.hpp"
 #include "post_processor.hpp"
 #include <chrono>
 #include <iostream>
@@ -45,13 +48,13 @@ http://www.fsf.org/licensing/licenses
 int main(int argc, char **argv) {
   bool log_ready(false);
 #if _DEBUG
-  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+  // std::this_thread::sleep_for(std::chrono::milliseconds(20000));
 #endif
   try {
     // Check command line arguments.
     if (argc != 2) {
       std::cerr << "Usage: firehose-client <config-file-name>\n";
-      // for profile and post commits:
+      // for Jetstream profile and post commits:
       // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
       return EXIT_FAILURE;
     }
@@ -68,12 +71,60 @@ int main(int argc, char **argv) {
     init_logging(log_file, log_level);
     log_ready = true;
 
+#if _DEBUG
+    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::TRACE);
+    restc_cpp::Logger::Instance().SetHandler(
+        [](restc_cpp::LogLevel level, const std::string &msg) {
+          static const std::array<std::string, 6> levels = {
+              "NONE", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
+          // REST log filtering is decoupled from app level setting
+          logger->info("REST trace {}", msg);
+        });
+#else
+    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::WARNING);
+    restc_cpp::Logger::Instance().SetHandler(
+        [](restc_cpp::LogLevel level, const std::string &msg) {
+          static const std::array<std::string, 6> levels = {
+              "NONE", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
+          // REST log filtering is decoupled from app level setting
+          logger->info("REST trace {}", msg);
+        });
+#endif
     REL_INFO("firehose_client v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
+    std::unique_ptr<datasource<firehose_payload>> firehose;
+    std::unique_ptr<datasource<jetstream_payload>> jetstream;
+    std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
+        std::make_shared<bsky::moderation::ozone_adapter>(
+            settings->build_moderation_db_connection_string());
     if (settings->is_full()) {
-      datasource<firehose_payload>(settings).start();
+      firehose.reset(new datasource<firehose_payload>(settings));
+      firehose->start();
+
+      // seed moderation monitor before we start post-processing firehose
+      // messages
+      moderation_data->start();
+
+      // prepare action handlers after we start processing firehose messages
+      // this is time consuming - allow a backlog for handlers while
+      // existing members load
+      action_router::instance().set_config(
+          settings->get_config()[PROJECT_NAME]["auto_reporter"]);
+      action_router::instance().set_moderation_data(moderation_data);
+      action_router::instance().start();
+
+      list_manager::instance().set_config(
+          settings->get_config()[PROJECT_NAME]["list_manager"]);
+      list_manager::instance().start();
+
+      // continue as long as firehose runs OK
+      firehose->wait_for_end_thread();
     } else {
-      datasource<jetstream_payload>(settings).start();
+      jetstream.reset(new datasource<jetstream_payload>(settings));
+      jetstream->start();
+
+      // continue as long as data feed runs OK
+      jetstream->wait_for_end_thread();
     }
 
     return EXIT_SUCCESS;

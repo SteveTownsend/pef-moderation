@@ -25,6 +25,9 @@ http://www.fsf.org/licensing/licenses
 #include <unicode/ustring.h>
 
 namespace json {
+
+restc_cpp::JsonFieldMapping TypeFieldMapping({{"_type", "$type"}});
+
 std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
     TargetFieldNames = {
         {bsky::AppBskyFeedPost,
@@ -46,7 +49,7 @@ std::map<std::string_view, std::vector<nlohmann::json::json_pointer>>
          }},
         {bsky::AppBskyActorProfile,
          {"/description"_json_pointer, "/displayName"_json_pointer}}};
-}
+} // namespace json
 
 namespace bsky {
 down_reason down_reason_from_string(std::string_view down_reason_str) {
@@ -117,8 +120,6 @@ embed_type embed_type_from_string(std::string_view embed_type_str) {
 bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
   std::istringstream is(date_time);
   bsky::parse_time_stamp tp;
-  // optimize for UTC offset 'Z'
-  constexpr const char *UtcDefault = "%FT%TZ";
   // is >> date::parse<bsky::parse_time_stamp, char>(UtcDefault, tp);
   is >> std::chrono::parse(UtcDefault, tp);
   if (!is.fail()) {
@@ -162,6 +163,10 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
 namespace atproto {
 
 at_uri::at_uri(std::string const &uri_str) {
+  if (uri_str.empty()) {
+    _empty = true;
+    return;
+  }
   if (!starts_with(uri_str, URIPrefix)) {
     REL_ERROR("Malformed at-uri {}", uri_str);
     return;
@@ -182,14 +187,14 @@ at_uri::at_uri(std::string const &uri_str) {
       break;
     case 1:
       if (token.empty()) {
-        REL_ERROR("Blank collection in at-uri {}", uri_str);
+        // this is optional
         return;
       }
       _collection.assign(token.cbegin(), token.cend());
       break;
     case 2:
       if (token.empty()) {
-        REL_ERROR("Blank rkey in at-uri {}", uri_str);
+        // this is optional
         return;
       }
       _rkey.assign(token.cbegin(), token.cend());
@@ -201,11 +206,12 @@ at_uri::at_uri(std::string const &uri_str) {
 
 at_uri::at_uri(at_uri const &uri)
     : _authority(uri._authority), _collection(uri._collection),
-      _rkey(uri._rkey) {}
+      _rkey(uri._rkey), _empty(uri._empty) {}
 at_uri &at_uri::operator=(at_uri const &uri) {
   _authority = uri._authority;
   _collection = uri._collection;
   _rkey = uri._rkey;
+  _empty = uri._empty;
   return *this;
 }
 

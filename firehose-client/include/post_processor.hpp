@@ -34,8 +34,6 @@ http://www.fsf.org/licensing/licenses
 
 namespace firehose {
 
-constexpr size_t QueueLimit = 10000;
-
 enum class op { error = -1, message = 1 };
 
 enum class op_type {
@@ -97,9 +95,10 @@ inline op_kind op_kind_from_string(std::string const &op_kind_str) {
 
 template <typename T> class post_processor {
 public:
-  post_processor() : _queue(firehose::QueueLimit) {
+  static constexpr size_t QueueLimit = 10000;
+
+  post_processor() : _queue(QueueLimit) {
     _thread = std::thread([&] {
-      static size_t matches(0);
       while (true) {
         T my_payload;
         _queue.wait_dequeue(my_payload);
@@ -161,8 +160,11 @@ private:
   void handle_content(post_processor<firehose_payload> &processor,
                       std::string const &repo, std::string const &cid,
                       nlohmann::json const &content);
+  void handle_matchable_content(post_processor<firehose_payload> &processor,
+                                std::string const &repo, std::string const &cid,
+                                nlohmann::json const &content);
   parser _parser;
-  candidate_list _candidates;
+  path_candidate_list _path_candidates;
   std::unordered_map<std::string, std::string> _path_by_cid;
 };
 

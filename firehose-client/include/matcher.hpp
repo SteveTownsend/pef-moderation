@@ -28,34 +28,6 @@ http://www.fsf.org/licensing/licenses
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 
-enum class match_type { invalid = 0, substring, whole_word };
-
-inline bool report_from_string(std::string_view str) {
-  if (str == "false")
-    return false;
-  if (str == "true")
-    return true;
-  std::ostringstream err;
-  err << "Bad report flag " << str;
-  throw std::invalid_argument(err.str());
-}
-
-inline match_type match_type_from_string(std::string_view str) {
-  if (str == "substring")
-    return match_type::substring;
-  if (str == "word")
-    return match_type::whole_word;
-  return match_type::invalid;
-}
-
-inline std::string match_type_to_string(match_type my_match_type) {
-  if (my_match_type == match_type::substring)
-    return "substring";
-  if (my_match_type == match_type::whole_word)
-    return "word";
-  return std::string{};
-}
-
 class matcher {
 public:
   matcher();
@@ -71,20 +43,58 @@ public:
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
   match_results
   all_matches_for_candidates(candidate_list const &candidates) const;
+  path_match_results all_matches_for_path_candidates(
+      path_candidate_list const &path_candidates) const;
 
-  struct rule {
+  class rule {
+  public:
+    enum class match_type { substring, whole_word };
+    enum class content_scope { profile, any };
+
+    inline content_scope content_scope_from_string(std::string_view str) {
+      if (str == "profile")
+        return content_scope::profile;
+      if (str == "any")
+        return content_scope::any;
+      std::ostringstream err;
+      err << "Bad content scope " << str;
+      throw std::invalid_argument(err.str());
+    }
+
+    inline match_type match_type_from_string(std::string_view str) {
+      if (str == "substring")
+        return match_type::substring;
+      if (str == "word")
+        return match_type::whole_word;
+      std::ostringstream err;
+      err << "Bad match type " << str;
+      throw std::invalid_argument(err.str());
+    }
+
+    inline std::string match_type_to_string(match_type my_match_type) {
+      if (my_match_type == match_type::substring)
+        return "substring";
+      if (my_match_type == match_type::whole_word)
+        return "word";
+      return std::string{};
+    }
+
     rule(std::string const &rule_string);
     rule(rule const &);
     std::string _target;
     std::string _labels;
     bool _track;
+    bool _report;
+    content_scope _content_scope;
+    std::string _block_list_name;
     match_type _match_type;
     std::string _contingent;
 
-    static constexpr size_t field_count = 5;
+    static constexpr size_t field_count = 4;
     bool matches_any_contingent(std::string const &candidate) const;
 
   private:
+    void store_actions(std::string_view actions);
     mutable aho_corasick::wtrie _substring_trie;
   };
 

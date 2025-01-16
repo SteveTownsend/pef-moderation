@@ -11,7 +11,9 @@ services:
       - type: bind
         source: /firehose-client/logs/
         target: /firehose-client/logs/
-
+      - type: bind
+        source: ./config/
+        target: /firehose-client/config/
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'

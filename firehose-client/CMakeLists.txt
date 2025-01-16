@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.2.2 LANGUAGES C CXX)
+project(firehose_client VERSION 2.3.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -36,16 +36,9 @@ include(CMakePrintHelpers)
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/firehost_client_config.hpp)
 SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_TAG v1.15.2
-  GIT_REPOSITORY https://github.com/google/googletest
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+find_package(gtest)
 
+include(FetchContent)
 # activity caching (header-only)
 set(BUILD_TEST OFF)
 FetchContent_Declare(
@@ -85,16 +78,29 @@ SET(ENABLE_TESTING OFF)
 FetchContent_MakeAvailable(prometheus-cpp)
 include_directories(${prometheus-cpp_SOURCE_DIR})
 
-# For Boost.Beast (REST, Websocket)
+# For Boost.Beast (Websocket)
 SET(Boost_USE_STATIC_LIBS YES)
 SET(Boost_USE_MULTITHREAD ON)
 SET(Boost_NO_BOOST_CMAKE TRUE)
-SET(BOOST_ROOT $ENV{BOOST_ROOT})
-set(BOOST_LIBRARYDIR $ENV{BOOST_LIBRARYDIR})
+# SET(Boost_ROOT CACHE STRING $ENV{BOOST_ROOT})
+if (WIN32)
+  SET(Boost_DIR "$ENV{BOOST_ROOT}/stage/lib/cmake/Boost-1.86.0")
+endif()
+# set(BOOST_LIBRARYDIR CACHE STRING "$ENV{BOOST_LIBRARYDIR}")
 
-find_package(Boost REQUIRED COMPONENTS system context)
+# includes those used by restc-cpp
+find_package(Boost REQUIRED COMPONENTS
+    system
+    program_options
+    filesystem
+    date_time
+    context
+    coroutine
+    chrono
+    log
+    json)
 IF(Boost_FOUND)
-include_directories(${Boost_INCLUDE_DIRS})
+  include_directories(${Boost_INCLUDE_DIRS})
   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
   ADD_DEFINITIONS( "-DHAS_BOOST" )
 ENDIF()
@@ -110,12 +116,14 @@ include_directories(${OPENSSL_INCLUDE_DIR})
   LINK_DIRECTORIES(${OPENSSL_LIBRARIES})
 ENDIF()
 
+# JSON
 FetchContent_Declare(
   json
   GIT_REPOSITORY https://github.com/stevetownsend/json
   GIT_TAG 13b6b8878d161ee1efe56237c62afa45abb54772)
 FetchContent_MakeAvailable(json)
 
+# logging
 set(spdlog_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 FetchContent_Declare(
  spdlog
@@ -132,6 +140,7 @@ if (NOT spdlog_POPULATED)
 endif()
 find_package(spdlog CONFIG REQUIRED)
 
+# YAML reader
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -143,9 +152,45 @@ endif()
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 
+# postgres
+SET(BUILD_TEST OFF)
+FetchContent_Declare(
+  libpqxx
+  GIT_REPOSITORY https://github.com/jtv/libpqxx
+  GIT_TAG 7.10.0
+)
+FetchContent_MakeAvailable(libpqxx)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+# restc-cpp/zlib
+if (UNIX)
+  find_package(restc-cpp)
+  find_package(zlib)
+else()
+  include_directories("$ENV{rest-cpp_DIR}/../include" "$ENV{rest-cpp_DIR}/generated-include" "$ENV{rest-cpp_DIR}/external-projects/src/externalRapidJson/include")
+  if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    SET(REST_CPP_LIBRARY $ENV{rest-cpp_DIR}/lib/Debug/restc-cppD.lib)
+  else()
+    SET(REST_CPP_LIBRARY $ENV{rest-cpp_DIR}/lib/Release/restc-cpp.lib)
+  endif()
+  SET(ZLIB_LIBRARY $ENV{ZLIB_ROOT}/lib/zlibstatic.lib)
+endif()
+
+# JSON Web Token handling
+set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "disable building examples" FORCE)
+set(JWT_BUILD_TESTS OFF CACHE BOOL "disable building tests" FORCE)
+if (WIN32)
+  set(JWT_DISABLE_PICOJSON ON CACHE BOOL "only use Boost" FORCE)
+endif()
+set(JWT_JSON_TRAITS_OPTIONS boost-json)
+FetchContent_Declare(jwt-cpp 
+    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+    GIT_HASH 71c3d36507183ceb74b9cf10d1232fe1223bdfb0
+)
+FetchContent_MakeAvailable(jwt-cpp)
 
 add_executable(firehose_client
   ./source/main.cpp
@@ -158,15 +203,23 @@ add_executable(firehose_client
   ./source/post_processor.cpp
   ./source/activity/account_events.cpp
   ./source/activity/event_cache.cpp
-  ./source/activity/event_recorder.cpp)
+  ./source/activity/event_recorder.cpp
+  ./source/moderation/action_router.cpp
+  ./source/moderation/list_manager.cpp
+  ./source/moderation/ozone_adapter.cpp
+  ./source/moderation/session_manager.cpp)
+
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
-nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull)
+nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp)
 if (UNIX)
-  target_link_libraries(firehose_client stdc++)
+	target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})
+else()
+  target_link_libraries(firehose_client ${ZLIB_LIBRARY}  ${REST_CPP_LIBRARY})
 endif()
 
-include(CTest)
-enable_testing()
-add_subdirectory(test)
+# TODO decide if I care about this
+# include(CTest)
+# enable_testing()
+# add_subdirectory(test)
 

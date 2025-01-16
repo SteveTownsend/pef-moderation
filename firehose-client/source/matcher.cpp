@@ -21,6 +21,7 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "helpers.hpp"
 #include "log_wrapper.hpp"
+#include "moderation/list_manager.hpp"
 #include <exception>
 #include <fstream>
 #include <ranges>
@@ -66,11 +67,15 @@ bool matcher::add_rule(std::string const &match_rule) {
   if (!new_rule._track) {
     return false;
   }
+  if (!new_rule._block_list_name.empty()) {
+    list_manager::instance().register_block_reason(new_rule._block_list_name,
+                                                   new_rule._target);
+  }
   std::wstring canonical_form(to_canonical(new_rule._target));
   // use ICU canonical form for multilanguage support
-  if (new_rule._match_type == match_type::substring)
+  if (new_rule._match_type == rule::match_type::substring)
     _substring_trie.insert(canonical_form);
-  else if (new_rule._match_type == match_type::whole_word)
+  else if (new_rule._match_type == rule::match_type::whole_word)
     _whole_word_trie.insert(canonical_form);
   _is_ready = true;
   return _rule_lookup.insert({canonical_form, new_rule}).second;
@@ -122,7 +127,6 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
     if (!all_matches.empty()) {
       results.emplace_back(next, all_matches);
     }
-    // Filter out any that also require but fail on contingent matching
   }
 
   // strip out matches which do not pass contingent string matching in rule
@@ -140,6 +144,18 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
       next_match = results.erase(next_match);
     } else {
       ++next_match;
+    }
+  }
+  return results;
+}
+
+path_match_results matcher::all_matches_for_path_candidates(
+    path_candidate_list const &path_candidates) const {
+  path_match_results results;
+  for (auto &next : path_candidates) {
+    match_results this_result_set(all_matches_for_candidates(next.second));
+    if (!this_result_set.empty()) {
+      results.emplace_back(next.first, this_result_set);
     }
   }
   return results;
@@ -167,19 +183,13 @@ matcher::rule::rule(std::string const &rule_string) {
       _labels = field;
       break;
     case 2:
-      _track = report_from_string(field);
+      store_actions(field);
       break;
     case 3:
-      _match_type = match_type_from_string(field);
-      if (_match_type == match_type::invalid)
-        throw std::invalid_argument("Invalid matchtype in filter rule " +
-                                    rule_string);
-      break;
-    case 4:
       if (field.empty())
         continue;
       _contingent = field;
-      // make a trie that is used to confirm the rule match
+      // make a trie of 'contingent strings' to confirm rule_string context
       for (const auto subtoken : std::views::split(_contingent, ',')) {
         _substring_trie.insert(to_canonical(std::string_view(subtoken)));
       }
@@ -197,9 +207,55 @@ matcher::rule::rule(std::string const &rule_string) {
                                 " fields in filter rule " + rule_string);
 }
 
+void matcher::rule::store_actions(std::string_view actions) {
+  // with string_view's C++23 range constructor:
+  for (const auto token : std::views::split(actions, ',')) {
+    std::string field(token.cbegin(), token.cend());
+    size_t offset(field.find('='));
+    if (offset == std::string::npos || offset == 0) {
+      throw std::invalid_argument("Invalid rule action " + field +
+                                  ", malformed key-value pair");
+    }
+    std::string value(field, offset + 1);
+    if (offset == std::string::npos) {
+      throw std::invalid_argument("Invalid rule action " + field +
+                                  ", blank value");
+    }
+    if (starts_with(field, "track=")) {
+      _track = bool_from_string(value);
+      continue;
+    }
+    if (starts_with(field, "report=")) {
+      _report = bool_from_string(value);
+      continue;
+    }
+    if (starts_with(field, "scope=")) {
+      _content_scope = content_scope_from_string(value);
+      continue;
+    }
+    if (starts_with(field, "match=")) {
+      _match_type = match_type_from_string(value);
+      continue;
+    }
+    if (starts_with(field, "block=")) {
+      if (!list_manager::is_active_list_for_group(value)) {
+        throw std::invalid_argument(
+            "Invalid rule action " + field +
+            ", hyphen not permitted in list-troup name");
+      }
+      _block_list_name = value;
+      continue;
+    }
+    throw std::invalid_argument("Invalid rule action " + field +
+                                ", invalid key");
+  }
+}
+
 matcher::rule::rule(matcher::rule const &rhs)
     : _target(rhs._target), _labels(rhs._labels), _track(rhs._track),
-      _match_type(rhs._match_type), _contingent(rhs._contingent) {
+      _report(rhs._report), _content_scope(rhs._content_scope),
+      _block_list_name(rhs._block_list_name), _match_type(rhs._match_type),
+      _contingent(rhs._contingent) {
   // make a trie that is used to confirm the rule match
   for (const auto subtoken : std::views::split(_contingent, ',')) {
     _substring_trie.insert(to_canonical(std::string_view(subtoken)));

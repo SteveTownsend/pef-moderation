@@ -2,8 +2,10 @@
 FROM ubuntu:24.10 AS build
 
 RUN apt-get -y update && apt-get -y install sudo 
-ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc g++ ninja-build'
+ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16'
 RUN sudo apt-get -y install $BUILD_DEPS
+RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
+ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
@@ -20,6 +22,18 @@ RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF &
   cmake --build . --parallel 4 && \
   cmake --install .
 
+WORKDIR /usr/src
+RUN git clone https://github.com/SteveTownsend/restc-cpp.git
+WORKDIR /usr/src/restc-cpp
+
+# fetch third-party dependencies
+RUN git submodule init
+RUN git submodule update
+RUN mkdir _build
+WORKDIR /usr/src/restc-cpp/
+RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=trace && cd build && make install
+ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
+
 WORKDIR /usr/src/firehose-client
 COPY . .
 RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
@@ -30,7 +44,7 @@ RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
 FROM ubuntu:24.10
 
 RUN apt-get -y update && apt-get -y install sudo
-ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake'
+ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
 RUN sudo apt-get -y install $RUNTIME_DEPS 
 
 COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
@@ -46,7 +60,7 @@ RUN rm -rf /usr/src && \
   sudo apt-get purge -y --auto-remove cmake
 
 RUN mkdir -p /firehose-client/logs
-ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/full_config.yml"]
+ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/full_config_prod.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
 

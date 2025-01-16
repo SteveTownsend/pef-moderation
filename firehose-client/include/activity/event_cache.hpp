@@ -1,5 +1,5 @@
-#ifndef __activity_cache_hpp__
-#define __activity_cache_hpp__
+#ifndef __event_cache_hpp__
+#define __event_cache_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024

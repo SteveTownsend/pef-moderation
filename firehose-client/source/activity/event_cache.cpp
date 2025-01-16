@@ -63,10 +63,6 @@ void event_cache::on_erase(std::string const &did,
       .operational_stats()
       .Get({{"cached_items", "account"}})
       .Decrement();
-  metrics::instance()
-      .realtime_alerts()
-      .Get({{"accounts", "evicted"}, {"state", "clean"}})
-      .Increment();
   size_t alerts(account->alert_count());
   if (alerts > 0) {
     REL_INFO("Account evicted {} with {} alerts {} events", did, alerts,
@@ -74,7 +70,12 @@ void event_cache::on_erase(std::string const &did,
     // TODO analyze evicted record and report via log file if it is of interest
     metrics::instance()
         .realtime_alerts()
-        .Get({{"accounts", "evicted"}, {"state", "flagged"}})
+        .Get({{"account", "evictions"}, {"state", "flagged"}})
+        .Increment();
+  } else {
+    metrics::instance()
+        .realtime_alerts()
+        .Get({{"account", "evictions"}, {"state", "clean"}})
         .Increment();
   }
 }

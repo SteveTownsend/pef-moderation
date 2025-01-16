@@ -196,12 +196,12 @@ void account::on_erase(atproto::at_uri const &uri,
     // TODO analyze evicted record and report via log file if it is of interest
     metrics::instance()
         .realtime_alerts()
-        .Get({{"account", "evicted_content"}, {"state", "flagged"}})
+        .Get({{"account", "content_evictions"}, {"state", "flagged"}})
         .Increment();
   } else {
     metrics::instance()
         .realtime_alerts()
-        .Get({{"account", "evicted_content"}, {"state", "clean"}})
+        .Get({{"account", "content_evictions"}, {"state", "clean"}})
         .Increment();
   }
 }

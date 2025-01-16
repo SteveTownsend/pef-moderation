@@ -45,7 +45,8 @@ public:
   candidate_list
   get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data);
   candidate_list get_candidates_from_json(nlohmann::json &full_json) const;
-  candidate_list get_candidates_from_record(nlohmann::json const &record) const;
+  static candidate_list
+  get_candidates_from_record(nlohmann::json const &record);
 
   template <typename IteratorType>
   bool json_from_cbor(IteratorType first, IteratorType last) {
