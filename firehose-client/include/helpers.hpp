@@ -243,6 +243,22 @@ inline std::string print_current_time() {
   return std::format("{0:%F}T{0:%T}Z", std::chrono::utc_clock::now());
 }
 
+template <typename T>
+inline std::string format_vector(std::vector<T> const &vals) {
+#ifdef _WIN32
+  return std::print(vals);
+#else
+  std::ostringstream oss;
+  oss << '[';
+  for (auto const &val : val) {
+    oss << '"';
+    oss << std::print(val);
+    oss << '"';
+  }
+  oss << ']';
+#endif
+}
+
 template <> struct std::less<atproto::at_uri> {
   bool operator()(const atproto::at_uri &lhs, const atproto::at_uri &rhs) {
     if (lhs._authority == rhs._authority) {

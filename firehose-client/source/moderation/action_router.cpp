@@ -161,8 +161,8 @@ void action_router::send_report(std::string const &did,
   properties.name_mapping = &json::TypeFieldMapping;
   reported(did);
   if (_dry_run) {
-    REL_INFO("Dry-run Report of {} for rules {} on paths {}", did, filters,
-             paths);
+    REL_INFO("Dry-run Report of {} for rules {} on paths {}", did,
+             format_vector(filters), format_vector(paths));
     return;
   }
   size_t retries(0);
@@ -220,8 +220,8 @@ void action_router::send_report(std::string const &did,
               .get();
       REL_INFO("Report of {} for rules {} on paths {} recorded at {}, reporter "
                "{} id={}",
-               did, filters, paths, response.createdAt, response.reportedBy,
-               response.id);
+               did, format_vector(filters), format_vector(paths),
+               response.createdAt, response.reportedBy, response.id);
       break;
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
@@ -232,12 +232,12 @@ void action_router::send_report(std::string const &did,
         // unrecoverable error
         REL_ERROR(
             "Create report of {} for rules {} on paths {} Boost exception {}",
-            did, filters, paths, exc.what())
+            did, format_vector(filters), format_vector(paths), exc.what());
         break;
       }
     } catch (std::exception const &exc) {
       REL_ERROR("Create report of {} for rules {} on paths {} exception {}",
-                did, filters, paths, exc.what())
+                did, format_vector(filters), format_vector(paths), exc.what());
       break;
     }
   }
