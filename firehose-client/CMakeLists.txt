@@ -88,7 +88,17 @@ if (WIN32)
 endif()
 # set(BOOST_LIBRARYDIR CACHE STRING "$ENV{BOOST_LIBRARYDIR}")
 
-find_package(Boost REQUIRED COMPONENTS system context)
+# includes those used by restc-cpp
+find_package(Boost REQUIRED COMPONENTS
+    system
+    program_options
+    filesystem
+    date_time
+    context
+    coroutine
+    chrono
+    log
+    json)
 IF(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
@@ -155,9 +165,9 @@ set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
 
-# rest-cpp/zlib
+# restc-cpp/zlib
 if (UNIX)
-  find_package(rest-cpp)
+  find_package(restc-cpp)
   find_package(zlib)
 else()
   include_directories("$ENV{rest-cpp_DIR}/../include" "$ENV{rest-cpp_DIR}/generated-include" "$ENV{rest-cpp_DIR}/external-projects/src/externalRapidJson/include")
@@ -172,7 +182,9 @@ endif()
 # JSON Web Token handling
 set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "disable building examples" FORCE)
 set(JWT_BUILD_TESTS OFF CACHE BOOL "disable building tests" FORCE)
-set(JWT_DISABLE_PICOJSON ON CACHE BOOL "only use Boost" FORCE)
+if (WIN32)
+  set(JWT_DISABLE_PICOJSON ON CACHE BOOL "only use Boost" FORCE)
+endif()
 set(JWT_JSON_TRAITS_OPTIONS boost-json)
 FetchContent_Declare(jwt-cpp 
     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
@@ -201,7 +213,7 @@ target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINA
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
 nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp)
 if (UNIX)
-  target_link_libraries(firehose_client stdc++ rest-cpp zlib)
+	target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})
 else()
   target_link_libraries(firehose_client ${ZLIB_LIBRARY}  ${REST_CPP_LIBRARY})
 endif()

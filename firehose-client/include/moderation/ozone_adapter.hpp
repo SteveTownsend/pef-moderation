@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include <chrono>
 #include <mutex>
 #include <pqxx/pqxx>
+#include <thread>
 #include <unordered_set>
 
 namespace bsky {

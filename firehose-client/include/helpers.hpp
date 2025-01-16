@@ -246,16 +246,23 @@ inline std::string print_current_time() {
 template <typename T>
 inline std::string format_vector(std::vector<T> const &vals) {
 #ifdef _WIN32
-  return std::print(vals);
+  return std::format("{}", vals);
 #else
   std::ostringstream oss;
   oss << '[';
-  for (auto const &val : val) {
+  bool first(true);
+  for (auto const &val : vals) {
+    if (!first) {
+      oss << ", ";
+    } else {
+      first = false;
+    }
     oss << '"';
-    oss << std::print(val);
+    oss << std::format("{}", val);
     oss << '"';
   }
   oss << ']';
+  return oss.str();
 #endif
 }
 
