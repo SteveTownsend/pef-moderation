@@ -166,16 +166,16 @@ void action_router::send_report(std::string const &did,
     return;
   }
   size_t retries(0);
+  bsky::moderation::report_response response;
   while (retries < 5) {
     try {
-      bsky::moderation::report_response response =
+      response =
           _rest_client
               ->ProcessWithPromiseT<bsky::moderation::report_response>(
                   [&](restc_cpp::Context &ctx) {
                     // This is a co-routine, running in a worker-thread
 
                     // Instantiate a report_response structure.
-                    bsky::moderation::report_response response;
                     bsky::moderation::report_request request;
                     request.subject.did = did;
 

@@ -30,8 +30,44 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 
 namespace bsky {
+// app.bsky.richtext.facet
+struct byte_slice {
+  std::string _type;
+  int32_t byteStart;
+  int32_t byteEnd;
+};
 
-namespace moderation {
+struct facet_data {
+  std::string _type;
+  std::string did; // mention
+  std::string tag; // hashtag
+  std::string uri; // link
+};
+
+// app.bsky.richtext.facet
+struct richtext_facet {
+  std::string _type = std::string(AppBskyRichtextFacet);
+  byte_slice index;
+  std::vector<facet_data> features;
+};
+
+// app.bsky.graph.list - restricted to the fields used by lists we manage
+struct list {
+  std::string _type = std::string(AppBskyGraphList);
+  std::string purpose = std::string(AppBskyGraphDefsModlist);
+  std::string name;
+  std::string description;
+  std::vector<richtext_facet> descriptionFacets;
+  std::string createdAt = print_current_time();
+};
+
+// app.bsky.graph.listitem
+struct listitem {
+  std::string _type = std::string(AppBskyGraphListItem);
+  std::string subject;
+  std::string list;
+  std::string createdAt = print_current_time();
+};
 
 // app.bsky.graph.getLists
 struct get_lists_request {
@@ -60,8 +96,12 @@ struct get_list_request {
   std::string cursor;
 };
 
+struct item_subject {
+  std::string did;
+};
 struct item_definition {
   std::string uri;
+  item_subject subject;
 };
 
 struct get_list_response {
@@ -69,55 +109,64 @@ struct get_list_response {
   std::vector<item_definition> items;
 };
 
+} // namespace bsky
+
+namespace atproto {
+
 // com.atproto.repo.createRecord (any)
 struct create_record_response {
   std::string uri;
+  std::string cid;
 };
 
-// com.atproto.repo.createRecord (app.bsky.graph.list)
-struct list {
-  std::string _type = std::string(AppBskyGraphList);
-  std::string purpose = std::string(AppBskyGraphDefsModlist);
-  std::string name;
-  std::string description;
-  std::string createdAt =
-      std::format("{0:%F}T{0:%T}Z", std::chrono::utc_clock::now());
+// com.atproto.repo.putRecord (any)
+struct put_record_response {
+  std::string uri;
+  std::string cid;
 };
 
-struct create_list_request {
+struct create_record_list_request {
   std::string repo;
-  std::string collection = std::string(AppBskyGraphList);
-  list record;
+  std::string collection = std::string(bsky::AppBskyGraphList);
+  bsky::list record;
 };
 
-// com.atproto.repo.createRecord (app.bsky.graph.listitem)
-struct listitem {
-  std::string _type = std::string(AppBskyGraphListItem);
-  std::string subject;
-  std::string list;
-  std::string createdAt =
-      std::format("{0:%F}T{0:%T}Z", std::chrono::utc_clock::now());
-};
-
-struct create_listitem_request {
+struct create_record_listitem_request {
   std::string repo;
-  std::string collection = std::string(AppBskyGraphListItem);
-  listitem record;
+  std::string collection = std::string(bsky::AppBskyGraphListItem);
+  bsky::listitem record;
 };
 
-} // namespace moderation
+struct get_record_list_response {
+  std::string uri;
+  std::string cid;
+  bsky::list value;
+};
 
-} // namespace bsky
+struct put_record_list_request {
+  std::string repo;
+  std::string collection;
+  std::string rkey;
+  bsky::list record;
+};
+
+} // namespace atproto
 
 struct block_list_addition {
   std::string _did;
-  std::string _list_name;
+  // block={name} in string filter rule identifies a *group of lists*.
+  // The most recent and current-active has a name matching the group-name. The
+  // others have names suffixed by the date/time they were rolled off as full.
+  // The dated ones are archived - we just load their members to avoid
+  // reprocessing.
+  std::string _list_group_name;
 };
 
-typedef std::unordered_map<std::string, atproto::at_uri> list_uri_by_name;
-typedef std::unordered_map<atproto::at_uri, std::unordered_set<std::string>,
-                           atproto::at_uri_hash>
-    list_membership;
+typedef std::unordered_map<std::string, atproto::at_uri> list_uris_by_name;
+typedef std::unordered_map<std::string, std::unordered_set<std::string>>
+    active_list_membership_for_group;
+typedef std::unordered_map<std::string, std::unordered_set<std::string>>
+    list_group_membership;
 
 class list_manager {
 public:
@@ -126,6 +175,7 @@ public:
   static constexpr size_t QueueLimit = 50000;
   static constexpr std::chrono::milliseconds DequeueTimeout =
       std::chrono::milliseconds(10000);
+  static constexpr size_t MaxItemsInList = 5000;
 
   static list_manager &instance();
   void set_config(YAML::Node const &settings);
@@ -137,6 +187,10 @@ public:
     _block_reasons[list_name].insert(reason);
   }
 
+  inline static bool is_active_list_for_group(std::string const &list_name) {
+    return !list_name.contains('-');
+  }
+
 private:
   list_manager();
   ~list_manager() = default;
@@ -145,36 +199,45 @@ private:
 
   inline atproto::at_uri list_is_available(std::string const &list_name) const {
     auto const &list_xref(_list_lookup.find(list_name));
-    if (list_xref != _list_lookup.cend() &&
-        _list_members.find(list_xref->second) != _list_members.cend()) {
+    if (list_xref != _list_lookup.cend()) {
       return list_xref->second;
     }
     return atproto::at_uri::empty();
   }
 
-  inline bool is_account_in_list(std::string const &did,
-                                 std::string const &list_name) const {
-    auto const &list_xref(_list_lookup.find(list_name));
-    if (list_xref == _list_lookup.cend()) {
-      return false;
-    }
-    auto this_list(_list_members.find(list_xref->second));
-    return this_list != _list_members.cend() && this_list->second.contains(did);
+  inline bool
+  is_account_in_list_group(std::string const &did,
+                           std::string const &list_group_name) const {
+    auto const &list_group_members(_list_group_members.find(list_group_name));
+    return list_group_members != _list_group_members.cend() &&
+           list_group_members->second.contains(did);
   }
 
-  inline atproto::at_uri record_account_in_list(std::string const &did,
-                                                std::string const &list_name) {
-    auto const &list_xref(_list_lookup.find(list_name));
-    if (list_xref == _list_lookup.end()) {
-      return atproto::at_uri::empty();
+  inline void record_account_in_list_and_group(std::string const &did,
+                                               std::string const &list_name) {
+    if (is_active_list_for_group(list_name)) {
+      auto this_list(_active_list_members_for_group.find(list_name));
+      if (this_list == _active_list_members_for_group.end()) {
+        _active_list_members_for_group.insert({list_name, {{did}}});
+      } else {
+        this_list->second.insert(did);
+      }
     }
-    auto this_list(_list_members.find(list_xref->second));
-    if (this_list == _list_members.end()) {
-      _list_members.insert({list_xref->second, {{did}}});
+    auto this_list_group(
+        _list_group_members.find(as_list_group_name(list_name)));
+    if (this_list_group == _list_group_members.end()) {
+      _list_group_members.insert({as_list_group_name(list_name), {{did}}});
     } else {
-      this_list->second.insert(did);
+      this_list_group->second.insert(did);
     }
-    return list_xref->second;
+  }
+
+  inline static std::string as_list_group_name(std::string const &list_name) {
+    size_t offset(list_name.find('='));
+    if (offset == std::string::npos) {
+      return list_name;
+    }
+    return list_name.substr(0, offset);
   }
 
   inline void make_known_list_available(std::string const &list_name,
@@ -183,11 +246,19 @@ private:
       REL_ERROR("Registering list {} with uri {} failed, already registered",
                 list_name, std::string(uri));
     }
-    if (!_list_members.insert({uri, {}}).second) {
-      REL_ERROR(
-          "Registering list {} with uri {} failed, membership-list already "
-          "registered",
-          list_name, std::string(uri));
+    // this is the normal case for list archival on size-limit being reached
+    if (!_list_group_members.insert({as_list_group_name(list_name), {}})
+             .second) {
+      REL_INFO("Registering group for list {} with uri {} failed, already "
+               "registered",
+               list_name, std::string(uri));
+    }
+    if (is_active_list_for_group(list_name) &&
+        !_active_list_members_for_group.insert({list_name, {}}).second) {
+      REL_ERROR("Registering active list {} with uri {} failed, "
+                "membership-list already "
+                "registered",
+                list_name, std::string(uri));
     }
   }
 
@@ -197,7 +268,7 @@ private:
     auto const &reasons(_block_reasons.find(list_name));
     if (reasons != _block_reasons.cend()) {
       for (auto const &reason : reasons->second) {
-        oss << ' \'' << reason << '\'';
+        oss << " '" << reason << "'";
       }
       return oss.str();
     }
@@ -206,10 +277,14 @@ private:
   }
 
   atproto::at_uri load_or_create_list(std::string const &list_name);
-  atproto::at_uri ensure_list_is_available(std::string const &list_name);
+  atproto::at_uri
+  ensure_list_group_is_available(std::string const &list_group_name);
+  atproto::at_uri archive_if_needed(std::string const &list_group_name,
+                                    atproto::at_uri const &list_uri);
 
-  atproto::at_uri add_account_to_list(std::string const &did,
-                                      std::string const &list_name);
+  atproto::at_uri
+  add_account_to_list_and_group(std::string const &did,
+                                std::string const &list_group_name);
 
   std::thread _thread;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
@@ -222,8 +297,9 @@ private:
   std::string _port;
   std::string _client_did;
   bool _dry_run = true;
-  list_uri_by_name _list_lookup;
-  list_membership _list_members;
+  list_uris_by_name _list_lookup;
+  list_group_membership _list_group_members;
+  active_list_membership_for_group _active_list_members_for_group;
   std::unordered_map<std::string, std::unordered_set<std::string>>
       _block_reasons;
 };

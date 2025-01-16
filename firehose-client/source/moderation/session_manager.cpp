@@ -45,13 +45,11 @@ void pds_session::connect(bsky::login_info const &credentials) {
                   [&](restc_cpp::Context &ctx) {
                     // This is a co-routine, running in a worker-thread
 
-                    // Instantiate a session_tokens structure.
-                    bsky::session_tokens session;
                     // Serialize it asynchronously. The asynchronously part
                     // does not really matter here, but it may if you receive
                     // huge data structures.
                     restc_cpp::SerializeFromJson(
-                        session,
+                        _tokens,
 
                         // Construct a request to the server
                         restc_cpp::RequestBuilder(ctx)
@@ -62,7 +60,7 @@ void pds_session::connect(bsky::login_info const &credentials) {
                             .Execute());
 
                     // Return the session instance through C++ future<>
-                    return session;
+                    return _tokens;
                   })
 
               // Get the Post instance from the future<>, or any C++ exception
@@ -106,13 +104,11 @@ void pds_session::check_refresh() {
                     [&](restc_cpp::Context &ctx) {
                       // This is a co-routine, running in a worker-thread
 
-                      // Instantiate a session_tokens structure.
-                      bsky::session_tokens session;
                       // Serialize it asynchronously. The asynchronously part
                       // does not really matter here, but it may if you receive
                       // huge data structures.
                       restc_cpp::SerializeFromJson(
-                          session,
+                          _tokens,
 
                           // Construct a request to the server
                           restc_cpp::RequestBuilder(ctx)
@@ -125,7 +121,7 @@ void pds_session::check_refresh() {
                               .Execute());
 
                       // Return the session instance through C++ future<>
-                      return session;
+                      return _tokens;
                     })
 
                 // Get the Post instance from the future<>, or any C++ exception

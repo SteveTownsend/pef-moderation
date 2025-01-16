@@ -238,6 +238,11 @@ void matcher::rule::store_actions(std::string_view actions) {
       continue;
     }
     if (starts_with(field, "block=")) {
+      if (!list_manager::is_active_list_for_group(value)) {
+        throw std::invalid_argument(
+            "Invalid rule action " + field +
+            ", hyphen not permitted in list-troup name");
+      }
       _block_list_name = value;
       continue;
     }

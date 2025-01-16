@@ -187,10 +187,11 @@ class account {
 public:
   // per-post facet abuse thresholds - hashtag, links, mentions, total
   // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/75
-  static constexpr size_t TagFacetThreshold = 30;
+  // 99.9% threshold based on observed metrics
+  static constexpr size_t TagFacetThreshold = 32;
   static constexpr size_t LinkFacetThreshold = 10;
   static constexpr size_t MentionFacetThreshold = 11;
-  static constexpr size_t TotalFacetThreshold = 27;
+  static constexpr size_t TotalFacetThreshold = 29;
   // allow occasional verbosity in facets
   static constexpr size_t FacetFactor = 5;
 

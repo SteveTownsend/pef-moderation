@@ -78,6 +78,7 @@ constexpr std::string_view AppBskyEmbedRecordWithMedia =
     "app.bsky.embed.recordWithMedia";
 constexpr std::string_view AppBskyEmbedVideo = "app.bsky.embed.video";
 
+constexpr std::string_view AppBskyRichtextFacet = "app.bsky.richtext.facet";
 constexpr std::string_view AppBskyRichtextFacetLink =
     "app.bsky.richtext.facet#link";
 constexpr std::string_view AppBskyRichtextFacetMention =
@@ -237,6 +238,10 @@ inline bool operator==(const at_uri &lhs, const at_uri &rhs) {
 }
 
 } // namespace atproto
+
+inline std::string print_current_time() {
+  return std::format("{0:%F}T{0:%T}Z", std::chrono::utc_clock::now());
+}
 
 template <> struct std::less<atproto::at_uri> {
   bool operator()(const atproto::at_uri &lhs, const atproto::at_uri &rhs) {
