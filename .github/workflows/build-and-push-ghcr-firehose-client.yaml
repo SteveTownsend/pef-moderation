@@ -1,8 +1,8 @@
 name: build-and-push-ghcr-firehose-client
 on:
   push:
-#    branches:
-#      - main  too verbose, build is slow
+    branches:
+      - main
     tags:
       - v*
 env:
@@ -42,6 +42,7 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=long
