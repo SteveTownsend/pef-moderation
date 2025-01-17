@@ -9,11 +9,11 @@ services:
       - "59090:59090"
     volumes:
       - type: bind
-        source: ./logs/
+        source: /firehose-client/logs/
         target: /firehose-client/logs/
       - type: bind
-        source: ./config/
-        target: /firehose-client/config/
+        source: /firehose-client/config/full_config_prod.yml
+        target: /etc/firehose-client/full_config_prod.yml
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
@@ -26,7 +26,7 @@ services:
         source: ./logs/
         target: /var/logs/
       - ./promtail/positions/:/etc/promtail/positions/
-      - ./config/promtail.yaml/:/etc/promtail/promtail.yaml
+      - ./config/promtail.yaml:/etc/promtail/promtail.yaml
     ports:
       - "9080:9080"
     command: -config.file=/etc/promtail/promtail.yaml
@@ -47,3 +47,4 @@ services:
       WATCHTOWER_CLEANUP: true
       WATCHTOWER_SCHEDULE: '@midnight'
       WATCHTOWER_LABEL_ENABLE: true
+

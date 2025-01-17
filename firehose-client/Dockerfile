@@ -52,15 +52,15 @@ WORKDIR /usr/src/prometheus-cpp/_build
 RUN cmake --install .
 
 WORKDIR /firehose-client
+RUN mkdir -p /firehose-client/logs /etc/firehose-client
 COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /firehose-client
-COPY --from=build /usr/src/firehose-client/config /firehose-client/config
+COPY --from=build /usr/src/firehose-client/config/live_filters /etc/firehose-client/live_filters
 
 RUN rm -rf /usr/src && \
   rm -rf /var/lib/apt/lists/* && \
   sudo apt-get purge -y --auto-remove cmake
 
-RUN mkdir -p /firehose-client/logs
-ENTRYPOINT ["/firehose-client/firehose_client", "/firehose-client/config/full_config_prod.yml"]
+ENTRYPOINT ["/firehose-client/firehose_client", "/etc/firehose-client/full_config_prod.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
 
