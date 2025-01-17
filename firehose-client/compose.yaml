@@ -12,8 +12,8 @@ services:
         source: /firehose-client/logs/
         target: /firehose-client/logs/
       - type: bind
-        source: ./config/
-        target: /firehose-client/config/
+        source: /firehose-client/config/full_config_prod.yml
+        target: /etc/firehose-client/full_config_prod.yml
     restart: unless-stopped
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
@@ -47,3 +47,4 @@ services:
       WATCHTOWER_CLEANUP: true
       WATCHTOWER_SCHEDULE: '@midnight'
       WATCHTOWER_LABEL_ENABLE: true
+
