@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
+#include "moderation/embed_checker.hpp"
 #include "post_processor.hpp"
 #include <boost/beast/core.hpp>
 
@@ -39,6 +40,7 @@ public:
     _is_ready = true;
     _post_processor.set_matcher(_matcher);
     action_router::instance().set_matcher(_matcher);
+    bsky::moderation::embed_checker::instance().set_matcher(_matcher);
   }
 
   std::string get_filter() const { return _filter_file; }

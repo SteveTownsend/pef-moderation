@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include "config.hpp"
 #include "helpers.hpp"
 #include "log_wrapper.hpp"
+#include "matcher.hpp"
 #include "nlohmann/json.hpp"
 #include <algorithm>
 #include <boost/beast/core.hpp>

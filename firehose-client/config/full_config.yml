@@ -41,10 +41,5 @@ firehose_client:
     port: 443
     dry_run: true
 
-  report_sink:
-    url: "https://ozone.nafo-moderation.org"
-    requestType: "POST"
-    path: "/xrpc/com.atproto.moderation.createReport"
-
   metrics:
     port: 59090

@@ -19,7 +19,6 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "parser.hpp"
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
 #include <string>
@@ -27,6 +26,34 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_map>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
+
+// filter match candidate
+struct candidate {
+  std::string _type;
+  std::string _field;
+  std::string _value;
+  bool operator==(candidate const &rhs) const;
+};
+// Path->candidate association
+typedef std::vector<candidate> candidate_list;
+typedef std::vector<std::pair<std::string, candidate_list>> path_candidate_list;
+
+// Stores context that matched one or more filters, and the matches
+struct match_result {
+  candidate _candidate;
+  aho_corasick::wtrie::emit_collection _matches;
+};
+typedef std::vector<match_result> match_results;
+typedef std::vector<std::pair<std::string, match_results>> path_match_results;
+
+struct account_filter_matches {
+  std::string _did;
+  path_match_results _matches;
+};
+
+inline bool candidate::operator==(candidate const &rhs) const {
+  return _type == rhs._type && _field == rhs._field && _value == rhs._value;
+}
 
 class matcher {
 public:
@@ -46,6 +73,7 @@ public:
   path_match_results all_matches_for_path_candidates(
       path_candidate_list const &path_candidates) const;
 
+  void report_if_needed(account_filter_matches &matches);
   class rule {
   public:
     enum class match_type { substring, whole_word };

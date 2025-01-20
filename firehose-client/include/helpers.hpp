@@ -220,6 +220,60 @@ struct at_uri_hash {
   }
 };
 
+template <typename IteratorType> class cid_decoder {
+public:
+  cid_decoder(IteratorType begin, IteratorType end)
+      : _begin(begin), _end(end), _current(begin) {}
+
+  // decode CID
+  inline nlohmann::json decode() {
+    uint64_t version(read_u64_leb128());
+    // TODO account for two unexplained bytes
+    version = read_u64_leb128();
+    version = read_u64_leb128();
+    uint64_t codec(read_u64_leb128());
+    uint64_t digest_length(0);
+    if (version == 0x12 && codec == 0x20) {
+      // handle v0 CID - digest is always 32 bytes
+      digest_length = 32;
+      version = 0;
+    } else {
+      // read Multihash
+      digest_length = read_u64_leb128();
+    }
+    std::vector<unsigned char> digest(digest_length);
+    for (auto next = digest.begin(); next != digest.end(); ++next) {
+      *next = get();
+    }
+    // Caller needs to process according to context
+    return nlohmann::json(
+        {{"digest", std::string(digest.cbegin(), digest.cend())},
+         {"version", version},
+         {"codec", codec}});
+  }
+
+private:
+  unsigned char get() const { return *_current++; }
+
+  uint64_t read_u64_leb128() const {
+    unsigned char uchar(0);
+    uint32_t shift(0);
+    uint64_t result(0);
+    while (true) {
+      uchar = get();
+      if (!(uchar & 0x80)) {
+        result |= (uchar << shift);
+        return result;
+      } else {
+        result |= ((uchar & 0x7F) << shift);
+      }
+    }
+  }
+  IteratorType _begin;
+  IteratorType _end;
+  mutable IteratorType _current;
+};
+
 struct at_uri_less {
   bool operator()(const at_uri &lhs, const at_uri &rhs) const {
     if (lhs._authority == rhs._authority) {
@@ -327,23 +381,4 @@ struct std::formatter<aho_corasick::wtrie::emit_collection>
                                           ctx);
   }
 };
-
-// filter match candidate
-struct candidate {
-  std::string _type;
-  std::string _field;
-  std::string _value;
-  bool operator==(candidate const &rhs) const;
-};
-// Path->candidate association
-typedef std::vector<candidate> candidate_list;
-typedef std::vector<std::pair<std::string, candidate_list>> path_candidate_list;
-
-// Stores context that matched one or more filters, and the matches
-struct match_result {
-  candidate _candidate;
-  aho_corasick::wtrie::emit_collection _matches;
-};
-typedef std::vector<match_result> match_results;
-typedef std::vector<std::pair<std::string, match_results>> path_match_results;
 #endif

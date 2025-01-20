@@ -57,6 +57,7 @@ mintpress_news/|disinfo,disruptive|track=true,report=true,scope=any,match=substr
 newsmax.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Richard Wolff|disinfo,network|track=true,report=true,scope=any,match=substring|
 democracyatwork|disinfo,network|track=true,report=true,scope=any,match=substring|
+democracynow.org/|disinfo,network|track=true,report=true,scope=any,match=substring|
 thealtworld.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 thegatewaypundit.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 revolver.news|disinfo,network|track=true,report=true,scope=any,match=substring|
@@ -75,9 +76,10 @@ truthfeed.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 texasscorecard.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 townhall.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 visiontimes.com|disinfo,network|track=true,report=true,scope=any,match=substring|
-washingtontimes.com|disinfo,network|track=true,report=true,scope=any,match=substring|
+washingtontimes.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
 westernjournal.com|disinfo,network|track=true,report=true,scope=any,match=substring|
-zerohedge.com|disinfo,network|track=true,report=true,scope=any,match=substring|
+zerohedge.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
+judgenap.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
 thealtworld.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 thefederalist.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 animallovers2024.foundation|disinfo,network|track=true,report=true,scope=any,match=substring|
@@ -135,7 +137,7 @@ gatewayhispanic.com/|abusive,disinfo,disruptive,network|track=true,report=true,s
 shattertheswarm.com|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 truthfreedomhealth.com|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 felastory.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
-infosannio.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
+infosannio.com/|abusive,disinfo,disruptive,network|track=true,report=false,scope=any,match=substring|
 ezone57.net/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 swentr.site/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 mahendrarajah.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
@@ -204,6 +206,7 @@ middleeasteye.net/|abusive,disinfo,disruptive|track=true,report=true,scope=any,m
 watcher.guru/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
  by Neutrality Studies|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Tuomas Malinen|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by Useful Idiots|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 ## short link to Al Jazeera (redirects should find this)
 aje.io/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 aljazeera.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
@@ -270,14 +273,23 @@ uniparty|disinfo,disruptive|track=true,report=true,scope=any,match=word|
 shitlib|abusive,disruptive|track=false,report=false,scope=any,match=substring|
 woke|abusive,disruptive|track=true,report=true,scope=any,match=substring|mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt
 only two genders|abusive,disinfo|track=true,report=true,scope=profile,match=substring|
-#pureblood|disinfo,disruptive|track=true,report=true,scope=any,match=word|
+## MAGA automation
+#pureblood|disinfo,disruptive|track=true,report=true,scope=profile,match=word|
+#MAGA|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#TrumpWon|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#Trump2.0|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#Trump2024|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+AmericaFirst|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
 ## Porn hashtags
 #kink|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
 #porn|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
 #nsfw|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-## Porn bots
+## Porn bots and other overtly NSFW content
 onlyfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-getallmylinks.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+loyalfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
+justfor.fans/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
+allmylinks.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+cammodels.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 fans.ly/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 ## not always nsfw
 carrrd.co/|disruptive,engagementfarmer,network|track=false,report=false,scope=any,block=nsfw,match=substring|
@@ -287,6 +299,7 @@ is.gd/|disruptive,engagementfarmer|track=true,report=false,scope=any,match=subst
 shorturl.at/|disruptive,engagementfarmer|track=false,report=false,scope=profile,match=substring|
 ## URLs may redirect to Telegram
 tg://resolve?|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
+tg://join?|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
 /t.me/|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
 ## bot network profile templates - currently not useful
 lover of|disruptive|track=false,report=false,scope=profile,match=substring|always curious about

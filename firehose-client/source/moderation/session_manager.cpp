@@ -87,7 +87,6 @@ void pds_session::connect(bsky::login_info const &credentials) {
 }
 
 void pds_session::check_refresh() {
-  // TODO handle session refresh when access or refresh token expiry is near
   auto now(std::chrono::system_clock::now());
   auto time_to_expiry(std::chrono::duration_cast<std::chrono::milliseconds>(
                           _access_expiry - now)

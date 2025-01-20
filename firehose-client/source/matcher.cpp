@@ -21,7 +21,10 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "helpers.hpp"
 #include "log_wrapper.hpp"
+#include "metrics.hpp"
 #include "moderation/list_manager.hpp"
+#include "moderation/report_agent.hpp"
+#include "parser.hpp"
 #include <exception>
 #include <fstream>
 #include <ranges>
@@ -159,6 +162,59 @@ path_match_results matcher::all_matches_for_path_candidates(
     }
   }
   return results;
+}
+
+void matcher::report_if_needed(account_filter_matches &matches) {
+
+  // iterate the match results for any rules that are marked
+  // auto-reportable
+  std::vector<std::string> paths;
+  std::vector<std::string> all_filters;
+  for (auto const &result : matches._matches) {
+    // this is the substring of the full JSON that matched one or more
+    // desired strings
+    std::string path(result.first);
+    std::vector<std::string> filters;
+    for (auto const &next_match : result.second) {
+      for (auto const &match : next_match._matches) {
+        matcher::rule matched_rule(find_rule(match.get_keyword()));
+        if (!matched_rule._report) {
+          // report not requested for this rule
+          continue;
+        }
+        if (!matched_rule._block_list_name.empty()) {
+          list_manager::instance().wait_enqueue(
+              {matches._did, matched_rule._block_list_name});
+        }
+        if (matched_rule._content_scope == matcher::rule::content_scope::any) {
+          filters.push_back(matched_rule._target);
+        } else if (matched_rule._content_scope ==
+                   matcher::rule::content_scope::profile) {
+          // report only if seen in profile
+          if (next_match._candidate._type == bsky::AppBskyActorProfile) {
+            filters.push_back(matched_rule._block_list_name);
+          }
+        }
+      }
+      if (!filters.empty()) {
+        paths.push_back(path);
+        all_filters.insert(all_filters.cend(), filters.cbegin(),
+                           filters.cend());
+      }
+    }
+  }
+
+  // record the account as a delta to cache for dup detection
+  if (!all_filters.empty()) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            matches._did,
+            bsky::moderation::filter_matches(all_filters, paths)));
+    metrics::instance()
+        .realtime_alerts()
+        .Get({{"auto_reports", "submitted"}})
+        .Increment();
+  }
 }
 
 matcher::rule::rule(std::string const &rule_string) {

@@ -21,6 +21,7 @@ http://www.fsf.org/licensing/licenses
 #include "post_processor.hpp"
 #include "activity/account_events.hpp"
 #include "moderation/action_router.hpp"
+#include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 
 jetstream_payload::jetstream_payload() {}
@@ -244,29 +245,95 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
   }
 }
 
+bsky::embed_type
+firehose_payload::context::process_embed(nlohmann::json const &embed) {
+  // TODO pass along the embeds for checking
+  std::string uri;
+  nlohmann::json cid;
+  nlohmann::json::binary_t encoded_cid;
+  bsky::embed_type embed_type = bsky::embed_type_from_string(_embed_type_str);
+  switch (embed_type) {
+  case bsky::embed_type::record:
+  case bsky::embed_type::record_with_media:
+    // Embedded record, this is a quote post
+    _event_type = bsky::tracked_event::quote;
+    _recorded = true;
+    uri = embed_type == bsky::embed_type::record
+              ? embed["record"]["uri"].template get<std::string>()
+              : embed["record"]["record"]["uri"].template get<std::string>();
+    _processor.request_recording(
+        {_repo,
+         bsky::time_stamp_from_iso_8601(
+             _content["createdAt"].template get<std::string>()),
+         activity::quote(_this_path, uri)});
+    // nested media must be checked
+    if (embed_type == bsky::embed_type::record_with_media) {
+      // TODO fix recursive checking
+      //      process_embed(embed["media"]);
+      add_embed(embed::record(uri));
+    }
+    break;
+  case bsky::embed_type::external:
+    add_embed(
+        embed::external(embed["external"]["uri"].template get<std::string>()));
+    if (embed["external"].contains("thumb")) {
+      encoded_cid = embed["external"]["thumb"]["ref"]
+                        .template get<nlohmann::json::binary_t>();
+      cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+                encoded_cid.cbegin(), encoded_cid.cend())
+                .decode();
+      add_embed(embed::image(cid["digest"]));
+    }
+    break;
+  case bsky::embed_type::images:
+    // pass along the CID in each image
+    for (auto const &image : embed["images"]) {
+      encoded_cid =
+          image["image"]["ref"].template get<nlohmann::json::binary_t>();
+      cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+                encoded_cid.cbegin(), encoded_cid.cend())
+                .decode();
+      add_embed(embed::image(cid["digest"]));
+    }
+    break;
+  case bsky::embed_type::video:
+    encoded_cid =
+        embed["video"]["ref"].template get<nlohmann::json::binary_t>();
+    cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+              encoded_cid.cbegin(), encoded_cid.cend())
+              .decode();
+    add_embed(embed::video(cid["digest"]));
+    break;
+  default:
+    break;
+  }
+  return embed_type;
+}
+
 void firehose_payload::handle_content(
     post_processor<firehose_payload> &processor, std::string const &repo,
     std::string const &cid, nlohmann::json const &content) {
-  std::string this_path;
+  context this_context(processor, content);
+  this_context._repo = repo;
   if (_path_by_cid.contains(cid)) {
-    this_path = _path_by_cid[cid];
+    this_context._this_path = _path_by_cid[cid];
   } else {
     throw std::runtime_error("cannot get URI for cid at " + dump_json(content));
   }
   auto collection(content["$type"].template get<std::string>());
-  bsky::tracked_event event_type = bsky::event_type_from_collection(collection);
-  if (event_type == bsky::tracked_event::post) {
+  this_context._event_type = bsky::event_type_from_collection(collection);
+  if (this_context._event_type == bsky::tracked_event::post) {
     bool recorded(false);
     // Post create/update - may need qualification
     if (content.contains("reply")) {
-      event_type = bsky::tracked_event::reply;
+      this_context._event_type = bsky::tracked_event::reply;
       recorded = true;
       processor.request_recording(
           {repo,
            bsky::time_stamp_from_iso_8601(
                content["createdAt"].template get<std::string>()),
            activity::reply(
-               this_path,
+               this_context._this_path,
                content["reply"]["root"]["uri"].template get<std::string>(),
                content["reply"]["parent"]["uri"].template get<std::string>())});
     }
@@ -281,25 +348,9 @@ void firehose_payload::handle_content(
     }
     if (content.contains("embed")) {
       auto const &embed(content["embed"]);
-      std::string embed_type_str(embed["$type"].template get<std::string>());
-      bsky::embed_type embed_type =
-          bsky::embed_type_from_string(embed_type_str);
-      if (embed_type == bsky::embed_type::record ||
-          embed_type == bsky::embed_type::record_with_media) {
-        // Embedded record, this is a quote post
-        event_type = bsky::tracked_event::quote;
-        recorded = true;
-        processor.request_recording(
-            {repo,
-             bsky::time_stamp_from_iso_8601(
-                 content["createdAt"].template get<std::string>()),
-             activity::quote(
-                 this_path,
-                 embed_type == bsky::embed_type::record
-                     ? embed["record"]["uri"].template get<std::string>()
-                     : embed["record"]["record"]["uri"]
-                           .template get<std::string>())});
-      }
+      this_context._embed_type_str = embed["$type"].template get<std::string>();
+      bsky::embed_type embed_type = this_context.process_embed(embed);
+
       if (content.contains("facets")) {
         size_t mentions(0);
         size_t links(0);
@@ -309,12 +360,11 @@ void firehose_payload::handle_content(
           for (auto const &lang : langs) {
             metrics::instance()
                 .firehose_stats()
-                .Get({{"embed", embed_type_str}, {"language", lang}})
+                .Get({{"embed", this_context._embed_type_str},
+                      {"language", lang}})
                 .Increment();
           }
         }
-        // bool is_media(embed_type == bsky::AppBskyEmbedImages ||
-        //               embed_type == bsky::AppBskyEmbedVideo);
         bool has_facets(false);
         for (auto const &facet : content["facets"]) {
           has_facets = true;
@@ -329,9 +379,11 @@ void firehose_payload::handle_content(
             } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
               _path_candidates.emplace_back(
                   std::make_pair<std::string, candidate_list>(
-                      std::string(this_path),
+                      std::string(this_context._this_path),
                       {{collection, std::string(bsky::AppBskyRichtextFacetLink),
                         feature["uri"].template get<std::string>()}}));
+              this_context.add_embed(
+                  embed::external(feature["uri"].template get<std::string>()));
               ++links;
             }
           }
@@ -408,46 +460,51 @@ void firehose_payload::handle_content(
           {repo,
            bsky::time_stamp_from_iso_8601(
                content["createdAt"].template get<std::string>()),
-           activity::post(this_path)});
+           activity::post(this_context._this_path)});
     }
-  } else if (event_type == bsky::tracked_event::block) {
+  } else if (this_context._event_type == bsky::tracked_event::block) {
     processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
-         activity::block(this_path,
+         activity::block(this_context._this_path,
                          content["subject"].template get<std::string>())});
-  } else if (event_type == bsky::tracked_event::follow) {
+  } else if (this_context._event_type == bsky::tracked_event::follow) {
     processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
-         activity::follow(this_path,
+         activity::follow(this_context._this_path,
                           content["subject"].template get<std::string>())});
-  } else if (event_type == bsky::tracked_event::like) {
+  } else if (this_context._event_type == bsky::tracked_event::like) {
     processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
          activity::like(
-             this_path,
+             this_context._this_path,
              content["subject"]["uri"].template get<std::string>())});
-  } else if (event_type == bsky::tracked_event::profile) {
+  } else if (this_context._event_type == bsky::tracked_event::profile) {
     processor.request_recording(
         {repo,
          (content.contains("createdAt")
               ? bsky::time_stamp_from_iso_8601(
                     content["createdAt"].template get<std::string>())
               : bsky::current_time()),
-         activity::profile(this_path)});
-  } else if (event_type == bsky::tracked_event::repost) {
+         activity::profile(this_context._this_path)});
+  } else if (this_context._event_type == bsky::tracked_event::repost) {
     processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
          activity::repost(
-             this_path,
+             this_context._this_path,
              content["subject"]["uri"].template get<std::string>())});
+  }
+  // pass along embeds for analysis
+  if (!this_context.get_embeds().empty()) {
+    bsky::moderation::embed_checker::instance().wait_enqueue(
+        {repo, this_context._this_path, this_context.get_embeds()});
   }
 }
 

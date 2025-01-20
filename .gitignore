@@ -10,3 +10,4 @@ firehose-client/CMakeFiles/
 firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
 firehose-client/config/promtail.local.yaml
+firehose-client/config/full_config_dev.yml
