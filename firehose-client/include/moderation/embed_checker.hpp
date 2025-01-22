@@ -90,7 +90,7 @@ public:
   // allow a large backlog - queued items are small and we need to manage rate
   // of record creation to obey rate limits
   static constexpr size_t QueueLimit = 50000;
-  static constexpr size_t NumberOfThreads = 3;
+  static constexpr size_t NumberOfThreads = 5;
   static constexpr size_t UrlRedirectLimit = 5;
   static constexpr std::string_view _uri_host_prefix = "www.";
 

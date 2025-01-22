@@ -279,11 +279,11 @@ only two genders|abusive,disinfo|track=true,report=true,scope=profile,match=subs
 #TrumpWon|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
 #Trump2.0|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
 #Trump2024|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
-AmericaFirst|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+AmericaFirst|disinfo,disruptive|track=true,report=false,scope=profile,match=substring|
 ## Porn hashtags
-#kink|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-#porn|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-#nsfw|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
+#kink|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
+#porn|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
+#nsfw|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
 ## Porn bots and other overtly NSFW content
 onlyfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
 loyalfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
