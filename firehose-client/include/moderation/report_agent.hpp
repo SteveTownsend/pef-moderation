@@ -59,11 +59,30 @@ struct report_response {
   std::string reportedBy;
 };
 
+struct label_event {
+  std::string _type = std::string(bsky::moderation::EventLabel);
+  std::vector<std::string> createLabelVals;
+  std::vector<std::string> negateLabelVals;
+};
+// Label auto-reported account. Associated eport indicates context
+struct emit_event_label_request {
+  label_event event;
+  report_subject subject;
+  std::string createdBy;
+};
+struct emit_event_label_response {
+  // ignore other fields
+  std::string createdAt;
+  int64_t id;
+  std::string createdBy;
+};
+
 struct no_content {};
 
 struct filter_matches {
   std::vector<std::string> _filters;
   std::vector<std::string> _paths;
+  std::vector<std::string> _labels;
 };
 struct link_redirection {
   std::string _path;
@@ -116,6 +135,8 @@ public:
                            std::vector<std::string> const &paths);
   void link_redirection_report(std::string const &did, std::string const &path,
                                std::vector<std::string> const &uri_chain);
+  void label_account(std::string const &did,
+                     std::vector<std::string> const &labels);
 
 private:
   report_agent();
@@ -133,6 +154,7 @@ private:
   moodycamel::BlockingConcurrentQueue<account_report> _queue;
   std::string _handle;
   std::string _password;
+  std::string _did;
   std::string _host;
   std::string _port;
   std::string _service_did;

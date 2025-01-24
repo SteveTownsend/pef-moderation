@@ -43,6 +43,16 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_request,
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
                           (std::string, createdAt), (int64_t, id),
                           (std::string, reportedBy))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
+                          (std::vector<std::string>, createLabelVals),
+                          (std::vector<std::string>, negateLabelVals))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
+                          (bsky::moderation::label_event, event),
+                          (bsky::moderation::report_subject, subject),
+                          (std::string, createdBy))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_response,
+                          (std::string, createdAt), (int64_t, id),
+                          (std::string, createdBy))
 
 namespace bsky {
 namespace moderation {
@@ -57,6 +67,7 @@ report_agent::report_agent() : _queue(QueueLimit) {}
 void report_agent::set_config(YAML::Node const &settings) {
   _handle = settings["handle"].as<std::string>();
   _password = settings["password"].as<std::string>();
+  _did = settings["did"].as<std::string>();
   _host = settings["host"].as<std::string>();
   _port = settings["port"].as<std::string>();
   _service_did = settings["service_did"].as<std::string>();
@@ -292,8 +303,96 @@ void report_agent::link_redirection_report(
   }
 }
 
+// TODO add metrics
+void report_agent::label_account(std::string const &did,
+                                 std::vector<std::string> const &labels) {
+  restc_cpp::serialize_properties_t properties;
+  properties.name_mapping = &json::TypeFieldMapping;
+  properties.ignore_empty_fileds =
+      0; // negateLabelsVals is mandatory but unused
+  if (_dry_run) {
+    REL_INFO("Dry-run Label of {} for {}", did, format_vector(labels));
+    return;
+  }
+  size_t retries(0);
+  bsky::moderation::emit_event_label_response response;
+  while (retries < 5) {
+    try {
+      response =
+          _rest_client
+              ->ProcessWithPromiseT<
+                  bsky::moderation::emit_event_label_response>(
+                  [&](restc_cpp::Context &ctx) {
+                    // This is a co-routine, running in a worker-thread
+
+                    // Instantiate a report_response structure.
+                    bsky::moderation::emit_event_label_request request;
+                    request.subject.did = did;
+                    request.createdBy = _did;
+                    request.event.createLabelVals = labels;
+
+                    std::ostringstream body;
+                    restc_cpp::SerializeToJson(request, body, properties);
+
+                    // Serialize it asynchronously. The asynchronously part does
+                    // not really matter here, but it may if you receive huge
+                    // data structures.
+                    restc_cpp::SerializeFromJson(
+                        response,
+
+                        // Construct a request to the server
+                        restc_cpp::RequestBuilder(ctx)
+                            .Post(_host + "tools.ozone.moderation.emitEvent")
+                            .Header("Content-Type", "application/json")
+                            .Header("Atproto-Accept-Labelers", _service_did)
+                            .Header(
+                                "Atproto-Proxy",
+                                _service_did +
+                                    std::string(atproto::ProxyLabelerSuffix))
+                            .Header("Authorization",
+                                    std::string("Bearer " +
+                                                _session->access_token()))
+                            .Data(body.str())
+                            // Send the request
+                            .Execute());
+
+                    // Return the session instance through C++ future<>
+                    return response;
+                  })
+
+              // Get the Post instance from the future<>, or any C++ exception
+              // thrown within the lambda.
+              .get();
+      REL_INFO("Label of {} for {} recorded at {}, reporter "
+               "{} id={}",
+               did, format_vector(labels), response.createdAt,
+               response.createdBy, response.id);
+      break;
+    } catch (boost::system::system_error const &exc) {
+      if (exc.code().value() == boost::asio::error::eof &&
+          exc.code().category() == boost::asio::error::get_misc_category()) {
+        REL_WARNING("IoReaderImpl::ReadSome(emitEvent): asio eof, retry");
+        ++retries;
+      } else {
+        // unrecoverable error
+        REL_ERROR("emitEvent(label) of {} for {} Boost exception {}", did,
+                  format_vector(labels), exc.what());
+        break;
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("emitEvent(label) of {} for {} exception {}", did,
+                format_vector(labels), exc.what());
+      break;
+    }
+  }
+}
+
 void report_content_visitor::operator()(filter_matches const &value) {
   _agent.string_match_report(_did, value._filters, value._paths);
+  if (!value._labels.empty()) {
+    // auto-label request augments the report
+    _agent.label_account(_did, value._labels);
+  }
 }
 void report_content_visitor::operator()(link_redirection const &value) {
   _agent.link_redirection_report(_did, value._path, value._uri_chain);

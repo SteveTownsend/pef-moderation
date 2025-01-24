@@ -110,12 +110,13 @@ public:
     rule(std::string const &rule_string);
     rule(rule const &);
     std::string _target;
-    std::string _labels;
-    bool _track;
-    bool _report;
-    content_scope _content_scope;
+    std::vector<std::string> _labels;
+    bool _track = false;
+    bool _report = false;
+    bool _label = false;
+    content_scope _content_scope = content_scope::any;
     std::string _block_list_name;
-    match_type _match_type;
+    match_type _match_type = match_type::substring;
     std::string _contingent;
 
     static constexpr size_t field_count = 4;

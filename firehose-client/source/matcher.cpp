@@ -170,6 +170,7 @@ void matcher::report_if_needed(account_filter_matches &matches) {
   // auto-reportable
   std::vector<std::string> paths;
   std::vector<std::string> all_filters;
+  std::vector<std::string> labels;
   for (auto const &result : matches._matches) {
     // this is the substring of the full JSON that matched one or more
     // desired strings
@@ -178,9 +179,15 @@ void matcher::report_if_needed(account_filter_matches &matches) {
     for (auto const &next_match : result.second) {
       for (auto const &match : next_match._matches) {
         matcher::rule matched_rule(find_rule(match.get_keyword()));
-        if (!matched_rule._report) {
-          // report not requested for this rule
+        if (!matched_rule._report && !matched_rule._label) {
+          // auto-moderation not requested for this rule
           continue;
+        }
+        if (matched_rule._label) {
+          if (!matched_rule._labels.empty()) {
+            labels.insert(labels.end(), matched_rule._labels.cbegin(),
+                          matched_rule._labels.cend());
+          }
         }
         if (!matched_rule._block_list_name.empty()) {
           list_manager::instance().wait_enqueue(
@@ -206,10 +213,14 @@ void matcher::report_if_needed(account_filter_matches &matches) {
 
   // record the account as a delta to cache for dup detection
   if (!all_filters.empty()) {
+    if (!labels.empty()) {
+      std::sort(labels.begin(), labels.end());
+      labels.erase(std::unique(labels.begin(), labels.end()), labels.end());
+    }
     bsky::moderation::report_agent::instance().wait_enqueue(
         bsky::moderation::account_report(
             matches._did,
-            bsky::moderation::filter_matches(all_filters, paths)));
+            bsky::moderation::filter_matches(all_filters, paths, labels)));
     metrics::instance()
         .realtime_alerts()
         .Get({{"auto_reports", "submitted"}})
@@ -236,7 +247,9 @@ matcher::rule::rule(std::string const &rule_string) {
       if (field.empty())
         throw std::invalid_argument("Blank labels in filter rule " +
                                     rule_string);
-      _labels = field;
+      for (const auto subtoken : std::views::split(std::string(field), ',')) {
+        _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
+      }
       break;
     case 2:
       store_actions(field);
@@ -285,6 +298,10 @@ void matcher::rule::store_actions(std::string_view actions) {
       _report = bool_from_string(value);
       continue;
     }
+    if (starts_with(field, "label=")) {
+      _label = bool_from_string(value);
+      continue;
+    }
     if (starts_with(field, "scope=")) {
       _content_scope = content_scope_from_string(value);
       continue;
@@ -309,7 +326,8 @@ void matcher::rule::store_actions(std::string_view actions) {
 
 matcher::rule::rule(matcher::rule const &rhs)
     : _target(rhs._target), _labels(rhs._labels), _track(rhs._track),
-      _report(rhs._report), _content_scope(rhs._content_scope),
+      _report(rhs._report), _label(rhs._label),
+      _content_scope(rhs._content_scope),
       _block_list_name(rhs._block_list_name), _match_type(rhs._match_type),
       _contingent(rhs._contingent) {
   // make a trie that is used to confirm the rule match

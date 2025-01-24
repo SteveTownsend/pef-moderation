@@ -89,6 +89,8 @@ constexpr std::string_view AppBskyRichtextFacetTag =
 namespace moderation {
 constexpr std::string_view ReasonOther =
     "com.atproto.moderation.defs#reasonOther";
+constexpr std::string_view EventLabel =
+    "tools.ozone.moderation.defs#modEventLabel";
 } // namespace moderation
 
 constexpr std::string_view DownReasonDeactivated = "deactivated";
