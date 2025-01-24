@@ -115,7 +115,8 @@ find_package(Boost REQUIRED COMPONENTS
     coroutine
     chrono
     log
-    json)
+    json
+    url)
 IF(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
