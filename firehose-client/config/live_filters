@@ -295,6 +295,7 @@ justfor.fans/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,
 allmylinks.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 cammodels.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 fans.ly/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+top4fans.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 ## not always nsfw
 carrrd.co/|disruptive,engagementfarmer,network|track=false,report=false,scope=any,block=nsfw,match=substring|
 ## short links can obfuscate getallmylinks content and other nonsense - redirects are checked against all rules
