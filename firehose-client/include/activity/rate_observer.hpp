@@ -1,5 +1,5 @@
-#ifndef __account_events_hpp__
-#define __account_events_hpp__
+#ifndef __rate_observer_hpp__
+#define __rate_observer_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -50,7 +50,7 @@ public:
         std::max(0, _last_fixed_end - sliding_window_start) / _window_size;
     COUNT_UNIT requests(static_cast<COUNT_UNIT>(
         std::floor(previous_window_weight * static_cast<float>(_last_count)) +
-        static_cast<float>(_++ current_count)));
+        static_cast<float>(++_current_count)));
     return std::max(0, requests - _limit);
   }
 
