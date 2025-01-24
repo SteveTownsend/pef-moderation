@@ -31,7 +31,6 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_map>
 #include <unordered_set>
 
-
 namespace bsky {
 // app.bsky.richtext.facet
 struct byte_slice {
@@ -267,10 +266,17 @@ private:
 
   inline std::string block_reasons(std::string const &list_name) const {
     std::ostringstream oss;
-    oss << "Auto-blocked by string-match rule(s):";
+    constexpr size_t MaxRules = 20;
     auto const &reasons(_block_reasons.find(list_name));
     if (reasons != _block_reasons.cend()) {
+      oss << "Auto-blocked by " << reasons->second.size()
+          << " string-match rule(s):";
+      size_t rule(0);
       for (auto const &reason : reasons->second) {
+        if (++rule >= MaxRules) {
+          oss << ", ...";
+          break;
+        }
         oss << " '" << reason << "'";
       }
       return oss.str();
