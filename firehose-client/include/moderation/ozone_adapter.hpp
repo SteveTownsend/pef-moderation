@@ -44,7 +44,7 @@ private:
   static constexpr std::chrono::minutes LabeledAccountRefreshInterval =
       std::chrono::minutes(15);
 
-  pqxx::connection _cx;
+  std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
   std::thread _thread;
   std::unordered_set<std::string> _labeled_accounts;

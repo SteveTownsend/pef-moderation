@@ -38,8 +38,11 @@ http://www.fsf.org/licensing/licenses
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
 #include "moderation/action_router.hpp"
+#include "moderation/embed_checker.hpp"
 #include "moderation/list_manager.hpp"
 #include "moderation/ozone_adapter.hpp"
+#include "moderation/report_agent.hpp"
+#include "parser.hpp"
 #include "post_processor.hpp"
 #include <chrono>
 #include <iostream>
@@ -72,7 +75,7 @@ int main(int argc, char **argv) {
     log_ready = true;
 
 #if _DEBUG
-    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::TRACE);
+    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::WARNING);
     restc_cpp::Logger::Instance().SetHandler(
         [](restc_cpp::LogLevel level, const std::string &msg) {
           static const std::array<std::string, 6> levels = {
@@ -108,10 +111,18 @@ int main(int argc, char **argv) {
       // prepare action handlers after we start processing firehose messages
       // this is time consuming - allow a backlog for handlers while
       // existing members load
-      action_router::instance().set_config(
+      bsky::moderation::report_agent::instance().set_config(
           settings->get_config()[PROJECT_NAME]["auto_reporter"]);
-      action_router::instance().set_moderation_data(moderation_data);
+      bsky::moderation::report_agent::instance().set_moderation_data(
+          moderation_data);
+      bsky::moderation::report_agent::instance().start();
+
       action_router::instance().start();
+#if _DEBUG
+      // std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
+#endif
+
+      bsky::moderation::embed_checker::instance().start();
 
       list_manager::instance().set_config(
           settings->get_config()[PROJECT_NAME]["list_manager"]);

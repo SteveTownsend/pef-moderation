@@ -19,15 +19,18 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "blockingconcurrentqueue.h"
 #include "firehost_client_config.hpp"
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
 #include "moderation/session_manager.hpp"
-#include "queue/readerwritercircularbuffer.h"
 #include "yaml-cpp/yaml.h"
 #include <optional>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
+
 
 namespace bsky {
 // app.bsky.richtext.facet
@@ -290,7 +293,7 @@ private:
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::unique_ptr<bsky::pds_session> _session;
   // Declare queue between match post-processing and HTTP Client
-  moodycamel::BlockingReaderWriterCircularBuffer<block_list_addition> _queue;
+  moodycamel::BlockingConcurrentQueue<block_list_addition> _queue;
   std::string _handle;
   std::string _password;
   std::string _host;

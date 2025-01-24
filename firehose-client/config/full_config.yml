@@ -23,6 +23,7 @@ firehose_client:
   auto_reporter:
     handle: "the-handle"
     password: "the-password"
+    did: "the-did"
     # this has to be the home PDS of the reporting account - using bsky.social sends reports to the platform
     # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
     host: "the-pds"
@@ -40,11 +41,6 @@ firehose_client:
     host: "the-pds"
     port: 443
     dry_run: true
-
-  report_sink:
-    url: "https://ozone.nafo-moderation.org"
-    requestType: "POST"
-    path: "/xrpc/com.atproto.moderation.createReport"
 
   metrics:
     port: 59090

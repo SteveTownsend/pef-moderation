@@ -57,6 +57,7 @@ mintpress_news/|disinfo,disruptive|track=true,report=true,scope=any,match=substr
 newsmax.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Richard Wolff|disinfo,network|track=true,report=true,scope=any,match=substring|
 democracyatwork|disinfo,network|track=true,report=true,scope=any,match=substring|
+democracynow.org/|disinfo,network|track=true,report=true,scope=any,match=substring|
 thealtworld.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 thegatewaypundit.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 revolver.news|disinfo,network|track=true,report=true,scope=any,match=substring|
@@ -75,9 +76,10 @@ truthfeed.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 texasscorecard.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 townhall.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 visiontimes.com|disinfo,network|track=true,report=true,scope=any,match=substring|
-washingtontimes.com|disinfo,network|track=true,report=true,scope=any,match=substring|
+washingtontimes.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
 westernjournal.com|disinfo,network|track=true,report=true,scope=any,match=substring|
-zerohedge.com|disinfo,network|track=true,report=true,scope=any,match=substring|
+zerohedge.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
+judgenap.com/|disinfo,network|track=true,report=true,scope=any,match=substring|
 thealtworld.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 thefederalist.com|disinfo,network|track=true,report=true,scope=any,match=substring|
 animallovers2024.foundation|disinfo,network|track=true,report=true,scope=any,match=substring|
@@ -135,7 +137,7 @@ gatewayhispanic.com/|abusive,disinfo,disruptive,network|track=true,report=true,s
 shattertheswarm.com|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 truthfreedomhealth.com|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 felastory.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
-infosannio.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
+infosannio.com/|abusive,disinfo,disruptive,network|track=true,report=false,scope=any,match=substring|
 ezone57.net/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 swentr.site/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
 mahendrarajah.com/|abusive,disinfo,disruptive,network|track=true,report=true,scope=any,match=substring|
@@ -191,6 +193,7 @@ Alex Rubinstein|disinfo,disruptive|track=true,report=true,scope=any,match=substr
 Wyatt Reed|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Richard Medhurst|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Caitlin Johnstone|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+Glenn Greenwald|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Danny Haiphong|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Rula Jebreal|caution|track=true,report=true,scope=any,match=substring
 Jeff Sharlet|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
@@ -204,12 +207,16 @@ middleeasteye.net/|abusive,disinfo,disruptive|track=true,report=true,scope=any,m
 watcher.guru/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
  by Neutrality Studies|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Tuomas Malinen|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by Useful Idiots|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 ## short link to Al Jazeera (redirects should find this)
 aje.io/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 aljazeera.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
  by Al Jazeera English|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 thecanary.co/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 palestinechronicle.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+doubledown.news/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by AJ+|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by FREENVESTING|track=true,report=true,scope=any,match=substring|
 ## antisemitic, disinfo on YouTube 
 BreezyPolitics|disinfo,network|track=true,report=true,scope=any,match=substring|
 Katchanovski|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
@@ -235,7 +242,7 @@ retard|abusive|track=true,report=true,scope=any,match=substring|
 ## October 7 2023 atrocity celebrants
 from the river to the sea|abusive,violent|track=true,report=true,scope=any,match=substring|
 globalize the intifada|abusive,violent|track=true,report=true,scope=any,match=substring|
-🔻|abusive,violent|track=true,report=true,scope=profile,match=substring|
+🔻|abusive,violent|track=true,report=true,scope=profile,match=substring|Gaza,genocide,Palestin,🍉,PSLB
 ## deadnaming - however, this is also a frequent typo
 Isreal|abusive|track=true,report=true,scope=any,match=word|
 Israhell|abusive|track=true,report=true,scope=any,match=word|
@@ -270,15 +277,25 @@ uniparty|disinfo,disruptive|track=true,report=true,scope=any,match=word|
 shitlib|abusive,disruptive|track=false,report=false,scope=any,match=substring|
 woke|abusive,disruptive|track=true,report=true,scope=any,match=substring|mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt
 only two genders|abusive,disinfo|track=true,report=true,scope=profile,match=substring|
-#pureblood|disinfo,disruptive|track=true,report=true,scope=any,match=word|
+## MAGA automation
+#pureblood|disinfo,disruptive|track=true,report=true,scope=profile,match=word|
+#MAGA|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#TrumpWon|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#Trump2.0|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+#Trump2024|disinfo,disruptive|track=true,report=false,scope=profile,match=word|
+AmericaFirst|disinfo,disruptive|track=true,report=false,scope=profile,match=substring|
 ## Porn hashtags
-#kink|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-#porn|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-#nsfw|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-## Porn bots
+#kink|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
+#porn|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
+#nsfw|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=word|
+## Porn bots and other overtly NSFW content
 onlyfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
-getallmylinks.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+loyalfans.com/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
+justfor.fans/|nsfw,engagementfarmer|track=true,report=true,scope=any,block=nsfw,match=substring|
+allmylinks.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+cammodels.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 fans.ly/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
+top4fans.com/|disruptive,engagementfarmer,network|track=true,report=true,scope=any,block=nsfw,match=substring|
 ## not always nsfw
 carrrd.co/|disruptive,engagementfarmer,network|track=false,report=false,scope=any,block=nsfw,match=substring|
 ## short links can obfuscate getallmylinks content and other nonsense - redirects are checked against all rules
@@ -287,6 +304,7 @@ is.gd/|disruptive,engagementfarmer|track=true,report=false,scope=any,match=subst
 shorturl.at/|disruptive,engagementfarmer|track=false,report=false,scope=profile,match=substring|
 ## URLs may redirect to Telegram
 tg://resolve?|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
+tg://join?|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
 /t.me/|disruptive,engagementfarmer|track=true,report=false,scope=any,match=substring|
 ## bot network profile templates - currently not useful
 lover of|disruptive|track=false,report=false,scope=profile,match=substring|always curious about
@@ -294,3 +312,106 @@ devoted to|disruptive|track=false,report=false,scope=profile,match=substring|whi
 passionate about|disruptive|track=false,report=false,scope=profile,match=substring|and exploring
 inspired by |disruptive|track=false,report=false,scope=profile,match=substring|art,reading,sports,writing,design,photography
 A dedicated |disruptive|track=false,report=false,scope=profile,match=substring|always seeking to
+## Correctiv investigation, Doppelganger Feb 2025
+ensemble-24.fr/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+kbsf-tv.com/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+berliner-wochenzeitung.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+zeitgeschenen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+anderemeinung.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+wehrpflicht2025.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+echozeit.com/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+presseneu.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+andererseits-seite.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+fr-press.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+deutsch-w.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+nrtv.online/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+oku-nachrichten.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+scheinwerfen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+news-checker.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+konusnews.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+einmaleinsneu.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+deinequellen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+wdr-hall.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+resonieren.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+berlinertagespost.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+nnberlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+cito-novit.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+f-aktuell.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+weitwinkelmedien.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+klartext-news.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+tageblatt-berlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+b-blatt.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+brlnr-stimme.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+an-berlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+newsletters-berlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+wochenüberblick-berlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+aktuellenews-berlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+berlin-apropos.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+heute-inberlin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+hamburger-anzeiger.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+hamburger-sichtweisen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+nachrichtendestages.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+alles-klar-hamburg.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+n-a-h.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+hamburg-ex.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+das-denkt-hamburg.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+hamb-post.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+h-np.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+dznachrichten.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+stimmedeutsch.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+infomediafuerdich.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+media-transparent.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+doch-infomedia.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+prinzipienfest.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+in-absicht.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+kernpunkt-infomedia.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+info-stichpunkt.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+ausdemueberall.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+einfachandersinfo.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+thesis-info.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+newsfuereuch.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+nachrichtenunabhaengig.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+gegengewicht-media.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+la-cher.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+gegenleitmedien.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+deutschenachrichtenstelle.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+infomediaregierungskritisch.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+info-mediaplattform.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+diewahreseite.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+guckmalgenauhin.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+zeitenwende-news.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+aktuellde.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+internetpoebler-info.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+herrpostillon.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+newswichtig.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+unmittelbar-medien.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+mehrstimmen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+aktuell-nachricht.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+allethemen24.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+w-a-munchen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+kernrecht.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+seite-eins-nachrichten.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+ungeziert-info.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+tagesnews-24.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+polemisch-infomedia.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+newsmacher.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+sag-das.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+in-und-ausland.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+nudis-verbis.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+expert-infomedien.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+de-nachrichtenseite.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+alles-wichtig-news.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+novanachrichten.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+vollverstand.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+dasneueste-online.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+munchener-nachrichten.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+tagundnacht24.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+laut-medien.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+rundumdieuhr-24.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+onlinedaheim-24.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+onlineunterwegs.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+ruf-der-freiheit.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+informant-info.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+top-news-munchen.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+kurzchronik.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|
+visionar-info.de/|disinfo|track=true,report=false,scope=any,label=true,block=doppelganger,match=substring|

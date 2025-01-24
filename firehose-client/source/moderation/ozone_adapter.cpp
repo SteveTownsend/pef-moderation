@@ -24,17 +24,28 @@ namespace bsky {
 namespace moderation {
 
 ozone_adapter::ozone_adapter(std::string const &connection_string)
-    : _connection_string(connection_string), _cx(connection_string) {
+    : _connection_string(connection_string) {
   REL_INFO("Connected OK to moderation DB: {}", safe_connection_string());
 }
 
 void ozone_adapter::start() {
-  // TODO handle errors, reconnect to DB
   _thread = std::thread([&] {
     while (true) {
-      // load the list of labeled accounts
-      check_refresh_labeled();
-
+      try {
+        if (!_cx) {
+          _cx = std::make_unique<pqxx::connection>(_connection_string);
+        }
+        // load the list of labeled accounts
+        check_refresh_labeled();
+      } catch (pqxx::broken_connection const &exc) {
+        // will reconnect on net loop
+        REL_ERROR("pqxx::broken_connection {}", exc.what());
+        _cx.reset();
+      } catch (std::exception const &exc) {
+        // try to reconnect on next loop, unlikely to work though
+        REL_ERROR("database exception {}", exc.what());
+        _cx.reset();
+      }
       std::this_thread::sleep_for(ThreadDelay);
     }
   });
@@ -46,7 +57,7 @@ void ozone_adapter::check_refresh_labeled() {
   if (std::chrono::duration_cast<std::chrono::seconds>(
           now - _last_labeled_refresh) > LabeledAccountRefreshInterval) {
     decltype(_labeled_accounts) new_list;
-    pqxx::work tx(_cx);
+    pqxx::work tx(*_cx);
     for (auto [did] : tx.query<std::string>(
              "SELECT DISTINCT(\"subjectDid\") FROM moderation_event WHERE "
              "(action = 'tools.ozone.moderation.defs#modEventLabel')")) {

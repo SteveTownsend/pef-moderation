@@ -56,6 +56,12 @@ public:
   inline prometheus::Family<prometheus::Counter> &realtime_alerts() {
     return _realtime_alerts;
   }
+  inline prometheus::Family<prometheus::Counter> &embed_stats() {
+    return _embed_stats;
+  }
+  inline prometheus::Family<prometheus::Histogram> &link_stats() {
+    return _link_stats;
+  }
 
 private:
   metrics();
@@ -74,5 +80,7 @@ private:
   prometheus::Family<prometheus::Gauge> &_operational_stats;
   prometheus::Family<prometheus::Histogram> &_firehose_facets;
   prometheus::Family<prometheus::Counter> &_realtime_alerts;
+  prometheus::Family<prometheus::Counter> &_embed_stats;
+  prometheus::Family<prometheus::Histogram> &_link_stats;
 };
 #endif

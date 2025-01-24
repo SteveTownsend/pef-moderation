@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.3.0 LANGUAGES C CXX)
+project(firehose_client VERSION 2.4.0 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -48,6 +48,23 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(caching)
 include_directories(${caching_SOURCE_DIR}/include)
+
+# lock-free queues
+FetchContent_Declare(
+  reader_writer_queue
+  GIT_TAG 16b48ae1148284e7b40abf72167206a4390a4592
+  GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue
+)
+FetchContent_MakeAvailable(reader_writer_queue)
+include_directories(${reader_writer_queue_SOURCE_DIR})
+
+FetchContent_Declare(
+  concurrent_queue
+  GIT_TAG 6dd38b8a1dbaa7863aa907045f32308a56a6ff5d
+  GIT_REPOSITORY https://github.com/cameron314/concurrentqueue
+)
+FetchContent_MakeAvailable(concurrent_queue)
+include_directories(${concurrent_queue_SOURCE_DIR})
 
 # Unicode support
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -205,8 +222,10 @@ add_executable(firehose_client
   ./source/activity/event_cache.cpp
   ./source/activity/event_recorder.cpp
   ./source/moderation/action_router.cpp
+  ./source/moderation/embed_checker.cpp
   ./source/moderation/list_manager.cpp
   ./source/moderation/ozone_adapter.cpp
+  ./source/moderation/report_agent.cpp
   ./source/moderation/session_manager.cpp)
 
 target_include_directories(firehose_client PUBLIC ./include ${CMAKE_CURRENT_BINARY_DIR})

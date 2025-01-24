@@ -40,7 +40,6 @@ std::string config::build_moderation_db_connection_string() const {
   bool first(true);
   std::ostringstream oss;
   for (auto field : _config[PROJECT_NAME]["moderation_data"]) {
-    // TODO Log this once the password is obfuscated via Hashicorp
     if (!first) {
       oss << ' ';
     } else {

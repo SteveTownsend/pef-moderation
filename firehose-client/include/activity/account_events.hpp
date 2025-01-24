@@ -117,7 +117,7 @@ typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
 // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
-constexpr size_t MaxContentItems = 50;
+constexpr size_t MaxContentItems = 20;
 struct content_hit_count {
   int32_t _likes = 0;
   int32_t _reposts = 0;
@@ -285,7 +285,7 @@ private:
 
   // content interactions may have a negative count
   int32_t _posts = 0;
-  // TODO might be better to inridet to event_cache
+  // TODO might be better to indirect to event_cache
   std::shared_ptr<lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>
       _content_hits;
 

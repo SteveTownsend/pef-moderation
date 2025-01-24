@@ -156,7 +156,7 @@ void list_manager::start() {
 }
 
 void list_manager::wait_enqueue(block_list_addition &&value) {
-  _queue.wait_enqueue(value);
+  _queue.enqueue(value);
   metrics::instance()
       .operational_stats()
       .Get({{"list_manager", "backlog"}})
@@ -372,12 +372,8 @@ list_manager::load_or_create_list(std::string const &list_name) {
                              // part does not really matter here, but it may if
                              // you receive huge data structures.
                              restc_cpp::SerializeFromJson(response,
-
                                                           // Send the request
                                                           builder.Execute());
-                             // TODO work out clean code path if it does not
-                             // exist
-
                              // Return the list members through C++ future<>
                              return response;
                            })
@@ -441,6 +437,11 @@ list_manager::archive_if_needed(std::string const &list_group_name,
                                 atproto::at_uri const &list_uri) {
   auto const &list_members(
       _active_list_members_for_group.find(list_group_name));
+  if (_dry_run) {
+    // no archival should happen
+    return list_uri;
+  }
+
   if (list_members != _active_list_members_for_group.cend()) {
     if (list_members->second.size() >= MaxItemsInList) {
       // rename the full active list and create a new list as the active.
