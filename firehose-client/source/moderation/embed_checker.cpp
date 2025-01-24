@@ -41,10 +41,9 @@ void embed_checker::start() {
   restc_cpp::Request::Properties properties;
   properties.maxRedirects = UrlRedirectLimit;
   // favour cache eviction since we are promiscuous about connections
-  properties.cacheCleanupIntervalSeconds = 5;
-  properties.cacheTtlSeconds = 4;
-  properties.cacheMaxConnectionsPerEndpoint = 1;
-  properties.cacheMaxConnections = 256;
+  properties.cacheCleanupIntervalSeconds = 2;
+  properties.cacheTtlSeconds = 5;
+  properties.cacheMaxConnections = 512;
   for (size_t count = 0; count < NumberOfThreads; ++count) {
     _rest_client = restc_cpp::RestClient::Create(properties);
     _threads[count] = std::thread([&] {
