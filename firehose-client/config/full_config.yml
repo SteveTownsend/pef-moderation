@@ -32,6 +32,9 @@ firehose_client:
     service_did: "service-did"
     dry_run: true
 
+  embed_checker:
+    follow_links: false
+
   list_manager:
     handle: "the-handle"
     password: "the-password"

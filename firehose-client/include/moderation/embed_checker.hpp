@@ -25,6 +25,7 @@ http://www.fsf.org/licensing/licenses
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
 #include "restc-cpp/restc-cpp.h"
+#include "yaml-cpp/yaml.h"
 #include <boost/url.hpp>
 #include <optional>
 #include <thread>
@@ -111,6 +112,7 @@ public:
 
   static embed_checker &instance();
 
+  void set_config(YAML::Node const &settings);
   void start();
   void wait_enqueue(embed::embed_info_list &&value);
   void image_seen(std::string const &repo, std::string const &path,
@@ -126,6 +128,7 @@ public:
     _matcher = my_matcher;
   }
   inline std::shared_ptr<matcher> get_matcher() const { return _matcher; }
+  inline bool follow_links() const { return _follow_links; }
 
 private:
   embed_checker();
@@ -137,6 +140,7 @@ private:
   moodycamel::BlockingConcurrentQueue<embed::embed_info_list> _queue;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::shared_ptr<matcher> _matcher;
+  bool _follow_links = false;
   std::unordered_map<std::string, size_t> _checked_images;
   std::unordered_map<std::string, size_t> _checked_records;
   std::unordered_map<std::string, size_t> _checked_uris;

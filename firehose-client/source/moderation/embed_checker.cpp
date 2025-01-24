@@ -37,6 +37,10 @@ embed_checker &embed_checker::instance() {
 
 embed_checker::embed_checker() : _queue(QueueLimit) {}
 
+void embed_checker::set_config(YAML::Node const &settings) {
+  _follow_links = settings["follow_links"].as<bool>();
+}
+
 void embed_checker::start() {
   restc_cpp::Request::Properties properties;
   properties.maxRedirects = UrlRedirectLimit;
@@ -203,6 +207,11 @@ void embed_handler::operator()(embed::external const &value) {
   }
   _root_url = value._uri;
   _uri_chain.emplace_back(std::move(value._uri));
+  if (!_checker.follow_links()) {
+    // link chain resolution requires fast DNS, Digital Ocean did not work out
+    // of the box
+    return;
+  }
   bool done(false);
   bool completed(false);
   bool overflow(false);

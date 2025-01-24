@@ -122,6 +122,8 @@ int main(int argc, char **argv) {
       // std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
 #endif
 
+      bsky::moderation::embed_checker::instance().set_config(
+          settings->get_config()[PROJECT_NAME]["embed_checker"]);
       bsky::moderation::embed_checker::instance().start();
 
       list_manager::instance().set_config(
