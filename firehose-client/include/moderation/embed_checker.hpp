@@ -30,6 +30,14 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 #include <unordered_set>
 
+inline std::string print_cid(std::string const &cid) {
+  std::ostringstream oss;
+  for (auto c : cid) {
+    oss << std::setw(2) << std::setfill('0') << std::hex
+        << static_cast<int>(static_cast<unsigned char>(c));
+  }
+  return oss.str();
+}
 namespace embed {
 
 struct external {
@@ -69,9 +77,9 @@ public:
   template <typename T> void operator()(T const &) {}
 
   void operator()(embed::external const &value);
-  inline void operator()(embed::image const &value) {}
-  inline void operator()(embed::record const &value) {}
-  inline void operator()(embed::video const &value) {}
+  void operator()(embed::image const &value);
+  void operator()(embed::record const &value);
+  void operator()(embed::video const &value);
 
   bool on_url_redirect(int code, std::string &url,
                        const restc_cpp::Reply &reply);
@@ -82,6 +90,7 @@ private:
   std::string _repo;
   std::string _path;
   std::string _root_url;
+  std::vector<std::string> _uri_chain;
   nlohmann::json _results;
 };
 
@@ -91,24 +100,28 @@ public:
   // of record creation to obey rate limits
   static constexpr size_t QueueLimit = 50000;
   static constexpr size_t NumberOfThreads = 5;
-  static constexpr size_t UrlRedirectLimit = 5;
+  static constexpr size_t UrlRedirectLimit = 10;
   static constexpr std::string_view _uri_host_prefix = "www.";
+
+  // embed repetition is logged
+  static constexpr size_t ImageFactor = 5;
+  static constexpr size_t LinkFactor = 5;
+  static constexpr size_t RecordFactor = 5;
+  static constexpr size_t VideoFactor = 5;
 
   static embed_checker &instance();
 
   void start();
   void wait_enqueue(embed::embed_info_list &&value);
-  bool uri_seen(std::string const &uri) {
-    // return true if insert fails, we already know this one
-    std::lock_guard<std::mutex> guard(_lock);
-    auto inserted(_checked_uris.insert({uri, 1}));
-    if (!inserted.second) {
-      ++(inserted.first->second);
-      return true;
-    }
-    return false;
-  }
+  void image_seen(std::string const &repo, std::string const &path,
+                  std::string const &cid);
+  void record_seen(std::string const &repo, std::string const &path,
+                   std::string const &uri);
   bool should_process_uri(std::string const &uri);
+  bool uri_seen(std::string const &repo, std::string const &path,
+                std::string const &uri);
+  void video_seen(std::string const &repo, std::string const &path,
+                  std::string const &cid);
   inline void set_matcher(std::shared_ptr<matcher> my_matcher) {
     _matcher = my_matcher;
   }
@@ -124,7 +137,10 @@ private:
   moodycamel::BlockingConcurrentQueue<embed::embed_info_list> _queue;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::shared_ptr<matcher> _matcher;
+  std::unordered_map<std::string, size_t> _checked_images;
+  std::unordered_map<std::string, size_t> _checked_records;
   std::unordered_map<std::string, size_t> _checked_uris;
+  std::unordered_map<std::string, size_t> _checked_videos;
   std::unordered_set<std::string> _whitelist_uris = {
       "youtube.com",  "x.com",
       "bsky.app",     "media.tenor.com",

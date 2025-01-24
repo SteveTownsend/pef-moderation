@@ -26,11 +26,15 @@ http://www.fsf.org/licensing/licenses
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_reason,
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
                           (std::string,
                            descriptor)(std::vector<std::string>,
                                        filters)(std::vector<std::string>,
                                                 paths))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
+                          (std::string,
+                           descriptor)(std::string,
+                                       path)(std::vector<std::string>, uris))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
                           (std::string, _type), (std::string, did))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_request,
@@ -108,9 +112,9 @@ void report_agent::wait_enqueue(account_report &&value) {
 }
 
 // TODO add metrics
-void report_agent::send_report(std::string const &did,
-                               std::vector<std::string> const &filters,
-                               std::vector<std::string> const &paths) {
+void report_agent::string_match_report(std::string const &did,
+                                       std::vector<std::string> const &filters,
+                                       std::vector<std::string> const &paths) {
   restc_cpp::serialize_properties_t properties;
   properties.name_mapping = &json::TypeFieldMapping;
   reported(did);
@@ -133,7 +137,7 @@ void report_agent::send_report(std::string const &did,
                     bsky::moderation::report_request request;
                     request.subject.did = did;
 
-                    bsky::moderation::report_reason reason;
+                    bsky::moderation::filter_match_info reason;
                     reason.filters = filters;
                     reason.paths = paths;
                     std::ostringstream oss;
@@ -197,17 +201,102 @@ void report_agent::send_report(std::string const &did,
   }
 }
 
-void report_content_visitor::operator()(filter_matches const &value) {
-  _agent.send_report(_did, value._filters, value._paths);
+// TODO add metrics
+void report_agent::link_redirection_report(
+    std::string const &did, std::string const &path,
+    std::vector<std::string> const &uri_chain) {
+  restc_cpp::serialize_properties_t properties;
+  properties.name_mapping = &json::TypeFieldMapping;
+  reported(did);
+  if (_dry_run) {
+    REL_INFO("Dry-run Report of {} for link-redirection chain {}", did,
+             format_vector(uri_chain));
+    return;
+  }
+  size_t retries(0);
+  bsky::moderation::report_response response;
+  while (retries < 5) {
+    try {
+      response =
+          _rest_client
+              ->ProcessWithPromiseT<bsky::moderation::report_response>(
+                  [&](restc_cpp::Context &ctx) {
+                    // This is a co-routine, running in a worker-thread
+
+                    // Instantiate a report_response structure.
+                    bsky::moderation::report_request request;
+                    request.subject.did = did;
+
+                    bsky::moderation::link_redirection_info reason;
+                    reason.path = path;
+                    reason.uris = uri_chain;
+                    std::ostringstream oss;
+                    restc_cpp::SerializeToJson(reason, oss);
+                    request.reason = oss.str();
+
+                    std::ostringstream body;
+                    restc_cpp::SerializeToJson(request, body, properties);
+
+                    // Serialize it asynchronously. The asynchronously part does
+                    // not really matter here, but it may if you receive huge
+                    // data structures.
+                    restc_cpp::SerializeFromJson(
+                        response,
+
+                        // Construct a request to the server
+                        restc_cpp::RequestBuilder(ctx)
+                            .Post(_host + "com.atproto.moderation.createReport")
+                            .Header("Content-Type", "application/json")
+                            .Header("Atproto-Accept-Labelers", _service_did)
+                            .Header(
+                                "Atproto-Proxy",
+                                _service_did +
+                                    std::string(atproto::ProxyLabelerSuffix))
+                            .Header("Authorization",
+                                    std::string("Bearer " +
+                                                _session->access_token()))
+                            .Data(body.str())
+                            // Send the request
+                            .Execute());
+
+                    // Return the session instance through C++ future<>
+                    return response;
+                  })
+
+              // Get the Post instance from the future<>, or any C++ exception
+              // thrown within the lambda.
+              .get();
+      REL_INFO(
+          "Report of {} {} for link redirection {} recorded at {}, reporter "
+          "{} id={}",
+          did, path, format_vector(uri_chain), response.createdAt,
+          response.reportedBy, response.id);
+      break;
+    } catch (boost::system::system_error const &exc) {
+      if (exc.code().value() == boost::asio::error::eof &&
+          exc.code().category() == boost::asio::error::get_misc_category()) {
+        REL_WARNING("IoReaderImpl::ReadSome(createReport): asio eof, retry");
+        ++retries;
+      } else {
+        // unrecoverable error
+        REL_ERROR(
+            "Create report of {} {} for link redirection {} Boost exception {}",
+            did, path, format_vector(uri_chain), exc.what());
+        break;
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("Create report of {} {} for link redirection {} exception {}",
+                did, path, format_vector(uri_chain), exc.what());
+      break;
+    }
+  }
 }
 
-void report_content_visitor::operator()(embed_abuse const &value) {
-  // TODO check the embeds
-  // report if abuse detected
-  // check URLs for redirection
-  // check content reuse by this and other accounts
-  // check content spam by this account
-  // _agent.send_report(_did, value._filters, value._paths);
+void report_content_visitor::operator()(filter_matches const &value) {
+  _agent.string_match_report(_did, value._filters, value._paths);
+}
+void report_content_visitor::operator()(link_redirection const &value) {
+  _agent.link_redirection_report(_did, value._path, value._uri_chain);
 }
 } // namespace moderation
 } // namespace bsky

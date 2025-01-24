@@ -193,6 +193,7 @@ Alex Rubinstein|disinfo,disruptive|track=true,report=true,scope=any,match=substr
 Wyatt Reed|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Richard Medhurst|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Caitlin Johnstone|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+Glenn Greenwald|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Danny Haiphong|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 Rula Jebreal|caution|track=true,report=true,scope=any,match=substring
 Jeff Sharlet|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
@@ -213,6 +214,9 @@ aljazeera.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substri
  by Al Jazeera English|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 thecanary.co/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
 palestinechronicle.com/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+doubledown.news/|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by AJ+|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
+ by FREENVESTING|track=true,report=true,scope=any,match=substring|
 ## antisemitic, disinfo on YouTube 
 BreezyPolitics|disinfo,network|track=true,report=true,scope=any,match=substring|
 Katchanovski|disinfo,disruptive|track=true,report=true,scope=any,match=substring|
@@ -238,7 +242,7 @@ retard|abusive|track=true,report=true,scope=any,match=substring|
 ## October 7 2023 atrocity celebrants
 from the river to the sea|abusive,violent|track=true,report=true,scope=any,match=substring|
 globalize the intifada|abusive,violent|track=true,report=true,scope=any,match=substring|
-🔻|abusive,violent|track=true,report=true,scope=profile,match=substring|
+🔻|abusive,violent|track=true,report=true,scope=profile,match=substring|Gaza,genocide,Palestin,🍉,PSLB
 ## deadnaming - however, this is also a frequent typo
 Isreal|abusive|track=true,report=true,scope=any,match=word|
 Israhell|abusive|track=true,report=true,scope=any,match=word|

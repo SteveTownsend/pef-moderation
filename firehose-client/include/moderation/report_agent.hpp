@@ -27,14 +27,18 @@ http://www.fsf.org/licensing/licenses
 #include "yaml-cpp/yaml.h"
 #include <thread>
 
-
 namespace bsky {
 namespace moderation {
 
-struct report_reason {
+struct filter_match_info {
   std::string descriptor = std::string(PROJECT_NAME);
   std::vector<std::string> filters;
   std::vector<std::string> paths;
+};
+struct link_redirection_info {
+  std::string descriptor = std::string(PROJECT_NAME);
+  std::string path;
+  std::vector<std::string> uris;
 };
 struct report_subject {
   std::string _type = std::string(atproto::AdminDefsRepoRef);
@@ -61,10 +65,12 @@ struct filter_matches {
   std::vector<std::string> _filters;
   std::vector<std::string> _paths;
 };
-struct embed_abuse {
-  size_t _count;
+struct link_redirection {
+  std::string _path;
+  std::vector<std::string> _uri_chain;
 };
-typedef std::variant<no_content, filter_matches, embed_abuse> report_content;
+typedef std::variant<no_content, filter_matches, link_redirection>
+    report_content;
 struct account_report {
   inline account_report() : _content(no_content()) {}
   inline account_report(std::string const &did, report_content content)
@@ -82,7 +88,7 @@ public:
   template <typename T> void operator()(T const &) {}
 
   void operator()(filter_matches const &value);
-  void operator()(embed_abuse const &value);
+  void operator()(link_redirection const &value);
 
 private:
   report_agent &_agent;
@@ -105,9 +111,11 @@ public:
   void start();
   void wait_enqueue(account_report &&value);
 
-  void send_report(std::string const &did,
-                   std::vector<std::string> const &filters,
-                   std::vector<std::string> const &paths);
+  void string_match_report(std::string const &did,
+                           std::vector<std::string> const &filters,
+                           std::vector<std::string> const &paths);
+  void link_redirection_report(std::string const &did, std::string const &path,
+                               std::vector<std::string> const &uri_chain);
 
 private:
   report_agent();

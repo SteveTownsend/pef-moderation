@@ -33,9 +33,13 @@ metrics::metrics()
           "firehose_facets", "Statistics about received firehose facets")),
       _operational_stats(
           add_gauge("operational_stats", "Statistics about client internals")),
-      _realtime_alerts(
-          add_counter("realtime_alerts",
-                      "Alerts generated for possibly suspect activity")) {
+      _realtime_alerts(add_counter(
+          "realtime_alerts", "Alerts generated for possibly suspect activity")),
+      _embed_stats(add_counter(
+          "embed_stats",
+          "Checks performed on 'embeds': post, video, image, link")),
+      _link_stats(
+          add_histogram("link_stats", "Statistics from link analysis")) {
   // Histogram metrics have to be added by hand, on-deman instantiation is not
   // possible
   prometheus::Histogram::BucketBoundaries boundaries = {
@@ -49,6 +53,10 @@ metrics::metrics()
   _firehose_facets.Add({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}},
                        boundaries);
   _firehose_facets.Add({{"facet", "total"}}, boundaries);
+
+  prometheus::Histogram::BucketBoundaries hop_count = {
+      0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+  _link_stats.Add({{"redirection", "hops"}}, hop_count);
 }
 
 metrics &metrics::instance() {

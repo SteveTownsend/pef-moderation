@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     log_ready = true;
 
 #if _DEBUG
-    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::TRACE);
+    restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::WARNING);
     restc_cpp::Logger::Instance().SetHandler(
         [](restc_cpp::LogLevel level, const std::string &msg) {
           static const std::array<std::string, 6> levels = {
