@@ -395,39 +395,18 @@ void firehose_payload::handle_content(
               .GetAt(
                   {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}})
               .Observe(static_cast<double>(mentions));
-          if (mentions > activity::account::MentionFacetThreshold) {
-            processor.request_recording(
-                {repo,
-                 bsky::time_stamp_from_iso_8601(
-                     content["createdAt"].template get<std::string>()),
-                 activity::mentions(mentions)});
-          }
         }
         if (links > 0) {
           metrics::instance()
               .firehose_facets()
               .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
               .Observe(static_cast<double>(links));
-          if (links > activity::account::MentionFacetThreshold) {
-            processor.request_recording(
-                {repo,
-                 bsky::time_stamp_from_iso_8601(
-                     content["createdAt"].template get<std::string>()),
-                 activity::links(links)});
-          }
         }
         if (tags > 0) {
           metrics::instance()
               .firehose_facets()
               .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
               .Observe(static_cast<double>(tags));
-          if (tags > activity::account::TagFacetThreshold) {
-            processor.request_recording(
-                {repo,
-                 bsky::time_stamp_from_iso_8601(
-                     content["createdAt"].template get<std::string>()),
-                 activity::tags(tags)});
-          }
         }
         if (has_facets) {
           size_t total(mentions + tags + links);
@@ -435,13 +414,11 @@ void firehose_payload::handle_content(
               .firehose_facets()
               .GetAt({{"facet", "total"}})
               .Observe(static_cast<double>(total));
-          if (total > activity::account::TotalFacetThreshold) {
-            processor.request_recording(
-                {repo,
-                 bsky::time_stamp_from_iso_8601(
-                     content["createdAt"].template get<std::string>()),
-                 activity::facets(total)});
-          }
+          processor.request_recording(
+              {repo,
+               bsky::time_stamp_from_iso_8601(
+                   content["createdAt"].template get<std::string>()),
+               activity::facets(tags, mentions, links)});
         }
         if (content.contains("langs")) {
           auto langs(content["langs"].template get<std::vector<std::string>>());

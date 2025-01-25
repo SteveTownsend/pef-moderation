@@ -24,7 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include <cache.hpp>
 #include <lfu_cache_policy.hpp>
 namespace activity {
-constexpr size_t MaxAccounts = 250000;
+constexpr size_t MaxAccounts = 500000;
 constexpr size_t MaxBacklog = 10000;
 
 template <typename Key, typename Value>
