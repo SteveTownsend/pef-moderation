@@ -58,11 +58,12 @@ public:
   }
 
 private:
+  // storage optimized order of fields
   system_clock::time_point _last_fixed_end = {};
-  COUNT_UNIT _last_count = 0;
   system_clock::time_point _current_fixed_end;
-  COUNT_UNIT _current_count = 0;
   system_clock::duration _window_size;
+  COUNT_UNIT _last_count = 0;
+  COUNT_UNIT _current_count = 0;
   COUNT_UNIT _limit;
   static_assert(std::is_integral<COUNT_UNIT>::value,
                 "COUNT_UNIT must be an integral type");

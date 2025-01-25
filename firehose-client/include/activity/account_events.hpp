@@ -73,23 +73,15 @@ struct profile {
   std::string _profile;
 };
 struct matches {
-  size_t _count;
-};
-struct tags {
-  size_t _count;
-};
-struct links {
-  size_t _count;
-};
-struct mentions {
-  size_t _count;
+  unsigned short _count;
 };
 struct facets {
-  size_t _count;
+  unsigned short _tags;
+  unsigned short _mentions;
+  unsigned short _links;
 };
 typedef std::variant<post, reply, repost, quote, follow, block, like, active,
-                     inactive, handle, profile, matches, tags, links, mentions,
-                     facets>
+                     inactive, handle, profile, matches, facets>
     event;
 struct timed_event {
   inline timed_event() : _event(active()) {}
@@ -117,7 +109,7 @@ typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
 // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
-constexpr size_t MaxContentItems = 20;
+constexpr size_t MaxContentItems = 25;
 struct content_hit_count {
   int32_t _likes = 0;
   int32_t _reposts = 0;
@@ -182,9 +174,20 @@ template <typename Key, typename Value>
 using lfu_cache_at_uri_t =
     typename caches::fixed_sized_cache<Key, Value, CustomLFUCachePolicy,
                                        content_hits>;
-
 class account {
 public:
+  enum class state { unknown, active, inactive };
+  static inline std::string to_string(state my_state) {
+    switch (my_state) {
+    case state::active:
+      return "active";
+    case state::inactive:
+      return "inactive";
+    case state::unknown:
+    default:
+      return "unknown";
+    }
+  }
   // per-post facet abuse thresholds - hashtag, links, mentions, total
   // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/75
   // 99.9% threshold based on observed metrics
@@ -193,9 +196,10 @@ public:
   static constexpr size_t MentionFacetThreshold = 11;
   static constexpr size_t TotalFacetThreshold = 29;
   // allow occasional verbosity in facets
-  static constexpr size_t FacetFactor = 5;
+  static constexpr size_t FacetFactor = 10;
 
   // output a log every few events to highlight frequent activity
+  static constexpr size_t AlertFactor = 10; // all alerts for the account
   static constexpr size_t PostFactor = 25;
 
   // track content interactions at account and content-item level
@@ -220,8 +224,8 @@ public:
   // track blocks both ways
   static constexpr size_t BlocksFactor = 50;
   static constexpr size_t BlockedByFactor = 25;
-  // track account-level updates
-  static constexpr size_t UpdateFactor = 5;
+  // track account-level updates, total and individual buckets
+  static constexpr size_t UpdateFactor = 10;
   // output a log every few matches to highlight suspect activity
   static constexpr size_t MatchFactor = 5;
 
@@ -236,7 +240,7 @@ public:
 
   void record(event_cache &parent_cache, timed_event const &event);
   inline size_t event_count() const { return _event_count; }
-  inline void alert() { ++_alert_count; }
+  void alert();
   inline size_t alert_count() const { return _alert_count; }
 
   void post(atproto::at_uri const &uri);
@@ -258,8 +262,11 @@ public:
   void blocked_by();
 
   void updated();
+  void activation(const bool active);
+  void profile();
+  void handle();
 
-  void add_matches(const size_t matches);
+  void add_matches(const unsigned short matches);
   size_t matches() const { return _matches; }
 
   caches::WrappedValue<content_hit_count>
@@ -305,8 +312,12 @@ private:
   int32_t _blocks = 0;
   int32_t _blocked_by = 0;
 
-  size_t _updates = 0;
-  size_t _matches = 0;
+  state _state = state::unknown;
+  unsigned short _updates = 0;
+  unsigned short _activations = 0;
+  unsigned short _profiles = 0;
+  unsigned short _handles = 0;
+  unsigned short _matches = 0;
 };
 
 // visitor for account-specific logic
@@ -331,9 +342,6 @@ struct augment_account_event {
 
   void operator()(activity::matches const &value);
 
-  void operator()(activity::tags const &value);
-  void operator()(activity::links const &value);
-  void operator()(activity::mentions const &value);
   void operator()(activity::facets const &value);
 
 private:
