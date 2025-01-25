@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.4.2 LANGUAGES C CXX)
+project(firehose_client VERSION 2.4.3 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -36,7 +36,7 @@ include(CMakePrintHelpers)
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/firehost_client_config.hpp)
 SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-find_package(gtest)
+find_package(GTest CONFIG REQUIRED)
 
 include(FetchContent)
 # activity caching (header-only)
@@ -235,7 +235,7 @@ nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx
 if (UNIX)
 	target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})
 else()
-  target_link_libraries(firehose_client ${ZLIB_LIBRARY}  ${REST_CPP_LIBRARY})
+  target_link_libraries(firehose_client ${ZLIB_LIBRARY} ${REST_CPP_LIBRARY})
 endif()
 
 # TODO decide if I care about this

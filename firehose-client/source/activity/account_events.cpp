@@ -21,7 +21,9 @@ http://www.fsf.org/licensing/licenses
 #include "activity/account_events.hpp"
 #include "activity/event_cache.hpp"
 #include "metrics.hpp"
+#include "moderation/report_agent.hpp"
 #include <algorithm>
+
 
 namespace activity {
 
@@ -347,6 +349,13 @@ void augment_account_event::augment_account_event::operator()(
   _account.blocks();
   auto target(_cache.get_account(value._blocked));
   target->blocked_by();
+  // report and label if account blocked moderation service
+  if (value._blocked ==
+      bsky::moderation::report_agent::instance().service_did()) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            _account.did(), bsky::moderation::blocks_moderation()));
+  }
 }
 void augment_account_event::augment_account_event::operator()(
     activity::follow const &value) {

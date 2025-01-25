@@ -221,10 +221,6 @@ void matcher::report_if_needed(account_filter_matches &matches) {
         bsky::moderation::account_report(
             matches._did,
             bsky::moderation::filter_matches(all_filters, paths, labels)));
-    metrics::instance()
-        .realtime_alerts()
-        .Get({{"auto_reports", "submitted"}})
-        .Increment();
   }
 }
 

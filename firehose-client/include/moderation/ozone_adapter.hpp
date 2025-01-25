@@ -33,22 +33,23 @@ class ozone_adapter {
 public:
   ozone_adapter(std::string const &connection_string);
   void start();
-  bool is_labeled(std::string const &did) const;
+  bool already_processed(std::string const &did) const;
 
 private:
-  void check_refresh_labeled();
+  void check_refresh_processed();
   std::string safe_connection_string() const;
 
   static constexpr std::chrono::milliseconds ThreadDelay =
       std::chrono::milliseconds(15000);
-  static constexpr std::chrono::minutes LabeledAccountRefreshInterval =
+  static constexpr std::chrono::minutes ProcessedAccountRefreshInterval =
       std::chrono::minutes(15);
 
   std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
   std::thread _thread;
   std::unordered_set<std::string> _labeled_accounts;
-  std::chrono::steady_clock::time_point _last_labeled_refresh;
+  std::chrono::steady_clock::time_point _last_refresh;
+  std::unordered_set<std::string> _processed_accounts;
   mutable std::mutex _lock;
 };
 
