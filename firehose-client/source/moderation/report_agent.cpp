@@ -94,7 +94,7 @@ void report_agent::start() {
             .Decrement();
 
         // Don't reprocess previously-labeled accounts
-        if (_moderation_data->is_labeled(report._did) ||
+        if (_moderation_data->already_processed(report._did) ||
             is_reported(report._did)) {
           REL_INFO("Report of {} skipped, already known", report._did);
           metrics::instance()
@@ -119,6 +119,10 @@ void report_agent::wait_enqueue(account_report &&value) {
   metrics::instance()
       .operational_stats()
       .Get({{"report_agent", "backlog"}})
+      .Increment();
+  metrics::instance()
+      .realtime_alerts()
+      .Get({{"auto_reports", "submitted"}})
       .Increment();
 }
 
@@ -304,6 +308,85 @@ void report_agent::link_redirection_report(
 }
 
 // TODO add metrics
+void report_agent::blocks_moderation_report(std::string const &did) {
+  restc_cpp::serialize_properties_t properties;
+  properties.name_mapping = &json::TypeFieldMapping;
+  reported(did);
+  if (_dry_run) {
+    REL_INFO("Dry-run Report of {} as blocks-moderation", did);
+    return;
+  }
+  size_t retries(0);
+  bsky::moderation::report_response response;
+  while (retries < 5) {
+    try {
+      response =
+          _rest_client
+              ->ProcessWithPromiseT<bsky::moderation::report_response>(
+                  [&](restc_cpp::Context &ctx) {
+                    // This is a co-routine, running in a worker-thread
+
+                    // Instantiate a report_response structure.
+                    bsky::moderation::report_request request;
+                    request.subject.did = did;
+                    request.reason = "Auto-report: blocks moderation";
+
+                    std::ostringstream body;
+                    restc_cpp::SerializeToJson(request, body, properties);
+
+                    // Serialize it asynchronously. The asynchronously part does
+                    // not really matter here, but it may if you receive huge
+                    // data structures.
+                    restc_cpp::SerializeFromJson(
+                        response,
+
+                        // Construct a request to the server
+                        restc_cpp::RequestBuilder(ctx)
+                            .Post(_host + "com.atproto.moderation.createReport")
+                            .Header("Content-Type", "application/json")
+                            .Header("Atproto-Accept-Labelers", _service_did)
+                            .Header(
+                                "Atproto-Proxy",
+                                _service_did +
+                                    std::string(atproto::ProxyLabelerSuffix))
+                            .Header("Authorization",
+                                    std::string("Bearer " +
+                                                _session->access_token()))
+                            .Data(body.str())
+                            // Send the request
+                            .Execute());
+
+                    // Return the session instance through C++ future<>
+                    return response;
+                  })
+
+              // Get the Post instance from the future<>, or any C++ exception
+              // thrown within the lambda.
+              .get();
+      REL_INFO("Report of {} as blocks-moderation recorded at {}, reporter "
+               "{} id={}",
+               did, response.createdAt, response.reportedBy, response.id);
+      break;
+    } catch (boost::system::system_error const &exc) {
+      if (exc.code().value() == boost::asio::error::eof &&
+          exc.code().category() == boost::asio::error::get_misc_category()) {
+        REL_WARNING("IoReaderImpl::ReadSome(createReport): asio eof, retry");
+        ++retries;
+      } else {
+        // unrecoverable error
+        REL_ERROR("Create report of {} as blocks-moderation Boost exception {}",
+                  did, exc.what());
+        break;
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("Create report of {} as blocks-moderation exception {}", did,
+                exc.what());
+      break;
+    }
+  }
+}
+
+// TODO add metrics
 void report_agent::label_account(std::string const &did,
                                  std::vector<std::string> const &labels) {
   restc_cpp::serialize_properties_t properties;
@@ -396,6 +479,11 @@ void report_content_visitor::operator()(filter_matches const &value) {
 }
 void report_content_visitor::operator()(link_redirection const &value) {
   _agent.link_redirection_report(_did, value._path, value._uri_chain);
+}
+void report_content_visitor::operator()(blocks_moderation const &value) {
+  _agent.blocks_moderation_report(_did);
+  // auto-label request augments the report
+  _agent.label_account(_did, {"blocks"});
 }
 } // namespace moderation
 } // namespace bsky

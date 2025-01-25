@@ -3,10 +3,9 @@ add_executable(
   firehose_client_tests
   ${PROJECT_SOURCE_DIR}/source/helpers.cpp
   ${PROJECT_SOURCE_DIR}/source/log_wrapper.cpp
-  ${PROJECT_SOURCE_DIR}/source/matcher.cpp
   ${PROJECT_SOURCE_DIR}/source/parser.cpp
-  ./source/matcher_test.cpp
   ./source/parser_test.cpp
+  ./source/rate_observer_test.cpp
 )
 # No logging in tests
 target_compile_definitions(firehose_client_tests PUBLIC DISABLE_LOGGING)
@@ -17,6 +16,9 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock_main
   spdlog
+  pqxx
+  prometheus-cpp::pull
+  jwt-cpp::jwt-cpp
   ${ICU_LIBRARIES}
 )
 

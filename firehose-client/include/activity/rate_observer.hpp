@@ -20,49 +20,54 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "chrono"
+#include <chrono>
 
 namespace activity {
 
+using std::chrono::system_clock;
 // after
 // https://www.rdiachenko.com/posts/arch/rate-limiting/sliding-window-algorithm/
 template <typename TIME_UNIT, typename COUNT_UNIT> class rate_observer {
 public:
   rate_observer() = delete;
   rate_observer(TIME_UNIT const window_size, COUNT_UNIT const limit)
-      : _window_size(window_size), _limit(limit) {}
+      : _window_size(
+            std::chrono::duration_cast<system_clock::duration>(window_size)),
+        _limit(limit) {
+    _current_fixed_end = system_clock::now() + _window_size;
+  }
   ~rate_observer() = default;
   // Calculates excess over allowed observations
-  COUNT_UNIT observed_excess() {
-    std::chrono::time_point<TIME_UNIT> now =
-        std::chrono::time_point_cast<TIME_UNIT>(
-            std::chrono::system_clock::now());
+  COUNT_UNIT observe_and_get_excess() {
+    system_clock::time_point now = system_clock::now();
     if (now > _current_fixed_end) {
       _last_fixed_end = _current_fixed_end;
       _last_count = _current_count;
-      _current_fixed_end =
-          std::chrono::time_point_cast<TIME_UNIT>(now + _window_size);
+      _current_fixed_end = now + _window_size;
       _current_count = 0;
     }
-    std::chrono::time_point<TIME_UNIT> sliding_window_start =
-        now - _window_size;
+    system_clock::time_point sliding_window_start = now - _window_size;
     float previous_window_weight =
-        std::max(0, _last_fixed_end - sliding_window_start) / _window_size;
+        std::max(0.0f, static_cast<float>(
+                           (_last_fixed_end - sliding_window_start).count())) /
+        static_cast<float>(_window_size.count());
     COUNT_UNIT requests(static_cast<COUNT_UNIT>(
-        std::floor(previous_window_weight * static_cast<float>(_last_count)) +
-        static_cast<float>(++_current_count)));
-    return std::max(0, requests - _limit);
+        std::floor((previous_window_weight * static_cast<float>(_last_count)) +
+                   static_cast<float>(++_current_count))));
+    return std::max(COUNT_UNIT(0), requests - _limit);
   }
 
 private:
-  std::chrono::time_point<TIME_UNIT> _last_fixed_end = {};
+  system_clock::time_point _last_fixed_end = {};
   COUNT_UNIT _last_count = 0;
-  std::chrono::time_point<TIME_UNIT> _current_fixed_end =
-      std::chrono::time_point_cast<TIME_UNIT>(std::chrono::system_clock::now() +
-                                              _window_size);
+  system_clock::time_point _current_fixed_end;
   COUNT_UNIT _current_count = 0;
-  std::chrono::duration<TIME_UNIT> _window_size;
+  system_clock::duration _window_size;
   COUNT_UNIT _limit;
+  static_assert(std::is_integral<COUNT_UNIT>::value,
+                "COUNT_UNIT must be an integral type");
+  static_assert(std::is_signed<COUNT_UNIT>::value,
+                "COUNT_UNIT must be a signed type");
 };
 
 } // namespace activity

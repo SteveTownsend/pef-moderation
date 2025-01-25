@@ -36,7 +36,7 @@ void ozone_adapter::start() {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
         }
         // load the list of labeled accounts
-        check_refresh_labeled();
+        check_refresh_processed();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on net loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
@@ -52,26 +52,36 @@ void ozone_adapter::start() {
 }
 
 // Don't refresh until interval has elapsed
-void ozone_adapter::check_refresh_labeled() {
+void ozone_adapter::check_refresh_processed() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-  if (std::chrono::duration_cast<std::chrono::seconds>(
-          now - _last_labeled_refresh) > LabeledAccountRefreshInterval) {
-    decltype(_labeled_accounts) new_list;
+  if (std::chrono::duration_cast<std::chrono::seconds>(now - _last_refresh) >
+      ProcessedAccountRefreshInterval) {
+    decltype(_labeled_accounts) new_labeled;
     pqxx::work tx(*_cx);
     for (auto [did] : tx.query<std::string>(
              "SELECT DISTINCT(\"subjectDid\") FROM moderation_event WHERE "
              "(action = 'tools.ozone.moderation.defs#modEventLabel')")) {
-      new_list.insert(did);
+      new_labeled.insert(did);
     }
+    decltype(_processed_accounts) new_done;
+    for (auto [did] : tx.query<std::string>(
+             "SELECT DISTINCT(\"subjectDid\") FROM moderation_event WHERE "
+             "(action = 'tools.ozone.moderation.defs#modEventAcknowledge')")) {
+      if (!new_labeled.contains(did)) {
+        new_done.insert(did);
+      }
+    }
+
     std::lock_guard guard(_lock);
-    _labeled_accounts.swap(new_list);
-    _last_labeled_refresh = std::chrono::steady_clock::now();
+    _labeled_accounts.swap(new_labeled);
+    _processed_accounts.swap(new_done);
+    _last_refresh = std::chrono::steady_clock::now();
   }
 }
 
-bool ozone_adapter::is_labeled(std::string const &did) const {
+bool ozone_adapter::already_processed(std::string const &did) const {
   std::lock_guard guard(_lock);
-  return _labeled_accounts.contains(did);
+  return _labeled_accounts.contains(did) || _processed_accounts.contains(did);
 }
 
 // mask the password

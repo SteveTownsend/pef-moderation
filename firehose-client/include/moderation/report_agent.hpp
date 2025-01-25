@@ -88,7 +88,10 @@ struct link_redirection {
   std::string _path;
   std::vector<std::string> _uri_chain;
 };
-typedef std::variant<no_content, filter_matches, link_redirection>
+struct blocks_moderation {};
+
+typedef std::variant<no_content, filter_matches, link_redirection,
+                     blocks_moderation>
     report_content;
 struct account_report {
   inline account_report() : _content(no_content()) {}
@@ -108,6 +111,7 @@ public:
 
   void operator()(filter_matches const &value);
   void operator()(link_redirection const &value);
+  void operator()(blocks_moderation const &value);
 
 private:
   report_agent &_agent;
@@ -135,8 +139,10 @@ public:
                            std::vector<std::string> const &paths);
   void link_redirection_report(std::string const &did, std::string const &path,
                                std::vector<std::string> const &uri_chain);
+  void blocks_moderation_report(std::string const &did);
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
+  std::string service_did() const { return _service_did; }
 
 private:
   report_agent();
