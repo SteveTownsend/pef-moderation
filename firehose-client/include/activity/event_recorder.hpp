@@ -21,7 +21,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "activity/event_cache.hpp"
-#include "readerwritercircularbuffer.h"
+#include "readerwriterqueue.h"
 
 namespace activity {
 class event_recorder {
@@ -31,7 +31,7 @@ public:
 
 private:
   // Declare queue between post-processing and recording
-  moodycamel::BlockingReaderWriterCircularBuffer<timed_event> _queue;
+  moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
   std::thread _thread;
 
   event_cache _events;
