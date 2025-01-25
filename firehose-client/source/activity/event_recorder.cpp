@@ -42,7 +42,7 @@ event_recorder::event_recorder() : _queue(MaxBacklog) {
 }
 
 void event_recorder::wait_enqueue(timed_event &&value) {
-  _queue.wait_enqueue(value);
+  _queue.enqueue(value);
   metrics::instance()
       .operational_stats()
       .Get({{"events", "backlog"}})

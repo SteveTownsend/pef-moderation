@@ -27,7 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include "metrics.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
-#include "readerwritercircularbuffer.h"
+#include "readerwriterqueue.h"
 #include <prometheus/counter.h>
 #include <prometheus/gauge.h>
 #include <prometheus/histogram.h>
@@ -116,7 +116,7 @@ public:
   }
   ~post_processor() = default;
   void wait_enqueue(T &&value) {
-    _queue.wait_enqueue(value);
+    _queue.enqueue(value);
     metrics::instance()
         .operational_stats()
         .Get({{"message", "backlog"}})
@@ -132,7 +132,7 @@ public:
 
 private:
   // Declare queue between websocket and match post-processing
-  moodycamel::BlockingReaderWriterCircularBuffer<T> _queue;
+  moodycamel::BlockingReaderWriterQueue<T> _queue;
   std::thread _thread;
   std::shared_ptr<matcher> _matcher;
   activity::event_recorder _recorder;
