@@ -109,7 +109,7 @@ typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
 // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
-constexpr size_t MaxContentItems = 25;
+constexpr size_t MaxContentItems = 30;
 struct content_hit_count {
   int32_t _likes = 0;
   int32_t _reposts = 0;
@@ -188,6 +188,78 @@ public:
       return "unknown";
     }
   }
+
+  struct statistics {
+    void record(event_cache &parent_cache, timed_event const &event);
+
+    void tags(const size_t count);
+    void links(const size_t count);
+    void mentions(const size_t count);
+    void facets(const size_t count);
+
+    void alert();
+
+    void post(atproto::at_uri const &uri);
+    void replied_to();
+    void reply_to(atproto::at_uri const &uri);
+    void reply();
+    void quoted();
+    void quote();
+    void reposted();
+    void repost();
+    void liked();
+    void like();
+
+    void follows();
+    void followed_by();
+    void blocks();
+    void blocked_by();
+
+    void updated();
+    void activation(const bool active);
+    void profile();
+    void handle();
+
+    void add_matches(const unsigned short matches);
+    size_t matches() const { return _matches; }
+
+    std::string _did;
+    state _state = state::unknown;
+    size_t _event_count = 0;
+    size_t _alert_count = 0;
+
+    // facet abuse
+    size_t _tags = 0;
+    size_t _links = 0;
+    size_t _mentions = 0;
+    size_t _facets = 0;
+
+    // content interactions may have a negative count
+    int32_t _posts = 0;
+
+    // these may go negative, depending on the state of the account when
+    // recorded, and subsequent events
+    int32_t _replied_to = 0;
+    int32_t _replies = 0;
+    int32_t _quoted = 0;
+    int32_t _quotes = 0;
+    int32_t _reposted = 0;
+    int32_t _reposts = 0;
+    int32_t _liked = 0;
+    int32_t _likes = 0;
+
+    int32_t _follows = 0;
+    int32_t _followed_by = 0;
+    int32_t _blocks = 0;
+    int32_t _blocked_by = 0;
+
+    unsigned short _updates = 0;
+    unsigned short _activations = 0;
+    unsigned short _profiles = 0;
+    unsigned short _handles = 0;
+    unsigned short _matches = 0;
+  };
+
   // per-post facet abuse thresholds - hashtag, links, mentions, total
   // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/75
   // 99.9% threshold based on observed metrics
@@ -199,7 +271,8 @@ public:
   static constexpr size_t FacetFactor = 10;
 
   // output a log every few events to highlight frequent activity
-  static constexpr size_t AlertFactor = 10; // all alerts for the account
+  static constexpr size_t EventFactor = 500; // all events for the account
+  static constexpr size_t AlertFactor = 10;  // all alerts for the account
   static constexpr size_t PostFactor = 25;
 
   // track content interactions at account and content-item level
@@ -231,98 +304,32 @@ public:
 
   account(did_type const &did);
 
-  inline std::string did() const { return _did; }
-
-  void tags(const size_t count);
-  void links(const size_t count);
-  void mentions(const size_t count);
-  void facets(const size_t count);
+  inline std::string did() const { return _statistics._did; }
 
   void record(event_cache &parent_cache, timed_event const &event);
-  inline size_t event_count() const { return _event_count; }
-  void alert();
-  inline size_t alert_count() const { return _alert_count; }
-
-  void post(atproto::at_uri const &uri);
-  inline int32_t posts() const { return _posts; }
-
-  void replied_to();
-  void reply_to(atproto::at_uri const &uri);
-  void reply();
-  void quoted();
-  void quote();
-  void reposted();
-  void repost();
-  void liked();
-  void like();
-
-  void follows();
-  void followed_by();
-  void blocks();
-  void blocked_by();
-
-  void updated();
-  void activation(const bool active);
-  void profile();
-  void handle();
-
-  void add_matches(const unsigned short matches);
-  size_t matches() const { return _matches; }
+  inline size_t event_count() const { return _statistics._event_count; }
+  inline size_t alert_count() const { return _statistics._alert_count; }
 
   caches::WrappedValue<content_hit_count>
   get_content_item(atproto::at_uri const &uri);
   // Callback on LFU cache eviction
   void on_erase(atproto::at_uri const &uri,
                 caches::WrappedValue<content_hit_count> const &entry);
+  inline statistics &get_statistics() { return _statistics; }
 
 private:
   caches::WrappedValue<content_hit_count>
   get_content_hits(atproto::at_uri const &uri);
   void cache_content_item(atproto::at_uri const &uri);
-
-  std::string _did;
-  size_t _event_count = 0;
-  size_t _alert_count = 0;
-
-  // facet abuse
-  size_t _tags = 0;
-  size_t _links = 0;
-  size_t _mentions = 0;
-  size_t _facets = 0;
-
-  // content interactions may have a negative count
-  int32_t _posts = 0;
   // TODO might be better to indirect to event_cache
   std::shared_ptr<lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>
       _content_hits;
-
-  // these may go negative, depending on the state of the account when recorded,
-  // and subsequent events
-  int32_t _replied_to = 0;
-  int32_t _replies = 0;
-  int32_t _quoted = 0;
-  int32_t _quotes = 0;
-  int32_t _reposted = 0;
-  int32_t _reposts = 0;
-  int32_t _liked = 0;
-  int32_t _likes = 0;
-
-  int32_t _follows = 0;
-  int32_t _followed_by = 0;
-  int32_t _blocks = 0;
-  int32_t _blocked_by = 0;
-
-  state _state = state::unknown;
-  unsigned short _updates = 0;
-  unsigned short _activations = 0;
-  unsigned short _profiles = 0;
-  unsigned short _handles = 0;
-  unsigned short _matches = 0;
+  statistics _statistics;
 };
 
 // visitor for account-specific logic
 struct augment_account_event {
-  augment_account_event(event_cache &cache, account &account);
+  augment_account_event(event_cache &cache, account::statistics &stats);
   template <typename T> void operator()(T const &value) {}
 
   void operator()(activity::post const &value);
@@ -347,7 +354,7 @@ struct augment_account_event {
 private:
   void reply_to(atproto::at_uri const &uri);
 
-  account &_account;
+  account::statistics &_stats;
   event_cache &_cache;
 };
 

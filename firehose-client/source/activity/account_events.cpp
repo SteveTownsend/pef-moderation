@@ -23,20 +23,34 @@ http://www.fsf.org/licensing/licenses
 #include "metrics.hpp"
 #include "moderation/report_agent.hpp"
 #include <algorithm>
+#include <boost/fusion/adapted.hpp>
+
+BOOST_FUSION_ADAPT_STRUCT(
+    activity::account::statistics, (std::string, _did), (size_t, _event_count),
+    (size_t, _alert_count), (size_t, _tags), (size_t, _links),
+    (size_t, _mentions), (size_t, _facets), (int32_t, _posts),
+    (int32_t, _replied_to), (int32_t, _replies), (int32_t, _quoted),
+    (int32_t, _quotes), (int32_t, _reposted), (int32_t, _reposts),
+    (int32_t, _liked), (int32_t, _likes), (int32_t, _follows),
+    (int32_t, _followed_by), (int32_t, _blocks), (int32_t, _blocked_by),
+    (unsigned short, _updates), (unsigned short, _activations),
+    (unsigned short, _profiles), (unsigned short, _handles),
+    (unsigned short, _matches))
 
 namespace activity {
 
 account::account(did_type const &did)
-    : _did(did),
-      _content_hits(std::make_shared<
+    : _content_hits(std::make_shared<
                     lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>(
           MaxContentItems, CustomLFUCachePolicy<atproto::at_uri>(),
           std::function<void(atproto::at_uri const &,
                              std::shared_ptr<content_hit_count> const &)>(
               std::bind(&account::on_erase, this, std::placeholders::_1,
-                        std::placeholders::_2)))) {}
+                        std::placeholders::_2)))) {
+  _statistics._did = did;
+}
 
-void account::tags(const size_t count) {
+void account::statistics::tags(const size_t count) {
   if (count > activity::account::TagFacetThreshold) {
     if (bsky::alert_needed(++_tags, FacetFactor)) {
       REL_INFO("Account flagged tag-facets {} {}", _did, _tags);
@@ -48,7 +62,7 @@ void account::tags(const size_t count) {
     }
   }
 }
-void account::links(const size_t count) {
+void account::statistics::links(const size_t count) {
   if (count > activity::account::LinkFacetThreshold) {
     if (bsky::alert_needed(++_links, FacetFactor)) {
       REL_INFO("Account flagged link-facets {} {}", _did, _links);
@@ -60,7 +74,7 @@ void account::links(const size_t count) {
     }
   }
 }
-void account::mentions(const size_t count) {
+void account::statistics::mentions(const size_t count) {
   if (count > activity::account::MentionFacetThreshold) {
     if (bsky::alert_needed(++_mentions, FacetFactor)) {
       REL_INFO("Account flagged mention-facets {} {}", _did, _mentions);
@@ -72,7 +86,7 @@ void account::mentions(const size_t count) {
     }
   }
 }
-void account::facets(const size_t count) {
+void account::statistics::facets(const size_t count) {
   if (count > activity::account::TotalFacetThreshold) {
     if (bsky::alert_needed(++_facets, FacetFactor)) {
       REL_INFO("Account flagged total-facets {} {}", _did, _facets);
@@ -85,14 +99,30 @@ void account::facets(const size_t count) {
   }
 }
 
-void account::record(event_cache &parent_cache, timed_event const &event) {
-  ++_event_count;
+void account::statistics::record(event_cache &parent_cache,
+                                 timed_event const &event) {
   std::visit(augment_account_event(parent_cache, *this), event._event);
+  if (bsky::alert_needed(++_event_count, EventFactor)) {
+    std::ostringstream oss;
+    restc_cpp::SerializeToJson(*this, oss);
+    REL_INFO("Account flagged events: {}", oss.str());
+    metrics::instance()
+        .realtime_alerts()
+        .Get({{"account", "all_facets"}})
+        .Increment();
+    alert();
+  }
 }
 
-void account::alert() {
+void account::record(event_cache &parent_cache, timed_event const &event) {
+  _statistics.record(parent_cache, event);
+}
+
+void account::statistics::alert() {
   if (bsky::alert_needed(++_alert_count, AlertFactor)) {
-    REL_INFO("Account flagged alerts {} {}", _did, _alert_count);
+    std::ostringstream oss;
+    restc_cpp::SerializeToJson(*this, oss);
+    REL_INFO("Account flagged alerts: {}", oss.str());
     metrics::instance()
         .realtime_alerts()
         .Get({{"account", "alerts"}})
@@ -100,7 +130,7 @@ void account::alert() {
   }
 }
 
-void account::post(atproto::at_uri const &) {
+void account::statistics::post(atproto::at_uri const &) {
   if (bsky::alert_needed(++_posts, PostFactor)) {
     REL_INFO("Account flagged posts {} {}", _did, _posts);
     metrics::instance()
@@ -111,7 +141,7 @@ void account::post(atproto::at_uri const &) {
   }
 }
 
-void account::replied_to() {
+void account::statistics::replied_to() {
   if (bsky::alert_needed(++_replied_to, RepliedToFactor)) {
     REL_INFO("Account flagged replied-to {} {}", _did, _replied_to);
     metrics::instance()
@@ -121,7 +151,7 @@ void account::replied_to() {
     alert();
   }
 }
-void account::reply() {
+void account::statistics::reply() {
   if (bsky::alert_needed(++_replies, ReplyFactor)) {
     REL_INFO("Account flagged replies {} {}", _did, _replies);
     metrics::instance()
@@ -131,7 +161,7 @@ void account::reply() {
     alert();
   }
 }
-void account::quoted() {
+void account::statistics::quoted() {
   if (bsky::alert_needed(++_quoted, QuotedFactor)) {
     REL_INFO("Account flagged quoted {} {}", _did, _quoted);
     metrics::instance()
@@ -141,7 +171,7 @@ void account::quoted() {
     alert();
   }
 }
-void account::quote() {
+void account::statistics::quote() {
   if (bsky::alert_needed(++_quotes, QuoteFactor)) {
     REL_INFO("Account flagged quotes {} {}", _did, _quotes);
     metrics::instance()
@@ -151,7 +181,7 @@ void account::quote() {
     alert();
   }
 }
-void account::reposted() {
+void account::statistics::reposted() {
   ++_reposted;
   if (bsky::alert_needed(++_reposted, RepostedFactor)) {
     REL_INFO("Account flagged reposted {} {}", _did, _reposted);
@@ -162,7 +192,7 @@ void account::reposted() {
     alert();
   }
 }
-void account::repost() {
+void account::statistics::repost() {
   if (bsky::alert_needed(++_reposts, RepostFactor)) {
     REL_INFO("Account flagged reposts {} {}", _did, _reposts);
     metrics::instance()
@@ -172,7 +202,7 @@ void account::repost() {
     alert();
   }
 }
-void account::liked() {
+void account::statistics::liked() {
   if (bsky::alert_needed(++_liked, LikedFactor)) {
     REL_INFO("Account flagged liked {} {}", _did, _liked);
     metrics::instance()
@@ -182,7 +212,7 @@ void account::liked() {
     alert();
   }
 }
-void account::like() {
+void account::statistics::like() {
   if (bsky::alert_needed(++_likes, LikeFactor)) {
     REL_INFO("Account flagged likes {} {}", _did, _likes);
     metrics::instance()
@@ -212,7 +242,8 @@ void account::on_erase(atproto::at_uri const &uri,
   if (alerts > 0) {
     REL_INFO("Content-item evicted {} with {} alerts {} events",
              std::string(uri), alerts, entry->hits());
-    // TODO analyze evicted record and report via log file if it is of interest
+    // TODO analyze evicted record and report via log file if it is of
+    // interest
     metrics::instance()
         .realtime_alerts()
         .Get({{"account", "content_evictions"}, {"state", "flagged"}})
@@ -241,7 +272,7 @@ account::get_content_item(const atproto::at_uri &uri) {
 }
 
 // toxic string filter matches, flag verbose accounts
-void account::add_matches(const unsigned short matches) {
+void account::statistics::add_matches(const unsigned short matches) {
   size_t old_matches(_matches);
   _matches += matches;
   if ((old_matches == 0) ||
@@ -256,7 +287,7 @@ void account::add_matches(const unsigned short matches) {
 }
 
 // account-level updates - flag if frequent
-void account::updated() {
+void account::statistics::updated() {
   size_t old_updates(_updates);
   ++_updates;
   if (old_updates / UpdateFactor != _updates / UpdateFactor) {
@@ -271,7 +302,7 @@ void account::updated() {
     alert();
   }
 }
-void account::activation(const bool active) {
+void account::statistics::activation(const bool active) {
   _state = active ? state::active : state::inactive;
   size_t old_activations(_activations);
   ++_activations;
@@ -285,7 +316,7 @@ void account::activation(const bool active) {
   }
   updated();
 }
-void account::handle() {
+void account::statistics::handle() {
   size_t old_handles(_handles);
   ++_handles;
   if (old_handles / UpdateFactor != _handles / UpdateFactor) {
@@ -298,7 +329,7 @@ void account::handle() {
   }
   updated();
 }
-void account::profile() {
+void account::statistics::profile() {
   size_t old_profiles(_profiles);
   ++_profiles;
   if (old_profiles / UpdateFactor != _profiles / UpdateFactor) {
@@ -312,7 +343,7 @@ void account::profile() {
   updated();
 }
 
-void account::blocks() {
+void account::statistics::blocks() {
   if (bsky::alert_needed(++_blocks, BlocksFactor)) {
     REL_INFO("Account flagged blocks {} {}", _did, _blocks);
     metrics::instance()
@@ -322,7 +353,7 @@ void account::blocks() {
     alert();
   }
 }
-void account::blocked_by() {
+void account::statistics::blocked_by() {
   if (bsky::alert_needed(++_blocked_by, BlockedByFactor)) {
     REL_INFO("Account flagged blocked-by {} {}", _did, _blocked_by);
     metrics::instance()
@@ -332,7 +363,7 @@ void account::blocked_by() {
     alert();
   }
 }
-void account::follows() {
+void account::statistics::follows() {
   if (bsky::alert_needed(++_follows, FollowsFactor)) {
     REL_INFO("Account flagged follows {} {}", _did, _follows);
     metrics::instance()
@@ -342,7 +373,7 @@ void account::follows() {
     alert();
   }
 }
-void account::followed_by() {
+void account::statistics::followed_by() {
   if (bsky::alert_needed(++_followed_by, FollowedByFactor)) {
     REL_INFO("Account flagged followed-by {} {}", _did, _followed_by);
     metrics::instance()
@@ -354,12 +385,12 @@ void account::followed_by() {
 }
 
 augment_account_event::augment_account_event(event_cache &cache,
-                                             account &account)
-    : _account(account), _cache(cache) {}
+                                             account::statistics &stats)
+    : _stats(stats), _cache(cache) {}
 
 void augment_account_event::augment_account_event::operator()(
     activity::post const &value) {
-  _account.post(atproto::make_at_uri(_account.did(), value._ref));
+  _stats.post(atproto::make_at_uri(_stats._did, value._ref));
 }
 
 void augment_account_event::augment_account_event::operator()(
@@ -367,12 +398,12 @@ void augment_account_event::augment_account_event::operator()(
   // record interactions with parent/root
   reply_to(value._parent);
   reply_to(value._root);
-  _account.reply();
+  _stats.reply();
 }
 void augment_account_event::augment_account_event::operator()(
     activity::repost const &value) {
   auto post_account(_cache.get_account(value._post._authority));
-  post_account->reposted();
+  post_account->get_statistics().reposted();
   auto content(post_account->get_content_item(value._post));
   if (bsky::alert_needed(++content->_reposts, account::ContentRepostFactor)) {
     content->alert();
@@ -382,14 +413,14 @@ void augment_account_event::augment_account_event::operator()(
         .realtime_alerts()
         .Get({{"account", "content-reposts"}})
         .Increment();
-    _account.alert();
+    _stats.alert();
   }
-  _account.repost();
+  _stats.repost();
 }
 void augment_account_event::augment_account_event::operator()(
     activity::quote const &value) {
   auto post_account(_cache.get_account(value._post._authority));
-  post_account->quoted();
+  post_account->get_statistics().quoted();
   auto content(post_account->get_content_item(value._post));
   if (bsky::alert_needed(++content->_quotes, account::ContentQuoteFactor)) {
     content->alert();
@@ -399,35 +430,35 @@ void augment_account_event::augment_account_event::operator()(
         .realtime_alerts()
         .Get({{"account", "content-quotes"}})
         .Increment();
-    _account.alert();
+    _stats.alert();
   }
-  _account.quote();
+  _stats.quote();
 }
 
 void augment_account_event::augment_account_event::operator()(
     activity::block const &value) {
-  _account.blocks();
+  _stats.blocks();
   auto target(_cache.get_account(value._blocked));
-  target->blocked_by();
+  target->get_statistics().blocked_by();
   // report and label if account blocked moderation service
   if (value._blocked ==
       bsky::moderation::report_agent::instance().service_did()) {
     bsky::moderation::report_agent::instance().wait_enqueue(
         bsky::moderation::account_report(
-            _account.did(), bsky::moderation::blocks_moderation()));
+            _stats._did, bsky::moderation::blocks_moderation()));
   }
 }
 void augment_account_event::augment_account_event::operator()(
     activity::follow const &value) {
-  _account.follows();
+  _stats.follows();
   auto target(_cache.get_account(value._followed));
-  target->followed_by();
+  target->get_statistics().followed_by();
 }
 
 void augment_account_event::augment_account_event::operator()(
     activity::like const &value) {
   auto liked_account(_cache.get_account(value._content._authority));
-  liked_account->liked();
+  liked_account->get_statistics().liked();
   auto content(liked_account->get_content_item(value._content));
   if (bsky::alert_needed(++content->_likes, account::ContentLikeFactor)) {
     content->alert();
@@ -437,50 +468,50 @@ void augment_account_event::augment_account_event::operator()(
         .realtime_alerts()
         .Get({{"account", "content-likes"}})
         .Increment();
-    _account.alert();
+    _stats.alert();
   }
-  _account.like();
+  _stats.like();
 }
 
 void augment_account_event::augment_account_event::operator()(
     activity::active const &) {
-  _account.activation(true);
+  _stats.activation(true);
 }
 void augment_account_event::augment_account_event::operator()(
     activity::handle const &) {
-  _account.handle();
+  _stats.handle();
 }
 void augment_account_event::augment_account_event::operator()(
     activity::inactive const &) {
-  _account.activation(false);
+  _stats.activation(false);
 }
 void augment_account_event::augment_account_event::operator()(
     activity::profile const &) {
-  _account.profile();
+  _stats.profile();
 }
 
 void augment_account_event::augment_account_event::operator()(
     activity::matches const &value) {
-  _account.add_matches(value._count);
+  _stats.add_matches(value._count);
 }
 
 void augment_account_event::operator()(activity::facets const &value) {
   if (value._tags > 0) {
-    _account.tags(value._tags);
+    _stats.tags(value._tags);
   }
   if (value._links > 0) {
-    _account.links(value._links);
+    _stats.links(value._links);
   }
   if (value._mentions > 0) {
-    _account.links(value._mentions);
+    _stats.links(value._mentions);
   }
-  _account.facets(value._tags + value._mentions + value._links);
+  _stats.facets(value._tags + value._mentions + value._links);
 }
 
 void augment_account_event::augment_account_event::reply_to(
     atproto::at_uri const &uri) {
   auto account(_cache.get_account(uri._authority));
-  account->replied_to();
+  account->get_statistics().replied_to();
   auto content(account->get_content_item(uri));
   if (bsky::alert_needed(++content->_replies, account::ContentReplyFactor)) {
     content->alert();
@@ -490,7 +521,7 @@ void augment_account_event::augment_account_event::reply_to(
         .realtime_alerts()
         .Get({{"account", "content-replies"}})
         .Increment();
-    account->alert();
+    account->get_statistics().alert();
   }
 }
 
