@@ -133,6 +133,7 @@ int main(int argc, char **argv) {
 
       list_manager::instance().set_config(
           settings->get_config()[PROJECT_NAME]["list_manager"]);
+      list_manager::instance().set_moderation_data(moderation_data);
       list_manager::instance().start();
 
       // continue as long as firehose runs OK

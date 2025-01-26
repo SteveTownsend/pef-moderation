@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
+#include "moderation/ozone_adapter.hpp"
 #include "moderation/session_manager.hpp"
 #include "yaml-cpp/yaml.h"
 #include <optional>
@@ -181,6 +182,10 @@ public:
 
   static list_manager &instance();
   void set_config(YAML::Node const &settings);
+  void
+  set_moderation_data(std::shared_ptr<bsky::moderation::ozone_adapter> &ozone) {
+    _moderation_data = ozone;
+  }
 
   void start();
   void wait_enqueue(block_list_addition &&value);
@@ -295,6 +300,7 @@ private:
   add_account_to_list_and_group(std::string const &did,
                                 std::string const &list_group_name);
 
+  std::shared_ptr<bsky::moderation::ozone_adapter> _moderation_data;
   std::thread _thread;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::unique_ptr<bsky::pds_session> _session;

@@ -132,9 +132,17 @@ void list_manager::start() {
               .Get({{"list_manager", "backlog"}})
               .Decrement();
 
+          // do not process if whitelisted
+          if (_moderation_data->already_processed(to_block._did)) {
+            REL_INFO("skipping {} for list-group {}, already processed",
+                     to_block._did, to_block._list_group_name);
+            continue;
+          }
           // do not process same account/list pair twice
           if (is_account_in_list_group(to_block._did,
                                        to_block._list_group_name)) {
+            REL_INFO("skipping {}, aleady in list-group {}", to_block._did,
+                     to_block._list_group_name);
             continue;
           }
 

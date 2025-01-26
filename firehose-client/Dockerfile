@@ -5,7 +5,7 @@ RUN apt-get -y update && apt-get -y install sudo
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16'
 RUN sudo apt-get -y install $BUILD_DEPS
 RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
- sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
+  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
 
 WORKDIR /usr/src
 RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
@@ -31,7 +31,7 @@ RUN git submodule init
 RUN git submodule update
 RUN mkdir _build
 WORKDIR /usr/src/restc-cpp/
-RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=trace && cd build && make install
+RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
 WORKDIR /usr/src/firehose-client
