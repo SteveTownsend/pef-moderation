@@ -272,7 +272,7 @@ void account::updated() {
   }
 }
 void account::activation(const bool active) {
-  updated();
+  _state = active ? state::active : state::inactive;
   size_t old_activations(_activations);
   ++_activations;
   if (old_activations / UpdateFactor != _activations / UpdateFactor) {
@@ -283,10 +283,9 @@ void account::activation(const bool active) {
         .Increment();
     alert();
   }
-  _state = active ? state::active : state::inactive;
+  updated();
 }
 void account::handle() {
-  updated();
   size_t old_handles(_handles);
   ++_handles;
   if (old_handles / UpdateFactor != _handles / UpdateFactor) {
@@ -297,9 +296,9 @@ void account::handle() {
         .Increment();
     alert();
   }
+  updated();
 }
 void account::profile() {
-  updated();
   size_t old_profiles(_profiles);
   ++_profiles;
   if (old_profiles / UpdateFactor != _profiles / UpdateFactor) {
@@ -310,6 +309,7 @@ void account::profile() {
         .Increment();
     alert();
   }
+  updated();
 }
 
 void account::blocks() {
