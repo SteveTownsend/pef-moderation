@@ -108,7 +108,7 @@ void account::statistics::record(event_cache &parent_cache,
     REL_INFO("Account flagged events: {}", oss.str());
     metrics::instance()
         .realtime_alerts()
-        .Get({{"account", "all_facets"}})
+        .Get({{"account", "event_volume"}})
         .Increment();
     alert();
   }
