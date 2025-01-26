@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/list_manager.hpp"
+#include "controller.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
@@ -109,49 +110,54 @@ void list_manager::set_config(YAML::Node const &settings) {
 
 void list_manager::start() {
   _thread = std::thread([&] {
-    // create client
-    _rest_client = restc_cpp::RestClient::Create();
+    try {
+      // create client
+      _rest_client = restc_cpp::RestClient::Create();
 
-    // create session
-    // bootstrap self-managed session from the returned tokens
-    _session = std::make_unique<bsky::pds_session>(*_rest_client, _host);
-    _session->connect(bsky::login_info({_handle, _password}));
+      // create session
+      // bootstrap self-managed session from the returned tokens
+      _session = std::make_unique<bsky::pds_session>(*_rest_client, _host);
+      _session->connect(bsky::login_info({_handle, _password}));
 
-    // this requires HTTP lookups and could take a while. Allow backlog while we
-    // are doing this.
-    lazy_load_managed_lists();
+      // this requires HTTP lookups and could take a while. Allow backlog while
+      // we are doing this.
+      lazy_load_managed_lists();
 
-    while (true) {
-      block_list_addition to_block;
-      if (_queue.wait_dequeue_timed(to_block, DequeueTimeout)) {
-        // process the item
-        metrics::instance()
-            .operational_stats()
-            .Get({{"list_manager", "backlog"}})
-            .Decrement();
+      while (controller::instance().is_active()) {
+        block_list_addition to_block;
+        if (_queue.wait_dequeue_timed(to_block, DequeueTimeout)) {
+          // process the item
+          metrics::instance()
+              .operational_stats()
+              .Get({{"list_manager", "backlog"}})
+              .Decrement();
 
-        // do not process same account/list pair twice
-        if (is_account_in_list_group(to_block._did,
-                                     to_block._list_group_name)) {
-          continue;
+          // do not process same account/list pair twice
+          if (is_account_in_list_group(to_block._did,
+                                       to_block._list_group_name)) {
+            continue;
+          }
+
+          add_account_to_list_and_group(to_block._did,
+                                        to_block._list_group_name);
+          metrics::instance()
+              .realtime_alerts()
+              .Get({{"accounts", "block_listed"}})
+              .Increment();
+
+          // crude rate limit obedience, wait 7 seconds between high-frequency
+          // create ops 86400 (seconds per day) / 16667 (creates per day)
+          // -> 7.406 seconds
+          std::this_thread::sleep_for(std::chrono::milliseconds(7000));
         }
-
-        add_account_to_list_and_group(to_block._did, to_block._list_group_name);
-        metrics::instance()
-            .realtime_alerts()
-            .Get({{"accounts", "block_listed"}})
-            .Increment();
-
-        // crude rate limit obedience, wait 7 seconds between high-frequency
-        // create ops 86400 (seconds per day) / 16667 (creates per day) -> 7.406
-        // seconds
-        std::this_thread::sleep_for(std::chrono::milliseconds(7000));
+        // check session status
+        _session->check_refresh();
       }
-      // check session status
-      _session->check_refresh();
-
-      // TODO terminate gracefully
+    } catch (std::exception const &exc) {
+      REL_ERROR("list_manager exception {}", exc.what());
+      controller::instance().force_stop();
     }
+    REL_INFO("list_manager stopping");
   });
 }
 

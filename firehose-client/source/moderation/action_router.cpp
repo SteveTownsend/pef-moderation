@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/action_router.hpp"
+#include "controller.hpp"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
@@ -34,7 +35,7 @@ action_router::action_router() : _queue(QueueLimit) {}
 
 void action_router::start() {
   _thread = std::thread([&] {
-    while (true) {
+    while (controller::instance().is_active()) {
       account_filter_matches matches;
       _queue.wait_dequeue(matches);
       // process the item
@@ -43,8 +44,8 @@ void action_router::start() {
           .Get({{"action_router", "backlog"}})
           .Decrement();
       _matcher->report_if_needed(matches);
-      // TODO terminate gracefully
     }
+    REL_INFO("action_router stopping");
   });
 }
 

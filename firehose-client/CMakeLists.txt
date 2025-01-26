@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.4.5 LANGUAGES C CXX)
+project(firehose_client VERSION 2.4.6 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -213,12 +213,13 @@ FetchContent_MakeAvailable(jwt-cpp)
 add_executable(firehose_client
   ./source/main.cpp
   ./source/config.cpp
+  ./source/content_handler.cpp
   ./source/helpers.cpp
   ./source/log_wrapper.cpp
   ./source/matcher.cpp
   ./source/metrics.cpp
   ./source/parser.cpp
-  ./source/post_processor.cpp
+  ./source/payload.cpp
   ./source/activity/account_events.cpp
   ./source/activity/event_cache.cpp
   ./source/activity/event_recorder.cpp

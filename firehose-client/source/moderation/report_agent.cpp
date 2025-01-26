@@ -19,8 +19,10 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/report_agent.hpp"
+#include "controller.hpp"
 #include "log_wrapper.hpp"
 #include "metrics.hpp"
+#include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
@@ -76,41 +78,46 @@ void report_agent::set_config(YAML::Node const &settings) {
 
 void report_agent::start() {
   _thread = std::thread([&] {
-    // create client
-    _rest_client = restc_cpp::RestClient::Create();
+    try {
+      // create client
+      _rest_client = restc_cpp::RestClient::Create();
 
-    // create session
-    // bootstrap self-managed session from the returned tokens
-    _session = std::make_unique<bsky::pds_session>(*_rest_client, _host);
-    _session->connect(bsky::login_info({_handle, _password}));
+      // create session
+      // bootstrap self-managed session from the returned tokens
+      _session = std::make_unique<bsky::pds_session>(*_rest_client, _host);
+      _session->connect(bsky::login_info({_handle, _password}));
 
-    while (true) {
-      account_report report;
-      if (_queue.wait_dequeue_timed(report, DequeueTimeout)) {
-        // process the item
-        metrics::instance()
-            .operational_stats()
-            .Get({{"report_agent", "backlog"}})
-            .Decrement();
-
-        // Don't reprocess previously-labeled accounts
-        if (_moderation_data->already_processed(report._did) ||
-            is_reported(report._did)) {
-          REL_INFO("Report of {} skipped, already known", report._did);
+      while (controller::instance().is_active()) {
+        account_report report;
+        if (_queue.wait_dequeue_timed(report, DequeueTimeout)) {
+          // process the item
           metrics::instance()
-              .realtime_alerts()
-              .Get({{"auto_reports", "skipped"}})
-              .Increment();
-          continue;
+              .operational_stats()
+              .Get({{"report_agent", "backlog"}})
+              .Decrement();
+
+          // Don't reprocess previously-labeled accounts
+          if (_moderation_data->already_processed(report._did) ||
+              is_reported(report._did)) {
+            REL_INFO("Report of {} skipped, already known", report._did);
+            metrics::instance()
+                .realtime_alerts()
+                .Get({{"auto_reports", "skipped"}})
+                .Increment();
+            continue;
+          }
+
+          std::visit(report_content_visitor(*this, report._did),
+                     report._content);
         }
-
-        std::visit(report_content_visitor(*this, report._did), report._content);
+        // check session status
+        _session->check_refresh();
       }
-      // check session status
-      _session->check_refresh();
-
-      // TODO terminate gracefully
+    } catch (std::exception const &exc) {
+      REL_WARNING("report_agent exception {}", exc.what());
+      controller::instance().force_stop();
     }
+    REL_INFO("report_agent stopping");
   });
 }
 

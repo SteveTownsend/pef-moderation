@@ -65,14 +65,9 @@ private:
   post_processor<PAYLOAD> _post_processor;
 };
 
+class firehose_payload;
 template <>
 void content_handler<firehose_payload>::handle(
-    beast::flat_buffer const &beast_data) {
-  if (!_is_ready)
-    return;
-  parser my_parser;
-  my_parser.get_candidates_from_flat_buffer(beast_data);
-  _post_processor.wait_enqueue(firehose_payload(my_parser));
-}
+    beast::flat_buffer const &beast_data);
 
 #endif

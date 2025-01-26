@@ -18,35 +18,15 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
-#include "controller.hpp"
-#include "metrics.hpp"
+#include "content_handler.hpp"
+#include "payload.hpp"
 
-namespace activity {
-event_recorder::event_recorder() : _queue(MaxBacklog) {
-  _thread = std::thread([&] {
-    static size_t matches(0);
-    while (controller::instance().is_active()) {
-      timed_event my_payload;
-      _queue.wait_dequeue(my_payload);
-      metrics::instance()
-          .operational_stats()
-          .Get({{"events", "backlog"}})
-          .Decrement();
-
-      // record the activity
-      _events.record(my_payload);
-    }
-    REL_INFO("event_recorder stopping");
-  });
+template <>
+void content_handler<firehose_payload>::handle(
+    beast::flat_buffer const &beast_data) {
+  if (!_is_ready)
+    return;
+  parser my_parser;
+  my_parser.get_candidates_from_flat_buffer(beast_data);
+  _post_processor.wait_enqueue(firehose_payload(my_parser));
 }
-
-void event_recorder::wait_enqueue(timed_event &&value) {
-  _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
-      .Get({{"events", "backlog"}})
-      .Increment();
-}
-
-} // namespace activity

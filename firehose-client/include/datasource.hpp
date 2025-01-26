@@ -32,6 +32,7 @@ http://www.fsf.org/licensing/licenses
 
 #include "config.hpp"
 #include "content_handler.hpp"
+#include "controller.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
@@ -46,15 +47,19 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 template <typename PAYLOAD> class datasource {
 public:
-  datasource() = delete;
-  ~datasource() = default;
-
-  datasource(std::shared_ptr<config> &settings)
-      : _settings(settings),
-        _input_messages(metrics::instance().add_counter(
+  static datasource &instance() {
+    static datasource my_source;
+    return my_source;
+  }
+  datasource()
+      : _input_messages(metrics::instance().add_counter(
             "websocket_inbound_messages", "Number of inbound messages")),
         _input_message_bytes(metrics::instance().add_counter(
-            "websocket_inbound_bytes", "Number of inbound message bytes")) {
+            "websocket_inbound_bytes", "Number of inbound message bytes")) {}
+  ~datasource() = default;
+
+  void set_config(std::shared_ptr<config> &settings) {
+    _settings = settings;
     _host = _settings->get_config()[PROJECT_NAME]["datasource"]["hosts"]
                 .as<std::string>();
     _port = _settings->get_config()[PROJECT_NAME]["datasource"]["port"]
@@ -71,37 +76,42 @@ public:
     _thread = std::thread([&] {
       REL_INFO("client startup for {}:{} at {}, filters {}", _host, _port,
                _subscription, _handler.get_filter());
+      try {
+        while (controller::instance().is_active()) {
+          // The io_context is required for all I/O
+          net::io_context ioc;
 
-      while (true) {
-        // The io_context is required for all I/O
-        net::io_context ioc;
+          // The SSL context is required, and holds certificates
+          ssl::context ctx{ssl::context::tlsv12_client};
 
-        // The SSL context is required, and holds certificates
-        ssl::context ctx{ssl::context::tlsv12_client};
+          // Launch the asynchronous operation
+          boost::asio::spawn(ioc,
+                             std::bind(&datasource::do_work, this,
+                                       std::ref(ioc), std::ref(ctx),
+                                       std::placeholders::_1),
+                             // on completion, spawn will call this function
+                             [](std::exception_ptr ex) {
+                               // if an exception occurred in the coroutine,
+                               // it's something critical, e.g. out of memory
+                               // we capture normal errors in the ec
+                               // so we just rethrow the exception here,
+                               // which will cause `ioc.run()` to throw
+                               if (ex)
+                                 std::rethrow_exception(ex);
+                             });
 
-        // Launch the asynchronous operation
-        boost::asio::spawn(ioc,
-                           std::bind(&datasource::do_work, this, std::ref(ioc),
-                                     std::ref(ctx), std::placeholders::_1),
-                           // on completion, spawn will call this function
-                           [](std::exception_ptr ex) {
-                             // if an exception occurred in the coroutine,
-                             // it's something critical, e.g. out of memory
-                             // we capture normal errors in the ec
-                             // so we just rethrow the exception here,
-                             // which will cause `ioc.run()` to throw
-                             if (ex)
-                               std::rethrow_exception(ex);
-                           });
+          // Run the I/O service. The call will return when
+          // the socket is closed.
+          ioc.run();
 
-        // Run the I/O service. The call will return when
-        // the socket is closed.
-        ioc.run();
-
-        // we should run forever unless killed. Try to reconnect in a little
-        // while.
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+          // we should run forever unless killed. Try to reconnect in a little
+          // while.
+          std::this_thread::sleep_for(std::chrono::seconds(10));
+        }
+      } catch (std::exception const &exc) {
+        REL_CRITICAL("datasource exception {}", exc.what());
       }
+      REL_INFO("datasource stopping");
     });
   }
 
@@ -117,6 +127,7 @@ private:
   prometheus::Family<prometheus::Counter> &_input_messages;
   prometheus::Family<prometheus::Counter> &_input_message_bytes;
   std::thread _thread;
+  std::unique_ptr<datasource> _instance;
 
   void do_work(net::io_context &ioc, ssl::context &ctx,
                net::yield_context yield) {
@@ -181,7 +192,7 @@ private:
     if (ec)
       return fail(ec, "handshake");
     // main processing loop
-    while (true) {
+    while (controller::instance().is_active()) {
       // This buffer will hold the incoming message
       beast::flat_buffer buffer;
 
@@ -204,6 +215,7 @@ private:
       return fail(ec, "close");
 
     // If we get here then the connection is closed gracefully
+    REL_INFO("websocket stopping");
   }
 
   // Report a failure
