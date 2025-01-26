@@ -70,7 +70,9 @@ int main(int argc, char **argv) {
     spdlog::level::level_enum log_level(spdlog::level::from_str(
         settings->get_config()[PROJECT_NAME]["logging"]["level"]
             .as<std::string>()));
-    init_logging(log_file, log_level);
+    if (!init_logging(log_file, log_level)) {
+      return EXIT_FAILURE;
+    }
     log_ready = true;
 
     controller::instance().set_config(settings);
