@@ -101,7 +101,7 @@ extern std::shared_ptr<spdlog::logger> logger;
     logger->critical(a_fmt __VA_OPT__(, ) __VA_ARGS__);                        \
   }
 
-void init_logging(std::string const &log_file,
+bool init_logging(std::string const &log_file,
                   spdlog::level::level_enum log_level);
 #endif
 

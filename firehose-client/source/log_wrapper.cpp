@@ -22,23 +22,27 @@ http://www.fsf.org/licensing/licenses
 #include "config.hpp"
 #include "firehost_client_config.hpp"
 #include <filesystem>
+#include <iostream>
 #include <spdlog/sinks/daily_file_sink.h>
 
 std::shared_ptr<spdlog::logger> logger;
 
-void init_logging(std::string const &log_file,
+bool init_logging(std::string const &log_file,
                   spdlog::level::level_enum log_level) {
   std::filesystem::path logPath(log_file);
   try {
     std::string fileName(logPath.generic_string());
     logger = spdlog::daily_logger_mt(PROJECT_NAME, log_file, 3, 0);
     logger->set_pattern("%Y-%m-%d %T.%F %8l %6t %v");
-  } catch (const spdlog::spdlog_ex &) {
-  }
-  logger->set_level(log_level); // Set mod's log level
+    logger->set_level(log_level); // Set mod's log level
 #if _DEBUG || defined(_FULL_LOGGING)
-  logger->flush_on(spdlog::level::level_enum::trace);
+    logger->flush_on(spdlog::level::level_enum::trace);
 #else
-  spdlog::flush_every(std::chrono::seconds(3));
+    spdlog::flush_every(std::chrono::seconds(3));
 #endif
+    return true;
+  } catch (const spdlog::spdlog_ex &exc) {
+    std::cerr << "logging error " << exc.what() << '\n';
+    return false;
+  }
 }

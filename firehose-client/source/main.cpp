@@ -64,20 +64,22 @@ int main(int argc, char **argv) {
     }
 
     std::shared_ptr<config> settings(std::make_shared<config>(argv[1]));
-    controller::instance().set_config(settings);
-    controller::instance().start();
-
-    metrics::instance().set_config(settings);
-    parser::set_config(settings);
-
     std::string const log_file(
         settings->get_config()[PROJECT_NAME]["logging"]["filename"]
             .as<std::string>());
     spdlog::level::level_enum log_level(spdlog::level::from_str(
         settings->get_config()[PROJECT_NAME]["logging"]["level"]
             .as<std::string>()));
-    init_logging(log_file, log_level);
+    if (!init_logging(log_file, log_level)) {
+      return EXIT_FAILURE;
+    }
     log_ready = true;
+
+    controller::instance().set_config(settings);
+    controller::instance().start();
+
+    metrics::instance().set_config(settings);
+    parser::set_config(settings);
 
 #if _DEBUG
     restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::WARNING);
