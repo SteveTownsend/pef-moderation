@@ -34,6 +34,7 @@ http://www.fsf.org/licensing/licenses
 //------------------------------------------------------------------------------
 
 #include "config.hpp"
+#include "controller.hpp"
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
@@ -43,7 +44,7 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/ozone_adapter.hpp"
 #include "moderation/report_agent.hpp"
 #include "parser.hpp"
-#include "post_processor.hpp"
+#include "payload.hpp"
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -61,7 +62,11 @@ int main(int argc, char **argv) {
       // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
       return EXIT_FAILURE;
     }
+
     std::shared_ptr<config> settings(std::make_shared<config>(argv[1]));
+    controller::instance().set_config(settings);
+    controller::instance().start();
+
     metrics::instance().set_config(settings);
     parser::set_config(settings);
 
@@ -95,14 +100,12 @@ int main(int argc, char **argv) {
 #endif
     REL_INFO("firehose_client v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
-    std::unique_ptr<datasource<firehose_payload>> firehose;
-    std::unique_ptr<datasource<jetstream_payload>> jetstream;
     std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
         std::make_shared<bsky::moderation::ozone_adapter>(
             settings->build_moderation_db_connection_string());
     if (settings->is_full()) {
-      firehose.reset(new datasource<firehose_payload>(settings));
-      firehose->start();
+      datasource<firehose_payload>::instance().set_config(settings);
+      datasource<firehose_payload>::instance().start();
 
       // seed moderation monitor before we start post-processing firehose
       // messages
@@ -131,13 +134,13 @@ int main(int argc, char **argv) {
       list_manager::instance().start();
 
       // continue as long as firehose runs OK
-      firehose->wait_for_end_thread();
+      datasource<firehose_payload>::instance().wait_for_end_thread();
     } else {
-      jetstream.reset(new datasource<jetstream_payload>(settings));
-      jetstream->start();
+      datasource<jetstream_payload>::instance().set_config(settings);
+      datasource<jetstream_payload>::instance().start();
 
       // continue as long as data feed runs OK
-      jetstream->wait_for_end_thread();
+      datasource<jetstream_payload>::instance().wait_for_end_thread();
     }
 
     return EXIT_SUCCESS;

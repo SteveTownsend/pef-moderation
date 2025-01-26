@@ -1,6 +1,6 @@
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
-Copyright (c) Steve Townsend 2024
+Copyright (c) Steve Townsend 2024, 2025
 
 >>> SOURCE LICENSE >>>
 This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,12 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "post_processor.hpp"
+#include "payload.hpp"
 #include "activity/account_events.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
+#include "payload.hpp"
 
 jetstream_payload::jetstream_payload() {}
 jetstream_payload::jetstream_payload(std::string json_msg,

@@ -18,6 +18,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/ozone_adapter.hpp"
+#include "controller.hpp"
 #include "log_wrapper.hpp"
 
 namespace bsky {
@@ -30,7 +31,7 @@ ozone_adapter::ozone_adapter(std::string const &connection_string)
 
 void ozone_adapter::start() {
   _thread = std::thread([&] {
-    while (true) {
+    while (controller::instance().is_active()) {
       try {
         if (!_cx) {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
@@ -48,6 +49,7 @@ void ozone_adapter::start() {
       }
       std::this_thread::sleep_for(ThreadDelay);
     }
+    REL_INFO("ozone_adapter stopping");
   });
 }
 

@@ -1,3 +1,5 @@
+#ifndef __controller_hpp__
+#define __controller_hpp__
 /*************************************************************************
 NAFO Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -18,35 +20,37 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
-#include "controller.hpp"
-#include "metrics.hpp"
+#include "config.hpp"
+#include "log_wrapper.hpp"
+#include <atomic>
 
-namespace activity {
-event_recorder::event_recorder() : _queue(MaxBacklog) {
-  _thread = std::thread([&] {
-    static size_t matches(0);
-    while (controller::instance().is_active()) {
-      timed_event my_payload;
-      _queue.wait_dequeue(my_payload);
-      metrics::instance()
-          .operational_stats()
-          .Get({{"events", "backlog"}})
-          .Decrement();
+class controller {
+public:
+  inline static controller &instance() {
+    static controller my_controller;
+    return my_controller;
+  }
+  inline void set_config(std::shared_ptr<config> &settings) {
+    _settings = settings;
+  }
+  inline void start() {
+    _active = true;
+    std::set_terminate(&on_terminate);
+  }
+  inline bool is_active() const { return _active; }
+  inline void force_stop() {
+    _active = false;
+    REL_CRITICAL("controller shutdown requested");
+  }
 
-      // record the activity
-      _events.record(my_payload);
-    }
-    REL_INFO("event_recorder stopping");
-  });
-}
+  inline static void on_terminate() {
+    REL_CRITICAL("Controller terminating");
+    std::abort();
+  }
 
-void event_recorder::wait_enqueue(timed_event &&value) {
-  _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
-      .Get({{"events", "backlog"}})
-      .Increment();
-}
+private:
+  std::atomic<bool> _active = false;
+  std::shared_ptr<config> _settings;
+};
 
-} // namespace activity
+#endif

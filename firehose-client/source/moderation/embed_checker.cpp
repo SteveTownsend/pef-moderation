@@ -18,13 +18,14 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/embed_checker.hpp"
+#include "controller.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
 #include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/report_agent.hpp"
-#include "post_processor.hpp"
+#include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
 
 namespace bsky {
@@ -51,31 +52,37 @@ void embed_checker::start() {
   for (size_t count = 0; count < NumberOfThreads; ++count) {
     _rest_client = restc_cpp::RestClient::Create(properties);
     _threads[count] = std::thread([&] {
-      while (true) {
-        embed::embed_info_list embed_list;
-        _queue.wait_dequeue(embed_list);
-        // process the item
-        metrics::instance()
-            .operational_stats()
-            .Get({{"embed_checker", "backlog"}})
-            .Decrement();
+      try {
+        while (controller::instance().is_active()) {
+          embed::embed_info_list embed_list;
+          _queue.wait_dequeue(embed_list);
+          // process the item
+          metrics::instance()
+              .operational_stats()
+              .Get({{"embed_checker", "backlog"}})
+              .Decrement();
 
-        // TODO the work
-        // add LFU cache of URL/did/rate-limit pairs
-        // add LFU cache of content-cid/did/rate-limit
-        // add metrics
-        for (auto const &next_embed : embed_list._embeds) {
-          embed_handler handler(*this, *_rest_client, embed_list._did,
-                                embed_list._path);
-          _rest_client->GetConnectionProperties()->redirectFn = std::bind(
-              &embed_handler::on_url_redirect, &handler, std::placeholders::_1,
-              std::placeholders::_2, std::placeholders::_3);
-          ;
+          // TODO the work
+          // add LFU cache of URL/did/rate-limit pairs
+          // add LFU cache of content-cid/did/rate-limit
+          // add metrics
+          for (auto const &next_embed : embed_list._embeds) {
+            embed_handler handler(*this, *_rest_client, embed_list._did,
+                                  embed_list._path);
+            _rest_client->GetConnectionProperties()->redirectFn =
+                std::bind(&embed_handler::on_url_redirect, &handler,
+                          std::placeholders::_1, std::placeholders::_2,
+                          std::placeholders::_3);
+            ;
 
-          std::visit(handler, next_embed);
+            std::visit(handler, next_embed);
+          }
         }
-        // TODO terminate gracefully
+      } catch (std::exception const &exc) {
+        REL_ERROR("embed_checker exception {}", exc.what());
+        controller::instance().force_stop();
       }
+      REL_INFO("embed_checker stopping");
     });
   }
 }
