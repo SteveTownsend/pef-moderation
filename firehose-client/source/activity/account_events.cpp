@@ -34,8 +34,9 @@ BOOST_FUSION_ADAPT_STRUCT(
     (int32_t, _liked), (int32_t, _likes), (int32_t, _follows),
     (int32_t, _followed_by), (int32_t, _blocks), (int32_t, _blocked_by),
     (unsigned short, _updates), (unsigned short, _activations),
-    (unsigned short, _profiles), (unsigned short, _handles),
-    (unsigned short, _matches))
+    (unsigned short, _profiles), (unsigned short, _handles), (size_t, _unposts),
+    (size_t, _unlikes), (size_t, _unreposts), (size_t, _unfollows),
+    (size_t, _unblocks), (unsigned short, _matches))
 
 namespace activity {
 
@@ -343,6 +344,34 @@ void account::statistics::profile() {
   updated();
 }
 
+void account::statistics::deleted(std::string const &path) {
+  if (starts_with(path, bsky::AppBskyFeedLike)) {
+    ++_unlikes;
+  } else if (starts_with(path, bsky::AppBskyFeedPost)) {
+    ++_unposts;
+  } else if (starts_with(path, bsky::AppBskyFeedRepost)) {
+    ++_unreposts;
+  } else if (starts_with(path, bsky::AppBskyGraphBlock)) {
+    ++_unblocks;
+  } else if (starts_with(path, bsky::AppBskyGraphFollow)) {
+    ++_unfollows;
+  } else {
+    // other collections not handled
+    return;
+  }
+  size_t deletes(_unlikes + _unposts + _unreposts + _unblocks + _unfollows);
+  if ((deletes - 1) / DeleteFactor != deletes / DeleteFactor) {
+    REL_INFO("Account flagged deletes {} {} likes {} posts {} reposts {} "
+             "blocks {} follows",
+             _did, _unlikes, _unposts, _unreposts, _unblocks, _unfollows);
+    metrics::instance()
+        .realtime_alerts()
+        .Get({{"account", "deletes"}})
+        .Increment();
+    alert();
+  }
+}
+
 void account::statistics::blocks() {
   if (bsky::alert_needed(++_blocks, BlocksFactor)) {
     REL_INFO("Account flagged blocks {} {}", _did, _blocks);
@@ -488,6 +517,11 @@ void augment_account_event::augment_account_event::operator()(
 void augment_account_event::augment_account_event::operator()(
     activity::profile const &) {
   _stats.profile();
+}
+
+void augment_account_event::augment_account_event::operator()(
+    activity::deleted const &value) {
+  _stats.deleted(value._path);
 }
 
 void augment_account_event::augment_account_event::operator()(

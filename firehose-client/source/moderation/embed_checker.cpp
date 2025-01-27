@@ -40,6 +40,7 @@ embed_checker::embed_checker() : _queue(QueueLimit) {}
 
 void embed_checker::set_config(YAML::Node const &settings) {
   _follow_links = settings["follow_links"].as<bool>();
+  _number_of_threads = settings["number_of_threads"].as<size_t>();
 }
 
 void embed_checker::start() {
@@ -49,7 +50,7 @@ void embed_checker::start() {
   properties.cacheCleanupIntervalSeconds = 2;
   properties.cacheTtlSeconds = 5;
   properties.cacheMaxConnections = 512;
-  for (size_t count = 0; count < NumberOfThreads; ++count) {
+  for (size_t count = 0; count < _number_of_threads; ++count) {
     _rest_client = restc_cpp::RestClient::Create(properties);
     _threads[count] = std::thread([&] {
       try {

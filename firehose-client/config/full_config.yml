@@ -34,6 +34,7 @@ firehose_client:
 
   embed_checker:
     follow_links: false
+    number_of_threads: 5
 
   list_manager:
     handle: "the-handle"

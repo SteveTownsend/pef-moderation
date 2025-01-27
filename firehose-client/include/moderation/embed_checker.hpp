@@ -100,7 +100,7 @@ public:
   // allow a large backlog - queued items are small and we need to manage rate
   // of record creation to obey rate limits
   static constexpr size_t QueueLimit = 50000;
-  static constexpr size_t NumberOfThreads = 5;
+  static constexpr size_t DefaultNumberOfThreads = 5;
   static constexpr size_t UrlRedirectLimit = 10;
   static constexpr std::string_view _uri_host_prefix = "www.";
 
@@ -134,13 +134,14 @@ private:
   embed_checker();
   ~embed_checker() = default;
 
-  std::array<std::thread, NumberOfThreads> _threads;
+  std::array<std::thread, DefaultNumberOfThreads> _threads;
   std::mutex _lock;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<embed::embed_info_list> _queue;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::shared_ptr<matcher> _matcher;
   bool _follow_links = false;
+  size_t _number_of_threads = DefaultNumberOfThreads;
   std::unordered_map<std::string, size_t> _checked_images;
   std::unordered_map<std::string, size_t> _checked_records;
   std::unordered_map<std::string, size_t> _checked_uris;
