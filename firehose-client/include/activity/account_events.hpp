@@ -72,6 +72,9 @@ struct handle {
 struct profile {
   std::string _profile;
 };
+struct deleted {
+  std::string _path;
+};
 struct matches {
   unsigned short _count;
 };
@@ -81,7 +84,7 @@ struct facets {
   unsigned short _links;
 };
 typedef std::variant<post, reply, repost, quote, follow, block, like, active,
-                     inactive, handle, profile, matches, facets>
+                     inactive, handle, profile, deleted, matches, facets>
     event;
 struct timed_event {
   inline timed_event() : _event(active()) {}
@@ -220,6 +223,8 @@ public:
     void profile();
     void handle();
 
+    void deleted(std::string const &path);
+
     void add_matches(const unsigned short matches);
     size_t matches() const { return _matches; }
 
@@ -257,6 +262,16 @@ public:
     unsigned short _activations = 0;
     unsigned short _profiles = 0;
     unsigned short _handles = 0;
+
+    // cannot go negative
+    // we would have to inspect the deleted post to determine if it was
+    // quote/reply
+    size_t _unposts = 0;
+    size_t _unlikes = 0;
+    size_t _unreposts = 0;
+    size_t _unfollows = 0;
+    size_t _unblocks = 0;
+
     unsigned short _matches = 0;
   };
 
@@ -299,6 +314,8 @@ public:
   static constexpr size_t BlockedByFactor = 25;
   // track account-level updates, total and individual buckets
   static constexpr size_t UpdateFactor = 10;
+  // track account-level deletes, total of individual buckets
+  static constexpr size_t DeleteFactor = 25;
   // output a log every few matches to highlight suspect activity
   static constexpr size_t MatchFactor = 5;
 
@@ -346,6 +363,8 @@ struct augment_account_event {
   void operator()(activity::handle const &value);
   void operator()(activity::inactive const &value);
   void operator()(activity::profile const &value);
+
+  void operator()(activity::deleted const &value);
 
   void operator()(activity::matches const &value);
 

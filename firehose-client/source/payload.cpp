@@ -97,6 +97,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         size_t count = 0;
         auto path(oper["path"].template get<std::string>());
         auto kind(oper["action"].template get<std::string>());
+        firehose::op_kind oper_kind(firehose::op_kind_from_string(kind));
         for (const auto token : std::views::split(path, '/')) {
           // with string_view's C++23 range constructor:
           std::string field(token.cbegin(), token.cend());
@@ -120,7 +121,14 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           }
           ++count;
         }
-        if (oper.contains("cid") && !oper["cid"].is_null()) {
+        // track deletions
+        if (oper_kind == firehose::op_kind::delete_) {
+          processor.request_recording(
+              {repo,
+               bsky::time_stamp_from_iso_8601(
+                   message["time"].template get<std::string>()),
+               activity::deleted(path)});
+        } else if (oper.contains("cid") && !oper["cid"].is_null()) {
           auto cid(oper["cid"].template get<nlohmann::json::binary_t>());
           parser cid_parser;
           if (cid_parser.json_from_cid(cid.cbegin(), cid.cend()) &&
