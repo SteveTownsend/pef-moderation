@@ -155,7 +155,7 @@ public:
   rule find_rule(std::wstring const &key) const;
 
 private:
-  bool insert_rule(rule &&new_rule);
+  bool insert_rule(rule const &new_rule);
   rule find_rule_unchecked(std::wstring const &key) const;
 
   mutable std::mutex _lock;
