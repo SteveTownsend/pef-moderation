@@ -128,10 +128,6 @@ public:
         .Get({{"message", "backlog"}})
         .Increment();
   }
-  inline void set_matcher(std::shared_ptr<matcher> my_matcher) {
-    _matcher = my_matcher;
-  }
-  inline matcher &get_matcher() { return *_matcher; }
   inline void request_recording(activity::timed_event &&event) {
     _recorder.wait_enqueue(std::move(event));
   }
@@ -140,7 +136,6 @@ private:
   // Declare queue between websocket and match post-processing
   moodycamel::BlockingReaderWriterQueue<T> _queue;
   std::thread _thread;
-  std::shared_ptr<matcher> _matcher;
   activity::event_recorder _recorder;
 };
 

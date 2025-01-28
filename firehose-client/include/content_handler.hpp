@@ -31,24 +31,11 @@ namespace beast = boost::beast; // from <boost/beast.hpp>
 
 template <typename PAYLOAD> class content_handler {
 public:
-  content_handler() : _is_ready(false), _matcher(new matcher) {}
+  content_handler() = default;
   ~content_handler() = default;
 
-  void set_filter(std::string const &filter_file) {
-    _filter_file = filter_file;
-    _matcher->set_filter(_filter_file);
-    _is_ready = true;
-    _post_processor.set_matcher(_matcher);
-    action_router::instance().set_matcher(_matcher);
-    bsky::moderation::embed_checker::instance().set_matcher(_matcher);
-  }
-
-  std::string get_filter() const { return _filter_file; }
-
   void handle(beast::flat_buffer const &beast_data) {
-    if (!_is_ready)
-      return;
-    auto matches(_matcher->find_all_matches(beast_data));
+    auto matches(matcher::shared().find_all_matches(beast_data));
     // No match, or all eliminated by contingent match processing
     if (matches.empty()) {
       return;
@@ -59,9 +46,6 @@ public:
   }
 
 private:
-  bool _is_ready;
-  std::string _filter_file;
-  std::shared_ptr<matcher> _matcher;
   post_processor<PAYLOAD> _post_processor;
 };
 

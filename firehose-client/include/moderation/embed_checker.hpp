@@ -27,6 +27,8 @@ http://www.fsf.org/licensing/licenses
 #include "restc-cpp/restc-cpp.h"
 #include "yaml-cpp/yaml.h"
 #include <boost/url.hpp>
+#include <cache.hpp>
+#include <lfu_cache_policy.hpp>
 #include <optional>
 #include <thread>
 #include <unordered_set>
@@ -102,7 +104,10 @@ public:
   static constexpr size_t QueueLimit = 50000;
   static constexpr size_t DefaultNumberOfThreads = 5;
   static constexpr size_t UrlRedirectLimit = 10;
-  static constexpr std::string_view _uri_host_prefix = "www.";
+  static constexpr size_t MaxHosts = 10000;
+  static constexpr size_t HostsOfInterest = 250;
+  static constexpr std::chrono::minutes HostDumpInterval =
+      std::chrono::minutes(60);
 
   // embed repetition is logged
   static constexpr size_t ImageFactor = 5;
@@ -111,52 +116,47 @@ public:
   static constexpr size_t VideoFactor = 5;
 
   static embed_checker &instance();
+  bool is_ready() const { return _is_ready; }
 
   void set_config(YAML::Node const &settings);
   void start();
   void wait_enqueue(embed::embed_info_list &&value);
+  void refresh_hosts(std::unordered_set<std::string> &&new_hosts);
   void image_seen(std::string const &repo, std::string const &path,
                   std::string const &cid);
   void record_seen(std::string const &repo, std::string const &path,
                    std::string const &uri);
   bool should_process_uri(std::string const &uri);
+  bool is_popular_host(std::string const &host);
   bool uri_seen(std::string const &repo, std::string const &path,
                 std::string const &uri);
   void video_seen(std::string const &repo, std::string const &path,
                   std::string const &cid);
-  inline void set_matcher(std::shared_ptr<matcher> my_matcher) {
-    _matcher = my_matcher;
-  }
-  inline std::shared_ptr<matcher> get_matcher() const { return _matcher; }
   inline bool follow_links() const { return _follow_links; }
 
 private:
   embed_checker();
   ~embed_checker() = default;
 
+  bool _is_ready = false;
   std::array<std::thread, DefaultNumberOfThreads> _threads;
   std::mutex _lock;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<embed::embed_info_list> _queue;
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
-  std::shared_ptr<matcher> _matcher;
   bool _follow_links = false;
   size_t _number_of_threads = DefaultNumberOfThreads;
   std::unordered_map<std::string, size_t> _checked_images;
   std::unordered_map<std::string, size_t> _checked_records;
   std::unordered_map<std::string, size_t> _checked_uris;
   std::unordered_map<std::string, size_t> _checked_videos;
-  std::unordered_set<std::string> _whitelist_uris = {
-      "youtube.com",  "x.com",
-      "bsky.app",     "media.tenor.com",
-      "facebook.com", "instagram.com",
-      "twitch.tv",    "amazon.com",
-      "amzn.to",      "youtu.be",
-      "etsy.com",     "google.com",
-      "tiktok.com",   "netflix.com",
-      "ebay.com",     "reddit.com",
-      "cnn.com",      "open.spotify.com",
-      "twitter.com",  "open.substack.com"};
+  std::unordered_set<std::string> _popular_hosts;
+
+  // LFU cache of recently-active accounts
+  caches::fixed_sized_cache<std::string, size_t, caches::LFUCachePolicy>
+      _observed_hosts;
+  std::chrono::system_clock::time_point _last_host_dump =
+      std::chrono::system_clock::now();
 };
 
 } // namespace moderation

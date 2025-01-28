@@ -24,8 +24,6 @@ http://www.fsf.org/licensing/licenses
 template <>
 void content_handler<firehose_payload>::handle(
     beast::flat_buffer const &beast_data) {
-  if (!_is_ready)
-    return;
   parser my_parser;
   my_parser.get_candidates_from_flat_buffer(beast_data);
   _post_processor.wait_enqueue(firehose_payload(my_parser));

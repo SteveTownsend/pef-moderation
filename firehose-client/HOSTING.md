@@ -109,6 +109,20 @@ sudo docker run hello-world
 ```bash
 sudo mkdir --parents /firehose-client/logs
 ```
+#### Create the Postgres env configuration file
+
+Configure Postgres with superuser credentials created at startup, and initial database name. Note that these credentials may be used to configure Ozone's `OZONE_DB_POSTGRES_URL` in the following step, or you may opt to setup a separate Postgres app user for running the Ozone service.
+
+```bash
+sudo mkdir --parents /firehose-client/postgres
+POSTGRES_PASSWORD="$(openssl rand --hex 16)"
+
+cat <<POSTGRES_CONFIG | sudo tee /firehose-client/postgres.env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_DB=moderation
+POSTGRES_CONFIG
+```
 
 #### Start the Firehose Client containers
 
@@ -117,6 +131,8 @@ sudo mkdir --parents /firehose-client/logs
 Download the `firehose-client/compose.yaml` to run your Firehose Client instance. The file includes the following containers:
 
 - `firehose-client` is the BlueSky Websocket firehose client
+- `promtail` scrapes the client logs for Loki
+- `postgres` is a database containing data supplementing the Ozone database that is used by the moderation service
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash

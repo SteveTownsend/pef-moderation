@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(firehose_client VERSION 2.5.0 LANGUAGES C CXX)
+project(firehose_client VERSION 2.5.1 LANGUAGES C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 23)
@@ -43,8 +43,8 @@ include(FetchContent)
 set(BUILD_TEST OFF)
 FetchContent_Declare(
   caching
-  GIT_TAG 3fc9e07d49ac46272a583de0555a9cf376cdf316
-  GIT_REPOSITORY https://github.com/vpetrigo/caches
+  GIT_TAG master
+  GIT_REPOSITORY https://github.com/SteveTownsend/caches
 )
 FetchContent_MakeAvailable(caching)
 include_directories(${caching_SOURCE_DIR}/include)
@@ -76,7 +76,7 @@ endif()
 
 FetchContent_Declare(
   aho_corasick
-  GIT_HASH 3d2fb8ca0f8a024d9fec69dbaf3860f08cdd09a3
+  GIT_TAG master
   GIT_REPOSITORY https://github.com/SteveTownsend/aho_corasick
 )
 FetchContent_MakeAvailable(aho_corasick)
@@ -224,6 +224,7 @@ add_executable(firehose_client
   ./source/activity/event_cache.cpp
   ./source/activity/event_recorder.cpp
   ./source/moderation/action_router.cpp
+  ./source/moderation/auxiliary_data.cpp
   ./source/moderation/embed_checker.cpp
   ./source/moderation/list_manager.cpp
   ./source/moderation/ozone_adapter.cpp

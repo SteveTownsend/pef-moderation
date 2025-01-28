@@ -30,7 +30,8 @@ public:
   config(std::string const &filename);
   const YAML::Node &get_config() const;
   inline bool is_full() { return _is_full; }
-  std::string build_moderation_db_connection_string() const;
+  std::string
+  build_db_connection_string(std::string const &config_section) const;
 
 private:
   YAML::Node _config;

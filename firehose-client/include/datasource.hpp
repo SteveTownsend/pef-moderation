@@ -67,15 +67,11 @@ public:
     _subscription =
         _settings->get_config()[PROJECT_NAME]["datasource"]["subscription"]
             .as<std::string>();
-    _handler.set_filter(
-        _settings->get_config()[PROJECT_NAME]["filters"]["filename"]
-            .as<std::string>());
   }
 
   void start() {
     _thread = std::thread([&] {
-      REL_INFO("client startup for {}:{} at {}, filters {}", _host, _port,
-               _subscription, _handler.get_filter());
+      REL_INFO("client startup for {}:{} at {}", _host, _port, _subscription);
       try {
         while (controller::instance().is_active()) {
           // The io_context is required for all I/O

@@ -212,8 +212,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
     }
     REL_TRACE("{} {}", header.dump(), message.dump());
     if (!_path_candidates.empty()) {
-      auto matches(processor.get_matcher().all_matches_for_path_candidates(
-          _path_candidates));
+      auto matches(
+          matcher::shared().all_matches_for_path_candidates(_path_candidates));
       if (!matches.empty()) {
         // Publish metrics for matches
         size_t count(0);
