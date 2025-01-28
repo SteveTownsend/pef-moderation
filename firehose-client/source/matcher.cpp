@@ -110,6 +110,7 @@ bool matcher::insert_rule(rule &&new_rule) {
   } else {
     REL_WARNING("Duplicate rule '{}'", new_rule.to_string());
   }
+  return true;
 }
 
 bool matcher::matches_any(std::string const &candidate) const {
