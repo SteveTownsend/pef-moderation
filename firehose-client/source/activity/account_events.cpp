@@ -344,6 +344,7 @@ void account::statistics::profile() {
   updated();
 }
 
+// TODO unwind content in the account's cache that gets deleted
 void account::statistics::deleted(std::string const &path) {
   if (starts_with(path, bsky::AppBskyFeedLike)) {
     ++_unlikes;

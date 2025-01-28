@@ -4,7 +4,8 @@ firehose_client:
     level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
 
   filters:
-    filename: "./config/live_filters"
+    #filename: "./config/live_filters"
+    use_db: true
 
   datasource:
     hosts:
@@ -17,6 +18,13 @@ firehose_client:
     host: "localhost"
     port: 5432
     dbname: "ozone"
+    user: "the-client"
+    password: "the-password"
+
+  auxiliary_data:
+    host: "localhost"
+    port: 5432
+    dbname: "moderation"
     user: "the-client"
     password: "the-password"
 

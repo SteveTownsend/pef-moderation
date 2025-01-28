@@ -38,7 +38,9 @@ http://www.fsf.org/licensing/licenses
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "log_wrapper.hpp"
+#include "matcher.hpp"
 #include "moderation/action_router.hpp"
+#include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
 #include "moderation/list_manager.hpp"
 #include "moderation/ozone_adapter.hpp"
@@ -102,16 +104,31 @@ int main(int argc, char **argv) {
 #endif
     REL_INFO("firehose_client v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
+    std::shared_ptr<bsky::moderation::auxiliary_data> auxiliary_data =
+        std::make_shared<bsky::moderation::auxiliary_data>(
+            settings->build_db_connection_string("auxiliary_data"));
+
     std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
         std::make_shared<bsky::moderation::ozone_adapter>(
-            settings->build_moderation_db_connection_string());
+            settings->build_db_connection_string("moderation_data"));
+    // Matcher is shared by many classes. Loads from file or DB.
+    matcher::shared().set_config(
+        settings->get_config()[PROJECT_NAME]["filters"]);
+
+    // seed database monitors before we start post-processing firehose
+    // messages
+    moderation_data->start();
+    auxiliary_data->start(); // seeds matcher with rules
+
+    // wait for matcher and embed checker to be ready
+    do {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } while (!matcher::shared().is_ready() ||
+             !bsky::moderation::embed_checker::instance().is_ready());
+
     if (settings->is_full()) {
       datasource<firehose_payload>::instance().set_config(settings);
       datasource<firehose_payload>::instance().start();
-
-      // seed moderation monitor before we start post-processing firehose
-      // messages
-      moderation_data->start();
 
       // prepare action handlers after we start processing firehose messages
       // this is time consuming - allow a backlog for handlers while

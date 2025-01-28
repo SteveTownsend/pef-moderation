@@ -43,7 +43,7 @@ void action_router::start() {
           .operational_stats()
           .Get({{"action_router", "backlog"}})
           .Decrement();
-      _matcher->report_if_needed(matches);
+      matcher::shared().report_if_needed(matches);
     }
     REL_INFO("action_router stopping");
   });

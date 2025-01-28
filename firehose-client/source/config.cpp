@@ -36,10 +36,11 @@ config::config(std::string const &filename) {
 
 YAML::Node const &config::get_config() const { return _config; }
 
-std::string config::build_moderation_db_connection_string() const {
+std::string
+config::build_db_connection_string(std::string const &config_section) const {
   bool first(true);
   std::ostringstream oss;
-  for (auto field : _config[PROJECT_NAME]["moderation_data"]) {
+  for (auto field : _config[PROJECT_NAME][config_section]) {
     if (!first) {
       oss << ' ';
     } else {

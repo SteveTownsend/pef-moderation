@@ -34,6 +34,23 @@ services:
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
 
+  postgres:
+    container_name: postgres
+    image: postgres:17.2-bookworm
+    network_mode: host
+    restart: unless-stopped
+    healthcheck:
+      test: pg_isready -h localhost -U $$POSTGRES_USER
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - type: bind
+        source: /firehose-client/postgres
+        target: /var/lib/postgresql/data
+    env_file:
+      - /firehose-client/postgres.env
+
   watchtower:
     container_name: watchtower
     image: containrrr/watchtower:latest

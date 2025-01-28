@@ -27,6 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/report_agent.hpp"
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
+#include <ranges>
 
 namespace bsky {
 namespace moderation {
@@ -36,7 +37,8 @@ embed_checker &embed_checker::instance() {
   return my_instance;
 }
 
-embed_checker::embed_checker() : _queue(QueueLimit) {}
+embed_checker::embed_checker()
+    : _queue(QueueLimit), _observed_hosts(MaxHosts) {}
 
 void embed_checker::set_config(YAML::Node const &settings) {
   _follow_links = settings["follow_links"].as<bool>();
@@ -94,6 +96,29 @@ void embed_checker::wait_enqueue(embed::embed_info_list &&value) {
       .operational_stats()
       .Get({{"embed_checker", "backlog"}})
       .Increment();
+}
+
+void embed_checker::refresh_hosts(std::unordered_set<std::string> &&new_hosts) {
+  std::lock_guard log(_lock);
+  // log the changes
+  auto removals =
+      _popular_hosts | std::views::filter([&new_hosts](std::string host) {
+        return !new_hosts.contains(host);
+      });
+  for (auto deleted : removals) {
+    REL_INFO("Hot-site refresh: removed {}", deleted);
+  }
+  auto additions = new_hosts | std::views::filter([&](std::string host) {
+                     return !_popular_hosts.contains(host);
+                   });
+  for (auto added : additions) {
+    REL_INFO("Hot-site refresh: added {}", added);
+  }
+  if (additions.empty() && removals.empty()) {
+    REL_INFO("Hot-site refresh: list unchanged");
+  }
+  _popular_hosts.swap(new_hosts);
+  _is_ready = true;
 }
 
 void embed_checker::image_seen(std::string const &repo, std::string const &path,
@@ -194,10 +219,7 @@ bool embed_checker::should_process_uri(std::string const &uri) {
     return false;
   }
   auto host(parsed_uri->host());
-  if (starts_with(host, _uri_host_prefix)) {
-    host = host.substr(_uri_host_prefix.length());
-  }
-  if (_whitelist_uris.contains(host)) {
+  if (is_popular_host(host)) {
     metrics::instance()
         .embed_stats()
         .Get({{"links", "whitelist_skipped"}})
@@ -205,6 +227,32 @@ bool embed_checker::should_process_uri(std::string const &uri) {
     return false;
   }
   return true;
+}
+
+bool embed_checker::is_popular_host(std::string const &host) {
+  std::lock_guard<std::mutex> guard(_lock);
+  if (!_observed_hosts.Cached(host)) {
+    _observed_hosts.Put(host, 1);
+  } else {
+    ++(*_observed_hosts.Get(host));
+  }
+  auto now(std::chrono::system_clock::now());
+  if (now > _last_host_dump + HostDumpInterval) {
+    _last_host_dump = now;
+    std::multimap<size_t, std::string, std::greater<size_t>> hot_sites;
+    for (auto next_host = _observed_hosts.begin();
+         next_host != _observed_hosts.end(); ++next_host) {
+      hot_sites.insert({*next_host->second, next_host->first});
+    }
+    size_t done(0);
+    for (auto hot_site : hot_sites) {
+      REL_INFO("{:6} embeds of host {}", hot_site.first, hot_site.second);
+      if (++done >= HostsOfInterest) {
+        break;
+      }
+    }
+  }
+  return _popular_hosts.contains(host);
 }
 
 void embed_handler::operator()(embed::external const &value) {
@@ -317,7 +365,7 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
   metrics::instance().embed_stats().Get({{"link", "redirections"}}).Increment();
   candidate_list candidate = {{_root_url, "redirected_url", url}};
   match_results results(
-      _checker.get_matcher()->all_matches_for_candidates(candidate));
+      matcher::shared().all_matches_for_candidates(candidate));
   if (!results.empty()) {
     metrics::instance()
         .embed_stats()

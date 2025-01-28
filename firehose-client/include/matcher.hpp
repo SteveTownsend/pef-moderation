@@ -19,11 +19,14 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "helpers.hpp"
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
+#include <mutex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <yaml-cpp/yaml.h>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 
@@ -57,14 +60,23 @@ inline bool candidate::operator==(candidate const &rhs) const {
 
 class matcher {
 public:
+  inline static matcher &shared() {
+    static matcher instance;
+    return instance;
+  }
   matcher();
   ~matcher() = default;
-  matcher(std::string const &filename);
 
-  void set_filter(std::string const &filename);
+  inline bool is_ready() const { return _is_ready; }
+  void set_config(const YAML::Node &filter_config);
+  void load_filter_file(std::string const &filename);
+  void refresh_rules(matcher &&replacement);
+
   bool matches_any(std::string const &candidate) const;
   bool matches_any(beast::flat_buffer const &beast_data) const;
   bool add_rule(std::string const &match_rule);
+  bool add_rule(std::string const &filter, std::string const &labels,
+                std::string const &actions, std::string const &contingent);
   bool check_candidates(candidate_list const &candidates) const;
 
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
@@ -74,6 +86,8 @@ public:
       path_candidate_list const &path_candidates) const;
 
   void report_if_needed(account_filter_matches &matches);
+  inline bool use_db_for_rules() const { return _use_db_for_rules; }
+
   class rule {
   public:
     enum class match_type { substring, whole_word };
@@ -107,10 +121,21 @@ public:
       return std::string{};
     }
 
+    // for load from file
     rule(std::string const &rule_string);
+    // for load from DB
+    rule(std::string const &filter, std::string const &labels,
+         std::string const &actions, std::string const &contingent);
     rule(rule const &);
+    inline std::string to_string() const {
+      std::ostringstream oss;
+      oss << _target << '|' << format_vector(_labels) << '|' << _raw_actions
+          << '|' << _contingent;
+      return oss.str();
+    }
     std::string _target;
     std::vector<std::string> _labels;
+    std::string _raw_actions;
     bool _track = false;
     bool _report = false;
     bool _label = false;
@@ -130,7 +155,12 @@ public:
   rule find_rule(std::wstring const &key) const;
 
 private:
-  bool _is_ready;
+  bool insert_rule(rule &&new_rule);
+  rule find_rule_unchecked(std::wstring const &key) const;
+
+  mutable std::mutex _lock;
+  bool _is_ready = false;
+  bool _use_db_for_rules = false;
   mutable aho_corasick::wtrie _substring_trie;
   mutable aho_corasick::wtrie _whole_word_trie;
   std::unordered_map<std::wstring, rule> _rule_lookup;

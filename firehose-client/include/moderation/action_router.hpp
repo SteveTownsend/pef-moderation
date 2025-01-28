@@ -30,9 +30,6 @@ public:
   static constexpr size_t QueueLimit = 1000;
 
   static action_router &instance();
-  inline void set_matcher(std::shared_ptr<matcher> my_matcher) {
-    _matcher = my_matcher;
-  }
 
   void start();
   void wait_enqueue(account_filter_matches &&value);

@@ -30,11 +30,17 @@ http://www.fsf.org/licensing/licenses
 #include <ranges>
 #include <string_view>
 
-matcher::matcher() : _is_ready(false) { _whole_word_trie.only_whole_words(); }
+matcher::matcher() { _whole_word_trie.only_whole_words(); }
 
-matcher::matcher(std::string const &filename) { set_filter(filename); }
+// load from file, or wait for DB to load
+void matcher::set_config(const YAML::Node &filter_config) {
+  _use_db_for_rules = filter_config["use_db"].as<bool>();
+  if (!_use_db_for_rules) {
+    load_filter_file(filter_config["filename"].as<std::string>());
+  }
+}
 
-void matcher::set_filter(std::string const &filename) {
+void matcher::load_filter_file(std::string const &filename) {
   std::ifstream file;
   file.open(filename);
   if (!file.is_open())
@@ -61,15 +67,34 @@ void matcher::set_filter(std::string const &filename) {
       REL_INFO("Stored rule at line {}: '{}'", line, str);
     }
   }
+}
+
+void matcher::refresh_rules(matcher &&replacement) {
+  std::lock_guard log(_lock);
+  _rule_lookup.swap(replacement._rule_lookup);
+  _substring_trie = std::move(replacement._substring_trie);
+  _whole_word_trie = std::move(replacement._whole_word_trie);
   _is_ready = true;
 }
 
 bool matcher::add_rule(std::string const &match_rule) {
-  rule new_rule(match_rule);
+  return insert_rule(rule(match_rule));
+}
+
+bool matcher::add_rule(std::string const &filter, std::string const &labels,
+                       std::string const &actions,
+                       std::string const &contingent) {
+  return insert_rule(rule(filter, labels, actions, contingent));
+}
+
+// thread-safe by design
+bool matcher::insert_rule(rule &&new_rule) {
   // Check for intentionally-skipped rule
   if (!new_rule._track) {
+    REL_WARNING("Skipped rule '{}'", new_rule.to_string());
     return false;
   }
+  // TODO handle this for refresh case
   if (!new_rule._block_list_name.empty()) {
     list_manager::instance().register_block_reason(new_rule._block_list_name,
                                                    new_rule._target);
@@ -80,8 +105,11 @@ bool matcher::add_rule(std::string const &match_rule) {
     _substring_trie.insert(canonical_form);
   else if (new_rule._match_type == rule::match_type::whole_word)
     _whole_word_trie.insert(canonical_form);
-  _is_ready = true;
-  return _rule_lookup.insert({canonical_form, new_rule}).second;
+  if (_rule_lookup.insert({canonical_form, new_rule}).second) {
+    REL_INFO("Stored rule '{}'", new_rule.to_string());
+  } else {
+    REL_WARNING("Duplicate rule '{}'", new_rule.to_string());
+  }
 }
 
 bool matcher::matches_any(std::string const &candidate) const {
@@ -95,6 +123,7 @@ bool matcher::matches_any(beast::flat_buffer const &beast_data) const {
 }
 
 bool matcher::check_candidates(candidate_list const &candidates) const {
+  std::lock_guard lock(_lock);
   for (auto &next : candidates) {
     if (next._value.empty())
       continue;
@@ -114,6 +143,7 @@ matcher::find_all_matches(beast::flat_buffer const &beast_data) const {
 
 match_results
 matcher::all_matches_for_candidates(candidate_list const &candidates) const {
+  std::lock_guard lock(_lock);
   match_results results;
   for (auto &next : candidates) {
     if (next._value.empty())
@@ -136,7 +166,7 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
   for (auto next_match = results.begin(); next_match != results.end();) {
     for (auto rule_key = next_match->_matches.begin();
          rule_key != next_match->_matches.end();) {
-      matcher::rule this_rule = find_rule(rule_key->get_keyword());
+      matcher::rule this_rule = find_rule_unchecked(rule_key->get_keyword());
       if (!this_rule.matches_any_contingent(next_match->_candidate._value)) {
         rule_key = next_match->_matches.erase(rule_key);
       } else {
@@ -272,7 +302,28 @@ matcher::rule::rule(std::string const &rule_string) {
                                 " fields in filter rule " + rule_string);
 }
 
+matcher::rule::rule(std::string const &filter, std::string const &labels,
+                    std::string const &actions, std::string const &contingent) {
+  if (filter.empty())
+    throw std::invalid_argument("Blank filter");
+  _target = filter;
+  if (labels.empty())
+    throw std::invalid_argument("Blank labels");
+  for (const auto subtoken : std::views::split(std::string(labels), ',')) {
+    _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
+  }
+  store_actions(actions);
+  if (contingent.empty())
+    return;
+  _contingent = contingent;
+  // make a trie of 'contingent strings' to confirm rule_string context
+  for (const auto subtoken : std::views::split(_contingent, ',')) {
+    _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+  }
+}
+
 void matcher::rule::store_actions(std::string_view actions) {
+  _raw_actions = actions;
   // with string_view's C++23 range constructor:
   for (const auto token : std::views::split(actions, ',')) {
     std::string field(token.cbegin(), token.cend());
@@ -341,6 +392,11 @@ bool matcher::rule::matches_any_contingent(std::string const &candidate) const {
 }
 
 matcher::rule matcher::find_rule(std::wstring const &key) const {
+  std::lock_guard lock(_lock);
+  return find_rule_unchecked(key);
+}
+
+matcher::rule matcher::find_rule_unchecked(std::wstring const &key) const {
   auto result(_rule_lookup.find(key));
   if (result != _rule_lookup.cend())
     return result->second;
