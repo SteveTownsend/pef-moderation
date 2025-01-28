@@ -78,19 +78,17 @@ void matcher::refresh_rules(matcher &&replacement) {
 }
 
 bool matcher::add_rule(std::string const &match_rule) {
-  rule new_rule(match_rule);
-  return insert_rule(new_rule);
+  return insert_rule(rule(match_rule));
 }
 
 bool matcher::add_rule(std::string const &filter, std::string const &labels,
                        std::string const &actions,
                        std::string const &contingent) {
-  rule new_rule(filter, labels, actions, contingent);
-  return insert_rule(new_rule);
+  return insert_rule(rule(filter, labels, actions, contingent));
 }
 
 // thread-safe by design
-bool matcher::insert_rule(rule const &new_rule) {
+bool matcher::insert_rule(rule &&new_rule) {
   // Check for intentionally-skipped rule
   if (!new_rule._track) {
     REL_WARNING("Skipped rule '{}'", new_rule.to_string());
@@ -112,6 +110,7 @@ bool matcher::insert_rule(rule const &new_rule) {
   } else {
     REL_WARNING("Duplicate rule '{}'", new_rule.to_string());
   }
+  return true;
 }
 
 bool matcher::matches_any(std::string const &candidate) const {
