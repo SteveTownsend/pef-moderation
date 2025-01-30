@@ -48,6 +48,13 @@ void embed_checker::set_config(YAML::Node const &settings) {
 void embed_checker::start() {
   restc_cpp::Request::Properties properties;
   properties.maxRedirects = UrlRedirectLimit;
+  properties.maxRetries = 3;
+  properties.maxIORetries = 3;
+  properties.connectTimeoutMs = 2000;
+  properties.sendTimeoutMs = 2000;
+  properties.replyTimeoutMs = 2000;
+  properties.recvTimeout = 2000;
+
   // favour cache eviction since we are promiscuous about connections
   properties.cacheCleanupIntervalSeconds = 2;
   properties.cacheTtlSeconds = 5;
