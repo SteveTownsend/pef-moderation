@@ -28,7 +28,7 @@ RUN git clone -b master https://github.com/SteveTownsend/restc-cpp.git
 WORKDIR /usr/src/restc-cpp
 
 # fetch third-party dependencies
-RUN git pull && git submodule init && git submodule update
+RUN git submodule init && git submodule update
 RUN mkdir _build
 RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
