@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
+#include "metrics.hpp"
 #include "moderation/ozone_adapter.hpp"
 #include "moderation/session_manager.hpp"
 #include "yaml-cpp/yaml.h"
@@ -237,10 +238,16 @@ private:
     } else {
       this_list_group->second.insert(did);
     }
+    metrics::instance()
+        .automation_stats()
+        .Get({{"block_list", "list_group"},
+              {"members", as_list_group_name(list_name)}})
+        .Increment();
   }
 
   inline static std::string as_list_group_name(std::string const &list_name) {
-    size_t offset(list_name.find('='));
+    // TODO this is not very scientific but will do for now
+    size_t offset(list_name.find('-'));
     if (offset == std::string::npos) {
       return list_name;
     }

@@ -148,10 +148,6 @@ void list_manager::start() {
 
           add_account_to_list_and_group(to_block._did,
                                         to_block._list_group_name);
-          metrics::instance()
-              .realtime_alerts()
-              .Get({{"accounts", "block_listed"}})
-              .Increment();
 
           // crude rate limit obedience, wait 7 seconds between high-frequency
           // create ops 86400 (seconds per day) / 16667 (creates per day)
@@ -328,6 +324,11 @@ list_manager::load_or_create_list(std::string const &list_name) {
                  response.uri);
         make_known_list_available(list_name, response.uri);
         list_uri = response.uri;
+        metrics::instance()
+            .automation_stats()
+            .Get({{"block_list", "list_group"},
+                  {"list_count", as_list_group_name(list_name)}})
+            .Increment();
         break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
@@ -409,6 +410,11 @@ list_manager::load_or_create_list(std::string const &list_name) {
           REL_INFO("List load get_list returned final {} items",
                    response.items.size());
           done = true;
+          metrics::instance()
+              .automation_stats()
+              .Get({{"block_list", "list_group"},
+                    {"list_count", as_list_group_name(list_name)}})
+              .Increment();
           break;
         }
       } catch (boost::system::system_error const &exc) {
@@ -621,6 +627,7 @@ atproto::at_uri list_manager::add_account_to_list_and_group(
   atproto::at_uri list_uri(ensure_list_group_is_available(list_group_name));
   list_uri = archive_if_needed(list_group_name, list_uri);
 
+  bool done(false);
   size_t retries(0);
   atproto::create_record_response response;
   while (retries < 5) {
@@ -672,6 +679,7 @@ atproto::at_uri list_manager::add_account_to_list_and_group(
               .get();
       REL_INFO("create-record(listitem={}|{}) yielded uri {}", did,
                list_group_name, response.uri);
+      done = true;
       break;
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
@@ -687,6 +695,17 @@ atproto::at_uri list_manager::add_account_to_list_and_group(
                 list_group_name, exc.what())
       break;
     }
+  }
+  if (done) {
+    metrics::instance()
+        .automation_stats()
+        .Get({{"block_list", "list_group"}, {"added", list_group_name}})
+        .Increment();
+  } else {
+    metrics::instance()
+        .automation_stats()
+        .Get({{"block_list", "list_group"}, {"add_failed", list_group_name}})
+        .Increment();
   }
   return list_uri;
 }

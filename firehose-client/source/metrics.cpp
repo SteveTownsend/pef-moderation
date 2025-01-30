@@ -38,8 +38,10 @@ metrics::metrics()
       _embed_stats(add_counter(
           "embed_stats",
           "Checks performed on 'embeds': post, video, image, link")),
-      _link_stats(
-          add_histogram("link_stats", "Statistics from link analysis")) {
+      _link_stats(add_histogram("link_stats", "Statistics from link analysis")),
+      _automation_stats(
+          add_counter("automation_stats",
+                      "Automated moderation activity - block-list, report")) {
   // Histogram metrics have to be added by hand, on-deman instantiation is not
   // possible
   prometheus::Histogram::BucketBoundaries boundaries = {

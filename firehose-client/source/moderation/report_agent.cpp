@@ -127,10 +127,6 @@ void report_agent::wait_enqueue(account_report &&value) {
       .operational_stats()
       .Get({{"report_agent", "backlog"}})
       .Increment();
-  metrics::instance()
-      .realtime_alerts()
-      .Get({{"auto_reports", "submitted"}})
-      .Increment();
 }
 
 // TODO add metrics
@@ -145,6 +141,7 @@ void report_agent::string_match_report(std::string const &did,
              format_vector(filters), format_vector(paths));
     return;
   }
+  bool done(false);
   size_t retries(0);
   bsky::moderation::report_response response;
   while (retries < 5) {
@@ -202,6 +199,11 @@ void report_agent::string_match_report(std::string const &did,
                "{} id={}",
                did, format_vector(filters), format_vector(paths),
                response.createdAt, response.reportedBy, response.id);
+      metrics::instance()
+          .automation_stats()
+          .Get({{"report", "string_match"}})
+          .Increment();
+      done = true;
       break;
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
@@ -221,6 +223,12 @@ void report_agent::string_match_report(std::string const &did,
       break;
     }
   }
+  if (!done) {
+    metrics::instance()
+        .automation_stats()
+        .Get({{"report_error", "string_match"}})
+        .Increment();
+  }
 }
 
 // TODO add metrics
@@ -235,6 +243,7 @@ void report_agent::link_redirection_report(
              format_vector(uri_chain));
     return;
   }
+  bool done(false);
   size_t retries(0);
   bsky::moderation::report_response response;
   while (retries < 5) {
@@ -293,6 +302,11 @@ void report_agent::link_redirection_report(
           "{} id={}",
           did, path, format_vector(uri_chain), response.createdAt,
           response.reportedBy, response.id);
+      metrics::instance()
+          .automation_stats()
+          .Get({{"report", "link_redirection"}})
+          .Increment();
+      done = true;
       break;
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
@@ -312,6 +326,12 @@ void report_agent::link_redirection_report(
       break;
     }
   }
+  if (!done) {
+    metrics::instance()
+        .automation_stats()
+        .Get({{"report_error", "link_redirection"}})
+        .Increment();
+  }
 }
 
 // TODO add metrics
@@ -323,6 +343,7 @@ void report_agent::blocks_moderation_report(std::string const &did) {
     REL_INFO("Dry-run Report of {} as blocks-moderation", did);
     return;
   }
+  bool done(false);
   size_t retries(0);
   bsky::moderation::report_response response;
   while (retries < 5) {
@@ -373,6 +394,11 @@ void report_agent::blocks_moderation_report(std::string const &did) {
       REL_INFO("Report of {} as blocks-moderation recorded at {}, reporter "
                "{} id={}",
                did, response.createdAt, response.reportedBy, response.id);
+      done = true;
+      metrics::instance()
+          .automation_stats()
+          .Get({{"report", "blocks_moderation"}})
+          .Increment();
       break;
     } catch (boost::system::system_error const &exc) {
       if (exc.code().value() == boost::asio::error::eof &&
@@ -390,6 +416,12 @@ void report_agent::blocks_moderation_report(std::string const &did) {
                 exc.what());
       break;
     }
+  }
+  if (!done) {
+    metrics::instance()
+        .automation_stats()
+        .Get({{"report_error", "blocks_moderation"}})
+        .Increment();
   }
 }
 
