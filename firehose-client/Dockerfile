@@ -23,7 +23,7 @@ RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF &
   cmake --install .
 
 WORKDIR /usr/src
-RUN git clone https://github.com/SteveTownsend/restc-cpp.git
+RUN git clone https://github.com/SteveTownsend/restc-cpp.git && git pull
 WORKDIR /usr/src/restc-cpp
 
 # fetch third-party dependencies
