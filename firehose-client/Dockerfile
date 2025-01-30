@@ -8,12 +8,12 @@ RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
 
 WORKDIR /usr/src
-RUN git clone https://github.com/SteveTownsend/prometheus-cpp.git
+ADD https://api.github.com/repos/SteveTownsend/prometheus-cpp/git/refs/heads/master prom-version.json
+RUN git clone -b master https://github.com/SteveTownsend/prometheus-cpp.git
 WORKDIR /usr/src/prometheus-cpp
 
 # fetch third-party dependencies
-RUN git submodule init
-RUN git submodule update
+RUN git submodule init && git submodule update
 RUN mkdir _build
 WORKDIR /usr/src/prometheus-cpp/_build
 
@@ -23,14 +23,13 @@ RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF &
   cmake --install .
 
 WORKDIR /usr/src
-RUN git clone https://github.com/SteveTownsend/restc-cpp.git
+ADD https://api.github.com/repos/SteveTownsend/restc-cpp/git/refs/heads/master restc-version.json
+RUN git clone -b master https://github.com/SteveTownsend/restc-cpp.git
 WORKDIR /usr/src/restc-cpp
 
 # fetch third-party dependencies
-RUN git submodule init
-RUN git submodule update
+RUN git submodule init && git submodule update
 RUN mkdir _build
-WORKDIR /usr/src/restc-cpp/
 RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
