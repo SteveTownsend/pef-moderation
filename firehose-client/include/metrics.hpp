@@ -62,6 +62,9 @@ public:
   inline prometheus::Family<prometheus::Histogram> &link_stats() {
     return _link_stats;
   }
+  inline prometheus::Family<prometheus::Counter> &automation_stats() {
+    return _automation_stats;
+  }
 
 private:
   metrics();
@@ -82,5 +85,6 @@ private:
   prometheus::Family<prometheus::Counter> &_realtime_alerts;
   prometheus::Family<prometheus::Counter> &_embed_stats;
   prometheus::Family<prometheus::Histogram> &_link_stats;
+  prometheus::Family<prometheus::Counter> &_automation_stats;
 };
 #endif
