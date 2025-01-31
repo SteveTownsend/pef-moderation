@@ -19,7 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "activity/event_recorder.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
 #include "metrics.hpp"
 
 namespace activity {

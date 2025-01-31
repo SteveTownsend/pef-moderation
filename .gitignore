@@ -1,13 +1,8 @@
-firehose-client/build/
 firehose-client/logs/
-firehose-client/debug-msvc/
-firehose-client/logging-msvc/
-firehose-client/release-msvc/
-firehose-client/debug-gcc/
-firehose-client/logging-gcc/
-firehose-client/release-gcc/
-firehose-client/CMakeFiles/
 firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
 firehose-client/config/promtail.local.yaml
 firehose-client/config/full_config_dev.yml
+debug-msvc/
+logging-msvc/
+release-msvc/

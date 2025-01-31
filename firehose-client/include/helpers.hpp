@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "aho_corasick/aho_corasick.hpp"
-#include "log_wrapper.hpp"
+#include "common/log_wrapper.hpp"
 #include "nlohmann/json.hpp"
 #include "restc-cpp/RequestBody.h"
 #include "restc-cpp/SerializeJson.h"
@@ -34,6 +34,9 @@ http://www.fsf.org/licensing/licenses
 #include <sstream>
 #include <string>
 #include <vector>
+
+class config;
+bool is_full(config const &settings);
 
 inline bool bool_from_string(std::string_view str) {
   if (str == "false")

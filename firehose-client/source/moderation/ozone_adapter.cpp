@@ -18,8 +18,8 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/ozone_adapter.hpp"
-#include "controller.hpp"
-#include "log_wrapper.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 
 namespace bsky {
 namespace moderation {

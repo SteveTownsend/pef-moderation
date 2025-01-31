@@ -18,9 +18,9 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/embed_checker.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/action_router.hpp"
@@ -28,6 +28,7 @@ http://www.fsf.org/licensing/licenses
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <ranges>
+
 
 namespace bsky {
 namespace moderation {

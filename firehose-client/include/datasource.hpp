@@ -30,13 +30,14 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/counter.h>
 #include <string>
 
-#include "config.hpp"
+#include "common/config.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "content_handler.hpp"
-#include "controller.hpp"
 #include "firehost_client_config.hpp"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
+
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>

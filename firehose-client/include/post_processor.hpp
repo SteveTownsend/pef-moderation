@@ -21,9 +21,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "activity/event_recorder.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "helpers.hpp"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/embed_checker.hpp"
@@ -34,6 +34,7 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/histogram.h>
 #include <thread>
 #include <unordered_map>
+
 
 namespace firehose {
 

@@ -19,8 +19,8 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/action_router.hpp"
-#include "controller.hpp"
-#include "log_wrapper.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/list_manager.hpp"

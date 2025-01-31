@@ -19,14 +19,15 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/list_manager.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <boost/fusion/adapted.hpp>
 #include <functional>
+
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::byte_slice, (std::string, _type),
                           (int32_t, byteStart), (int32_t, byteEnd))

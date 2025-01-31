@@ -19,7 +19,7 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "config.hpp"
+#include "common/config.hpp"
 #include <chrono>
 #include <mutex>
 #include <pqxx/pqxx>
