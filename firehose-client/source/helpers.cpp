@@ -234,7 +234,7 @@ at_uri::at_uri(at_uri &&uri)
 std::wstring to_canonical(std::string_view const input) {
   if (input.empty())
     return std::wstring();
-  int32_t capacity((static_cast<int32_t>(input.length()) * 3));
+  int32_t capacity((static_cast<int32_t>(input.length()) * 4));
   int32_t new_size;
   std::vector<UChar> workspace(capacity);
   icu::ErrorCode error_code;
@@ -282,7 +282,7 @@ std::string wstring_to_utf8(std::wstring_view rc_string) {
   if (rc_string.empty())
     return std::string();
 
-  size_t output_max(rc_string.size() * 3);
+  size_t output_max(rc_string.size() * 4);
   std::vector<UChar> buffer(output_max, 0);
   std::string result(output_max, 0);
 
