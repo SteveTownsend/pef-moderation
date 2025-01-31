@@ -253,7 +253,7 @@ std::wstring to_canonical(std::string_view const input) {
     REL_ERROR(oss.str());
     return std::wstring();
   }
-  std::unique_ptr<UChar> case_folded(new UChar[capacity]);
+  std::unique_ptr<UChar[]> case_folded(new UChar[capacity]);
   new_size =
       u_strFoldCase(case_folded.get(), capacity, workspace.get(), new_size,
                     U_FOLD_CASE_DEFAULT, (UErrorCode *)error_code);
