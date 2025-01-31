@@ -1,4 +1,3 @@
-db-crawler/config/crawler_dev.yml
 firehose-client/logs/
 firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
@@ -7,3 +6,4 @@ firehose-client/config/full_config_dev.yml
 debug-msvc/
 logging-msvc/
 release-msvc/
+db-crawler/config/crawler_dev.yml
