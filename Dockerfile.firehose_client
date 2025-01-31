@@ -34,7 +34,7 @@ RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_T
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
 WORKDIR /usr/src/nafo-forum-moderation
-COPY .. .
+COPY . .
 RUN cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build --preset=rel-gcc && \
   rm -rf /var/lib/apt/lists/* && \
   apt-get purge -y --auto-remove $buildDeps
