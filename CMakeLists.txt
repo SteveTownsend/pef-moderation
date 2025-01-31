@@ -10,7 +10,7 @@ option(DB_CRAWLER_BUILD "build db crawler" ON)
 option(FIREHOSE_CLIENT_BUILD "build firehose client" ON)
 
 # #######################################################################################################################
-# # Configuration for all targets 
+# # Configuration for all targets
 # #######################################################################################################################
 if(WIN32)
   add_compile_definitions(
