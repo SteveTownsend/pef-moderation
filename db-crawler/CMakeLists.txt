@@ -8,7 +8,6 @@ add_executable(db_crawler
   ../source/common/log_wrapper.cpp)
 
 target_include_directories(db_crawler PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
-cmake_print_variables(CMAKE_CURRENT_BINARY_DIR PROJECT_NAME)
 target_link_libraries(db_crawler ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
 nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp)
 if (UNIX)

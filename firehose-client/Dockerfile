@@ -33,9 +33,9 @@ RUN mkdir _build
 RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
-WORKDIR /usr/src/firehose-client
-COPY . .
-RUN cmake --preset=Release-GCC && cmake --build --preset=rel-gcc && \
+WORKDIR /usr/src/nafo-forum-moderation
+COPY .. .
+RUN cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build --preset=rel-gcc && \
   rm -rf /var/lib/apt/lists/* && \
   apt-get purge -y --auto-remove $buildDeps
 
@@ -52,8 +52,8 @@ RUN cmake --install .
 
 WORKDIR /firehose-client
 RUN mkdir -p /firehose-client/logs /etc/firehose-client
-COPY --from=build /usr/src/firehose-client/release-gcc/firehose_client /firehose-client
-COPY --from=build /usr/src/firehose-client/config/live_filters /etc/firehose-client/live_filters
+COPY --from=build /usr/src/nafo-forum-moderation/release-gcc/firehose_client /firehose-client
+COPY --from=build /usr/src/nafo-forum-moderation/firehose-client/config/live_filters /etc/firehose-client/live_filters
 
 RUN rm -rf /usr/src && \
   rm -rf /var/lib/apt/lists/* && \

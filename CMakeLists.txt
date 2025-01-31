@@ -13,12 +13,12 @@ option(FIREHOSE_CLIENT_BUILD "build firehose client" ON)
 # # Configuration for all targets
 # #######################################################################################################################
 if(WIN32)
-        add_compile_definitions(
-                UNICODE
-                _UNICODE
-                NOMINMAX
-                _AMD64_
-                WIN32_LEAN_AND_MEAN)
+  add_compile_definitions(
+          UNICODE
+          _UNICODE
+          NOMINMAX
+          _AMD64_
+          WIN32_LEAN_AND_MEAN)
 endif()
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
   add_compile_definitions(
@@ -34,8 +34,6 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
           _DEBUG
   )
 endif()
-
-include(CMakePrintHelpers)
 
 SET(MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -110,16 +108,16 @@ endif()
 
 # includes those used by restc-cpp
 find_package(Boost REQUIRED COMPONENTS
-    system
-    program_options
-    filesystem
-    date_time
-    context
-    coroutine
-    chrono
-    log
-    json
-    url)
+  system
+  program_options
+  filesystem
+  date_time
+  context
+  coroutine
+  chrono
+  log
+  json
+  url)
 IF(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
@@ -154,10 +152,10 @@ FetchContent_Declare(
 )
 FetchContent_GetProperties(spdlog)
 if (NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        set(SPDLOG_INSTALL ON CACHE INTERNAL "Install SPDLOG for firehose client")
-        set(SPDLOG_USE_STD_FORMAT ON CACHE INTERNAL "Use std::format in SPDLOG, not fmt")
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+  FetchContent_Populate(spdlog)
+  set(SPDLOG_INSTALL ON CACHE INTERNAL "Install SPDLOG for firehose client")
+  set(SPDLOG_USE_STD_FORMAT ON CACHE INTERNAL "Use std::format in SPDLOG, not fmt")
+  add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
 endif()
 find_package(spdlog CONFIG REQUIRED)
 
@@ -210,10 +208,14 @@ if (WIN32)
 endif()
 set(JWT_JSON_TRAITS_OPTIONS boost-json)
 FetchContent_Declare(jwt-cpp 
-    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
-    GIT_HASH 71c3d36507183ceb74b9cf10d1232fe1223bdfb0
+  GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+  GIT_HASH 71c3d36507183ceb74b9cf10d1232fe1223bdfb0
 )
 FetchContent_MakeAvailable(jwt-cpp)
 
-add_subdirectory(db-crawler)
+if (DB_CRAWLER_BUILD)
+  add_subdirectory(db-crawler)
+endif()
+if (FIREHOSE_CLIENT_BUILD)
 add_subdirectory(firehose-client)
+endif()
