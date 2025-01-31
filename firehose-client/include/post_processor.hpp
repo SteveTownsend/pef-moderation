@@ -29,6 +29,7 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 #include "readerwriterqueue.h"
+#include <nlohmann/detail/exceptions.hpp>
 #include <prometheus/counter.h>
 #include <prometheus/gauge.h>
 #include <prometheus/histogram.h>
@@ -105,13 +106,18 @@ public:
       try {
         while ((controller::instance().is_active())) {
           T my_payload;
-          _queue.wait_dequeue(my_payload);
-          metrics::instance()
-              .operational_stats()
-              .Get({{"message", "backlog"}})
-              .Decrement();
+          try {
+            _queue.wait_dequeue(my_payload);
+            metrics::instance()
+                .operational_stats()
+                .Get({{"message", "backlog"}})
+                .Decrement();
 
-          my_payload.handle(*this);
+            my_payload.handle(*this);
+          } catch (nlohmann::detail::exception const &exc) {
+            REL_ERROR("post_processor JSON error {} on payload {}", exc.what(),
+                      my_payload.to_string());
+          }
         }
       } catch (std::exception const &exc) {
         REL_ERROR("post_processor exception {}", exc.what());
