@@ -34,7 +34,7 @@ action_router &action_router::instance() {
 action_router::action_router() : _queue(QueueLimit) {}
 
 void action_router::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       account_filter_matches matches;
       _queue.wait_dequeue(matches);

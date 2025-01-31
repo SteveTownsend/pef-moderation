@@ -38,7 +38,6 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "metrics.hpp"
 
-
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -71,7 +70,7 @@ public:
   }
 
   void start() {
-    _thread = std::thread([&] {
+    _thread = std::thread([&, this] {
       REL_INFO("client startup for {}:{} at {}", _host, _port, _subscription);
       try {
         while (controller::instance().is_active()) {

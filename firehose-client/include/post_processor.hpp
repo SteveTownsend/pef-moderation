@@ -35,7 +35,6 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 #include <unordered_map>
 
-
 namespace firehose {
 
 enum class op { error = -1, message = 1 };
@@ -102,7 +101,7 @@ public:
   static constexpr size_t QueueLimit = 10000;
 
   post_processor() : _queue(QueueLimit) {
-    _thread = std::thread([&] {
+    _thread = std::thread([&, this] {
       try {
         while ((controller::instance().is_active())) {
           T my_payload;

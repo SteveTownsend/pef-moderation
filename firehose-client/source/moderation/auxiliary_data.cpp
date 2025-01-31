@@ -32,7 +32,7 @@ auxiliary_data::auxiliary_data(std::string const &connection_string)
 }
 
 void auxiliary_data::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {

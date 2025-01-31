@@ -29,7 +29,6 @@ http://www.fsf.org/licensing/licenses
 #include "restc-cpp/RequestBuilder.h"
 #include <ranges>
 
-
 namespace bsky {
 namespace moderation {
 
@@ -62,7 +61,7 @@ void embed_checker::start() {
   properties.cacheMaxConnections = 512;
   for (size_t count = 0; count < _number_of_threads; ++count) {
     _rest_client = restc_cpp::RestClient::Create(properties);
-    _threads[count] = std::thread([&] {
+    _threads[count] = std::thread([&, this] {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;

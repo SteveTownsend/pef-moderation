@@ -30,7 +30,7 @@ ozone_adapter::ozone_adapter(std::string const &connection_string)
 }
 
 void ozone_adapter::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {

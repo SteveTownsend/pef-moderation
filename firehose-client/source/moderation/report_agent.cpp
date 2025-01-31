@@ -77,7 +77,7 @@ void report_agent::set_config(YAML::Node const &settings) {
 }
 
 void report_agent::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     try {
       // create client
       _rest_client = restc_cpp::RestClient::Create();

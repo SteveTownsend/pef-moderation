@@ -28,7 +28,6 @@ http://www.fsf.org/licensing/licenses
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 
-
 BOOST_FUSION_ADAPT_STRUCT(bsky::byte_slice, (std::string, _type),
                           (int32_t, byteStart), (int32_t, byteEnd))
 
@@ -110,7 +109,7 @@ void list_manager::set_config(YAML::Node const &settings) {
 }
 
 void list_manager::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     try {
       // create client
       _rest_client = restc_cpp::RestClient::Create();
