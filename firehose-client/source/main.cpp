@@ -36,6 +36,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "matcher.hpp"
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
     controller::instance().set_config(settings);
     controller::instance().start();
 
-    metrics::instance().set_config(settings);
+    metrics_factory::instance().set_config(settings, PROJECT_NAME);
     parser::set_config(settings);
 
 #if _DEBUG

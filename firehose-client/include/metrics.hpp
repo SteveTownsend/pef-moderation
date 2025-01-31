@@ -22,24 +22,14 @@ http://www.fsf.org/licensing/licenses
 
 #include "common/config.hpp"
 #include <prometheus/counter.h>
-#include <prometheus/exposer.h>
+#include <prometheus/family.h>
 #include <prometheus/gauge.h>
 #include <prometheus/histogram.h>
-#include <prometheus/info.h>
-#include <prometheus/registry.h>
-#include <prometheus/summary.h>
+
 
 class metrics {
 public:
   static metrics &instance();
-  void set_config(std::shared_ptr<config> &settings);
-
-  prometheus::Family<prometheus::Counter> &add_counter(std::string const &name,
-                                                       std::string const &help);
-  prometheus::Family<prometheus::Gauge> &add_gauge(std::string const &name,
-                                                   std::string const &help);
-  prometheus::Family<prometheus::Histogram> &
-  add_histogram(std::string const &name, std::string const &help);
 
   inline prometheus::Family<prometheus::Counter> &matched_elements() {
     return _matched_elements;
@@ -69,11 +59,6 @@ public:
 private:
   metrics();
   ~metrics() = default;
-
-  std::string _port;
-  std::shared_ptr<config> _settings;
-  std::unique_ptr<prometheus::Exposer> _exposer;
-  std::shared_ptr<prometheus::Registry> _registry;
 
   // Cardinality =
   //   (number of rules) times (number of elements - profile/post -

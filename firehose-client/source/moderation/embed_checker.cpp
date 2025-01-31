@@ -43,6 +43,8 @@ embed_checker::embed_checker()
 void embed_checker::set_config(YAML::Node const &settings) {
   _follow_links = settings["follow_links"].as<bool>();
   _number_of_threads = settings["number_of_threads"].as<size_t>();
+  _rest_clients.reserve(_number_of_threads);
+  _threads.reserve(_number_of_threads);
 }
 
 void embed_checker::start() {
@@ -58,10 +60,10 @@ void embed_checker::start() {
   // favour cache eviction since we are promiscuous about connections
   properties.cacheCleanupIntervalSeconds = 2;
   properties.cacheTtlSeconds = 5;
-  properties.cacheMaxConnections = 512;
   for (size_t count = 0; count < _number_of_threads; ++count) {
-    _rest_client = restc_cpp::RestClient::Create(properties);
-    _threads[count] = std::thread([&, this] {
+    auto new_client(restc_cpp::RestClient::Create(properties));
+    _rest_clients.push_back(std::move(new_client));
+    _threads.push_back(std::thread([&, this, count] {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;
@@ -77,9 +79,9 @@ void embed_checker::start() {
           // add LFU cache of content-cid/did/rate-limit
           // add metrics
           for (auto const &next_embed : embed_list._embeds) {
-            embed_handler handler(*this, *_rest_client, embed_list._did,
+            embed_handler handler(*this, *_rest_clients[count], embed_list._did,
                                   embed_list._path);
-            _rest_client->GetConnectionProperties()->redirectFn =
+            _rest_clients[count]->GetConnectionProperties()->redirectFn =
                 std::bind(&embed_handler::on_url_redirect, &handler,
                           std::placeholders::_1, std::placeholders::_2,
                           std::placeholders::_3);
@@ -93,7 +95,7 @@ void embed_checker::start() {
         controller::instance().force_stop();
       }
       REL_INFO("embed_checker stopping");
-    });
+    }));
   }
 }
 

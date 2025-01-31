@@ -21,20 +21,14 @@ http://www.fsf.org/licensing/licenses
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "db_crawler_config.hpp"
-// #include "matcher.hpp"
-// #include "moderation/action_router.hpp"
-// #include "moderation/auxiliary_data.hpp"
-// #include "moderation/embed_checker.hpp"
-// #include "moderation/list_manager.hpp"
 // #include "moderation/ozone_adapter.hpp"
 // #include "moderation/report_agent.hpp"
-// #include "parser.hpp"
-// #include "payload.hpp"
-// #include <chrono>
 #include "restc-cpp/logging.h"
+#include <chrono>
 #include <iostream>
-// #include <thread>
+#include <thread>
 
 int main(int argc, char **argv) {
   bool log_ready(false);
@@ -63,8 +57,7 @@ int main(int argc, char **argv) {
     controller::instance().set_config(settings);
     controller::instance().start();
 
-    // metrics::instance().set_config(settings);
-    // parser::set_config(settings);
+    metrics_factory::instance().set_config(settings, PROJECT_NAME);
 
 #if _DEBUG
     restc_cpp::Logger::Instance().SetLogLevel(restc_cpp::LogLevel::WARNING);
@@ -87,21 +80,13 @@ int main(int argc, char **argv) {
 #endif
     REL_INFO("db_crawler v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
-    // std::shared_ptr<bsky::moderation::auxiliary_data> auxiliary_data =
-    //     std::make_shared<bsky::moderation::auxiliary_data>(
-    //         settings->build_db_connection_string("auxiliary_data"));
+    // std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
+    //     std::make_shared<bsky::moderation::ozone_adapter>(
+    //         settings->build_db_connection_string("moderation_data"));
 
-    //     std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
-    //         std::make_shared<bsky::moderation::ozone_adapter>(
-    //             settings->build_db_connection_string("moderation_data"));
-    //     // Matcher is shared by many classes. Loads from file or DB.
-    //     matcher::shared().set_config(
-    //         settings->get_config()[PROJECT_NAME]["filters"]);
-
-    //     // seed database monitors before we start post-processing firehose
-    //     // messages
-    //     moderation_data->start();
-    //     auxiliary_data->start(); // seeds matcher with rules
+    // seed database monitors before we start post-processing firehose
+    // messages
+    // moderation_data->start();
 
     //     // wait for matcher and embed checker to be ready
     //     do {

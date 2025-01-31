@@ -139,11 +139,11 @@ private:
   ~embed_checker() = default;
 
   bool _is_ready = false;
-  std::array<std::thread, DefaultNumberOfThreads> _threads;
+  std::vector<std::unique_ptr<restc_cpp::RestClient>> _rest_clients;
+  std::vector<std::thread> _threads;
   std::mutex _lock;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<embed::embed_info_list> _queue;
-  std::unique_ptr<restc_cpp::RestClient> _rest_client;
   bool _follow_links = false;
   size_t _number_of_threads = DefaultNumberOfThreads;
   std::unordered_map<std::string, size_t> _checked_images;

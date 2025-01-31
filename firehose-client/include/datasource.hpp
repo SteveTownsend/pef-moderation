@@ -33,6 +33,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "content_handler.hpp"
 #include "firehost_client_config.hpp"
 #include "matcher.hpp"
@@ -52,9 +53,9 @@ public:
     return my_source;
   }
   datasource()
-      : _input_messages(metrics::instance().add_counter(
+      : _input_messages(metrics_factory::instance().add_counter(
             "websocket_inbound_messages", "Number of inbound messages")),
-        _input_message_bytes(metrics::instance().add_counter(
+        _input_message_bytes(metrics_factory::instance().add_counter(
             "websocket_inbound_bytes", "Number of inbound message bytes")) {}
   ~datasource() = default;
 
