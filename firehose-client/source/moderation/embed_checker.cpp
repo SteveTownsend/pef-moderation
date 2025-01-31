@@ -62,8 +62,8 @@ void embed_checker::start() {
   properties.cacheTtlSeconds = 5;
   for (size_t count = 0; count < _number_of_threads; ++count) {
     auto new_client(restc_cpp::RestClient::Create(properties));
-    _rest_clients[count].swap(new_client);
-    _threads[count] = std::thread([&, this, count] {
+    _rest_clients.push_back(std::move(new_client));
+    _threads.push_back(std::thread([&, this, count] {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;
@@ -95,7 +95,7 @@ void embed_checker::start() {
         controller::instance().force_stop();
       }
       REL_INFO("embed_checker stopping");
-    });
+    }));
   }
 }
 
