@@ -33,7 +33,13 @@ jobs:
         with:
           filters: |
             firehose-client:
-              - 'firehose-client/**'     
+              - 'firehose-client/**'
+              - 'include/**'
+              - 'source/**'
+              - 'Dockerfile.firehose_client'
+              - 'CMakeLists.txt'
+              - 'CMakePresets.json'
+              - 'spdlogConfig.cmake'
 
       - name: Setup Docker buildx
         if: steps.filter.outputs.firehose-client == 'true'
