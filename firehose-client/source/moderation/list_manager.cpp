@@ -19,9 +19,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/list_manager.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "restc-cpp/RequestBuilder.h"
@@ -109,7 +109,7 @@ void list_manager::set_config(YAML::Node const &settings) {
 }
 
 void list_manager::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     try {
       // create client
       _rest_client = restc_cpp::RestClient::Create();

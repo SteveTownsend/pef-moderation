@@ -19,10 +19,19 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "helpers.hpp"
-#include "log_wrapper.hpp"
+#include "common/config.hpp"
+#include "common/log_wrapper.hpp"
+#include "firehost_client_config.hpp"
 #include <unicode/errorcode.h>
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>
+
+bool is_full(config const &settings) {
+  constexpr std::string_view jetstream = "jetstream";
+  return !settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
+              .as<std::string>()
+              .contains(jetstream);
+}
 
 namespace json {
 

@@ -19,8 +19,8 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/report_agent.hpp"
-#include "controller.hpp"
-#include "log_wrapper.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "metrics.hpp"
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
@@ -77,7 +77,7 @@ void report_agent::set_config(YAML::Node const &settings) {
 }
 
 void report_agent::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     try {
       // create client
       _rest_client = restc_cpp::RestClient::Create();

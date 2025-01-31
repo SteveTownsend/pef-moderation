@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "log_wrapper.hpp"
+#include "common/log_wrapper.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"

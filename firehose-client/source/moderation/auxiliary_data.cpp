@@ -18,8 +18,8 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/auxiliary_data.hpp"
-#include "controller.hpp"
-#include "log_wrapper.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "matcher.hpp"
 #include "moderation/embed_checker.hpp"
 
@@ -32,7 +32,7 @@ auxiliary_data::auxiliary_data(std::string const &connection_string)
 }
 
 void auxiliary_data::start() {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {

@@ -18,9 +18,9 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/embed_checker.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/action_router.hpp"
@@ -61,7 +61,7 @@ void embed_checker::start() {
   properties.cacheMaxConnections = 512;
   for (size_t count = 0; count < _number_of_threads; ++count) {
     _rest_client = restc_cpp::RestClient::Create(properties);
-    _threads[count] = std::thread([&] {
+    _threads[count] = std::thread([&, this] {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;
@@ -284,7 +284,7 @@ void embed_handler::operator()(embed::external const &value) {
     while (retries < 5) {
       try {
         auto check_done =
-            _rest_client.ProcessWithPromise([=](restc_cpp::Context &ctx) {
+            _rest_client.ProcessWithPromise([=, this](restc_cpp::Context &ctx) {
               restc_cpp::RequestBuilder builder(ctx);
               // pretend to be a browser, like the web-app
               builder.Get(_root_url)

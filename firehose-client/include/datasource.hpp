@@ -30,11 +30,11 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/counter.h>
 #include <string>
 
-#include "config.hpp"
+#include "common/config.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "content_handler.hpp"
-#include "controller.hpp"
 #include "firehost_client_config.hpp"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 
@@ -70,7 +70,7 @@ public:
   }
 
   void start() {
-    _thread = std::thread([&] {
+    _thread = std::thread([&, this] {
       REL_INFO("client startup for {}:{} at {}", _host, _port, _subscription);
       try {
         while (controller::instance().is_active()) {

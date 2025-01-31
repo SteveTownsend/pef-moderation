@@ -19,12 +19,12 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "activity/event_recorder.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
 #include "metrics.hpp"
 
 namespace activity {
 event_recorder::event_recorder() : _queue(MaxBacklog) {
-  _thread = std::thread([&] {
+  _thread = std::thread([&, this] {
     static size_t matches(0);
     while (controller::instance().is_active()) {
       timed_event my_payload;

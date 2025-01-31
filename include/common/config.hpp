@@ -22,6 +22,8 @@ http://www.fsf.org/licensing/licenses
 #include "yaml-cpp/yaml.h"
 #include <string>
 
+std::string build_db_connection_string(YAML::Node const &config_section);
+
 class config {
 public:
   config() = delete;
@@ -29,14 +31,10 @@ public:
 
   config(std::string const &filename);
   const YAML::Node &get_config() const;
-  inline bool is_full() { return _is_full; }
-  std::string
-  build_db_connection_string(std::string const &config_section) const;
 
 private:
   YAML::Node _config;
   // uss host to infer whether we are using Jetstream or full firehose
-  bool _is_full;
 };
 
 #endif

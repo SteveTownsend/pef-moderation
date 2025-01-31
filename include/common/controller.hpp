@@ -20,8 +20,8 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "config.hpp"
-#include "log_wrapper.hpp"
+#include "common/config.hpp"
+#include "common/log_wrapper.hpp"
 #include <atomic>
 
 class controller {

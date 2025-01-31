@@ -18,29 +18,13 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "config.hpp"
-#include "firehost_client_config.hpp"
-#include "log_wrapper.hpp"
+#include "common/config.hpp"
+#include "common/log_wrapper.hpp"
 
-config::config(std::string const &filename) {
-  try {
-    _config = YAML::LoadFile(filename);
-    constexpr std::string_view jetstream = "jetstream";
-    _is_full = !_config[PROJECT_NAME]["datasource"]["hosts"]
-                    .as<std::string>()
-                    .contains(jetstream);
-  } catch (std::exception const &exc) {
-    REL_CRITICAL("Error processing config file {}:{}", filename, exc.what());
-  }
-}
-
-YAML::Node const &config::get_config() const { return _config; }
-
-std::string
-config::build_db_connection_string(std::string const &config_section) const {
+std::string build_db_connection_string(YAML::Node const &config_section) {
   bool first(true);
   std::ostringstream oss;
-  for (auto field : _config[PROJECT_NAME][config_section]) {
+  for (auto field : config_section) {
     if (!first) {
       oss << ' ';
     } else {
@@ -51,3 +35,13 @@ config::build_db_connection_string(std::string const &config_section) const {
   }
   return oss.str();
 }
+
+config::config(std::string const &filename) {
+  try {
+    _config = YAML::LoadFile(filename);
+  } catch (std::exception const &exc) {
+    REL_CRITICAL("Error processing config file {}:{}", filename, exc.what());
+  }
+}
+
+YAML::Node const &config::get_config() const { return _config; }

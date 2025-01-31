@@ -36,7 +36,7 @@ parser::get_candidates_from_string(std::string const &full_content) const {
 candidate_list
 parser::get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) {
   auto buffer(beast_data.data());
-  if (_settings->is_full()) {
+  if (is_full(*_settings)) {
     bool parsed(json_from_cbor(buffers_begin(buffer), buffers_end(buffer)));
     if (!parsed) {
       // TODO error handling

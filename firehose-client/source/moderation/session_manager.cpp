@@ -19,7 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/session_manager.hpp"
-#include "log_wrapper.hpp"
+#include "common/log_wrapper.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <boost/fusion/adapted.hpp>
 #include <jwt-cpp/traits/boost-json/traits.h>

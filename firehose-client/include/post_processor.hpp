@@ -21,9 +21,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "activity/event_recorder.hpp"
-#include "controller.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "helpers.hpp"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/embed_checker.hpp"
@@ -101,7 +101,7 @@ public:
   static constexpr size_t QueueLimit = 10000;
 
   post_processor() : _queue(QueueLimit) {
-    _thread = std::thread([&] {
+    _thread = std::thread([&, this] {
       try {
         while ((controller::instance().is_active())) {
           T my_payload;

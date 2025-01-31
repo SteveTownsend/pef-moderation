@@ -33,11 +33,11 @@ http://www.fsf.org/licensing/licenses
 //
 //------------------------------------------------------------------------------
 
-#include "config.hpp"
-#include "controller.hpp"
+#include "common/config.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
-#include "log_wrapper.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   try {
     // Check command line arguments.
     if (argc != 2) {
-      std::cerr << "Usage: firehose-client <config-file-name>\n";
+      std::cerr << "Usage: firehose_client <config-file-name>\n";
       // for Jetstream profile and post commits:
       // subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
       return EXIT_FAILURE;
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     spdlog::level::level_enum log_level(spdlog::level::from_str(
         settings->get_config()[PROJECT_NAME]["logging"]["level"]
             .as<std::string>()));
-    if (!init_logging(log_file, log_level)) {
+    if (!init_logging(log_file, PROJECT_NAME, log_level)) {
       return EXIT_FAILURE;
     }
     log_ready = true;
@@ -106,11 +106,13 @@ int main(int argc, char **argv) {
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
     std::shared_ptr<bsky::moderation::auxiliary_data> auxiliary_data =
         std::make_shared<bsky::moderation::auxiliary_data>(
-            settings->build_db_connection_string("auxiliary_data"));
+            build_db_connection_string(
+                settings->get_config()[PROJECT_NAME]["auxiliary_data"]));
 
     std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
         std::make_shared<bsky::moderation::ozone_adapter>(
-            settings->build_db_connection_string("moderation_data"));
+            build_db_connection_string(
+                settings->get_config()[PROJECT_NAME]["moderation_data"]));
     // Matcher is shared by many classes. Loads from file or DB.
     matcher::shared().set_config(
         settings->get_config()[PROJECT_NAME]["filters"]);
@@ -126,7 +128,7 @@ int main(int argc, char **argv) {
     } while (!matcher::shared().is_ready() ||
              !bsky::moderation::embed_checker::instance().is_ready());
 
-    if (settings->is_full()) {
+    if (is_full(*settings)) {
       datasource<firehose_payload>::instance().set_config(settings);
       datasource<firehose_payload>::instance().start();
 
