@@ -236,9 +236,9 @@ std::wstring to_canonical(std::string_view const input) {
     return std::wstring();
   int32_t capacity((static_cast<int32_t>(input.length()) * 3));
   int32_t new_size;
-  std::unique_ptr<UChar[]> workspace(new UChar[capacity]);
+  std::vector<UChar> workspace(capacity);
   icu::ErrorCode error_code;
-  u_strFromUTF8(workspace.get(), capacity, &new_size, input.data(),
+  u_strFromUTF8(&workspace.front(), capacity, &new_size, input.data(),
                 static_cast<int32_t>(input.length()), (UErrorCode *)error_code);
   if (error_code.isFailure()) {
     std::ostringstream oss;
@@ -253,10 +253,10 @@ std::wstring to_canonical(std::string_view const input) {
     REL_ERROR(oss.str());
     return std::wstring();
   }
-  std::unique_ptr<UChar[]> case_folded(new UChar[capacity]);
+  std::vector<UChar> case_folded(capacity);
   new_size =
-      u_strFoldCase(case_folded.get(), capacity, workspace.get(), new_size,
-                    U_FOLD_CASE_DEFAULT, (UErrorCode *)error_code);
+      u_strFoldCase(&case_folded.front(), capacity, &workspace.front(),
+                    new_size, U_FOLD_CASE_DEFAULT, (UErrorCode *)error_code);
   if (error_code.isFailure()) {
     std::ostringstream oss;
     oss << "to_canonical: u_strFoldCase error " << error_code.errorName();
@@ -270,7 +270,7 @@ std::wstring to_canonical(std::string_view const input) {
     REL_ERROR(oss.str());
     return std::wstring();
   }
-  return std::wstring(case_folded.get(), case_folded.get() + new_size);
+  return std::wstring(&case_folded.front(), &case_folded.front() + new_size);
 }
 
 std::string wstring_to_utf8(std::wstring const &rc_string) {
