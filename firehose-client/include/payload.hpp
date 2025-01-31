@@ -32,6 +32,7 @@ public:
   jetstream_payload();
   jetstream_payload(std::string json_msg, match_results matches);
   void handle(post_processor<jetstream_payload> &processor);
+  inline std::string to_string() const { return _json_msg; }
 
 private:
   std::string _json_msg;
@@ -42,6 +43,14 @@ public:
   firehose_payload();
   firehose_payload(parser &my_parser);
   void handle(post_processor<firehose_payload> &processor);
+  inline std::string to_string() const {
+    auto const &header(_parser.other_cbors().front().second);
+    auto const &message(_parser.other_cbors().back().second);
+    std::ostringstream oss;
+    oss << "header (" << dump_json(header) << ") message ("
+        << dump_json(message) << ')';
+    return oss.str();
+  }
 
 private:
   struct context {
