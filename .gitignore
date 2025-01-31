@@ -1,3 +1,4 @@
+db-crawler/config/crawler_dev.yml
 firehose-client/logs/
 firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
