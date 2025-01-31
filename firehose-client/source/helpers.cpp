@@ -232,9 +232,11 @@ at_uri::at_uri(at_uri &&uri)
 
 // convert UTF-8 input to canonical form where case differences are erased
 std::wstring to_canonical(std::string_view const input) {
+  if (input.empty())
+    return std::wstring();
   int32_t capacity((static_cast<int32_t>(input.length()) * 3));
   int32_t new_size;
-  std::unique_ptr<UChar> workspace(new UChar[capacity]);
+  std::unique_ptr<UChar[]> workspace(new UChar[capacity]);
   icu::ErrorCode error_code;
   u_strFromUTF8(workspace.get(), capacity, &new_size, input.data(),
                 static_cast<int32_t>(input.length()), (UErrorCode *)error_code);
