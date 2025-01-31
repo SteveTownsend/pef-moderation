@@ -284,7 +284,7 @@ void embed_handler::operator()(embed::external const &value) {
     while (retries < 5) {
       try {
         auto check_done =
-            _rest_client.ProcessWithPromise([=](restc_cpp::Context &ctx) {
+            _rest_client.ProcessWithPromise([=, this](restc_cpp::Context &ctx) {
               restc_cpp::RequestBuilder builder(ctx);
               // pretend to be a browser, like the web-app
               builder.Get(_root_url)
