@@ -35,9 +35,12 @@ jobs:
           filters: |
             firehose-client:
               - 'firehose-client/**'
+            shared-code:
               - 'include/**'
               - 'source/**'
+            dockerfile:
               - 'Dockerfile.firehose_client'
+            shared-build:
               - 'CMakeLists.txt'
               - 'CMakePresets.json'
               - 'spdlogConfig.cmake'
