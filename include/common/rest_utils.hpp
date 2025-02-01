@@ -21,7 +21,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include <nlohmann/json.hpp>
 #include <restc-cpp/RequestBody.h>
-#include <restc-cpp/SerializeJSON.h>
+#include <restc-cpp/SerializeJson.h>
 
 namespace json {
 extern restc_cpp::JsonFieldMapping TypeFieldMapping;
