@@ -24,7 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/log_wrapper.hpp"
 #include "nlohmann/json.hpp"
 #include "restc-cpp/RequestBody.h"
-#include "restc-cpp/SerializeJSON.h"
+#include "restc-cpp/SerializeJson.h"
 #include <algorithm>
 #include <chrono>
 #include <format>
