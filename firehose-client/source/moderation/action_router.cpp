@@ -21,10 +21,11 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/action_router.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/list_manager.hpp"
-#include "moderation/report_agent.hpp"
+
 
 action_router &action_router::instance() {
   static action_router my_instance;

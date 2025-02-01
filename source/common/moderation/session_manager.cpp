@@ -18,7 +18,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "moderation/session_manager.hpp"
+#include "common/moderation/session_manager.hpp"
 #include "common/log_wrapper.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <boost/fusion/adapted.hpp>

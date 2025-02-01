@@ -20,13 +20,13 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
+#include "common/moderation/ozone_adapter.hpp"
+#include "common/moderation/session_manager.hpp"
 #include "firehost_client_config.hpp"
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
 #include "metrics.hpp"
-#include "moderation/ozone_adapter.hpp"
-#include "moderation/session_manager.hpp"
 #include "yaml-cpp/yaml.h"
 #include <optional>
 #include <thread>

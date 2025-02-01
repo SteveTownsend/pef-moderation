@@ -37,6 +37,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
+#include "common/moderation/ozone_adapter.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "datasource.hpp"
 #include "firehost_client_config.hpp"
 #include "matcher.hpp"
@@ -44,8 +46,6 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
 #include "moderation/list_manager.hpp"
-#include "moderation/ozone_adapter.hpp"
-#include "moderation/report_agent.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
 #include <chrono>

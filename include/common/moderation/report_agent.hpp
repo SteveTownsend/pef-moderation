@@ -20,10 +20,18 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
+#include "common/moderation/ozone_adapter.hpp"
+#include "common/moderation/session_manager.hpp"
+#if defined(_DB_CRAWLER)
+#include "db_crawler_config.hpp"
+#else
+#if defined(_FIREHOSE_CLIENT)
 #include "firehost_client_config.hpp"
-#include "helpers.hpp"
-#include "moderation/ozone_adapter.hpp"
-#include "moderation/session_manager.hpp"
+#endif
+#endif
+#include "common/bluesky/platform.hpp"
+#include "restc-cpp/RequestBody.h"
+#include "restc-cpp/restc-cpp.h"
 #include "yaml-cpp/yaml.h"
 #include <thread>
 

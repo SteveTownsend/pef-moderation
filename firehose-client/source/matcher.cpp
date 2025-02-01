@@ -20,16 +20,15 @@ http://www.fsf.org/licensing/licenses
 
 #include "matcher.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "helpers.hpp"
 #include "metrics.hpp"
 #include "moderation/list_manager.hpp"
-#include "moderation/report_agent.hpp"
 #include "parser.hpp"
 #include <exception>
 #include <fstream>
 #include <ranges>
 #include <string_view>
-
 
 matcher::matcher() { _whole_word_trie.only_whole_words(); }
 

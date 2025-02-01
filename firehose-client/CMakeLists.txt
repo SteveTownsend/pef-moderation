@@ -1,6 +1,10 @@
-project(firehose_client VERSION 2.5.6 LANGUAGES C CXX)
+project(firehose_client VERSION 2.5.7 LANGUAGES C CXX)
 
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/firehost_client_config.hpp)
+
+add_compile_definitions(
+  _FIREHOSE_CLIENT
+)
 
 add_executable(firehose_client
   ./source/main.cpp
@@ -17,12 +21,13 @@ add_executable(firehose_client
   ./source/moderation/auxiliary_data.cpp
   ./source/moderation/embed_checker.cpp
   ./source/moderation/list_manager.cpp
-  ./source/moderation/ozone_adapter.cpp
-  ./source/moderation/report_agent.cpp
-  ./source/moderation/session_manager.cpp
   ../source/common/config.cpp
   ../source/common/log_wrapper.cpp
-  ../source/common/metrics_factory.cpp)
+  ../source/common/metrics_factory.cpp
+  ../source/common/rest_utils.cpp
+  ../source/common/moderation/ozone_adapter.cpp
+  ../source/common/moderation/report_agent.cpp
+  ../source/common/moderation/session_manager.cpp)
 
 target_include_directories(firehose_client PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}

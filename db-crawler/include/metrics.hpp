@@ -37,11 +37,23 @@ public:
   inline prometheus::Family<prometheus::Counter> &tagged_records() {
     return _tagged_records;
   }
+  inline prometheus::Family<prometheus::Gauge> &operational_stats() {
+    return _operational_stats;
+  }
+  inline prometheus::Family<prometheus::Counter> &realtime_alerts() {
+    return _realtime_alerts;
+  }
+  inline prometheus::Family<prometheus::Counter> &automation_stats() {
+    return _automation_stats;
+  }
 
 private:
   metrics();
   ~metrics() = default;
 
   prometheus::Family<prometheus::Counter> &_tagged_records;
+  prometheus::Family<prometheus::Gauge> &_operational_stats;
+  prometheus::Family<prometheus::Counter> &_realtime_alerts;
+  prometheus::Family<prometheus::Counter> &_automation_stats;
 };
 #endif
