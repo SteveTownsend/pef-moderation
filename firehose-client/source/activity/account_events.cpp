@@ -20,8 +20,8 @@ http://www.fsf.org/licensing/licenses
 
 #include "activity/account_events.hpp"
 #include "activity/event_cache.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "metrics.hpp"
-#include "moderation/report_agent.hpp"
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
 
@@ -53,7 +53,7 @@ account::account(did_type const &did)
 
 void account::statistics::tags(const size_t count) {
   if (count > activity::account::TagFacetThreshold) {
-    if (bsky::alert_needed(++_tags, FacetFactor)) {
+    if (alert_needed(++_tags, FacetFactor)) {
       REL_INFO("Account flagged tag-facets {} {}", _did, _tags);
       metrics::instance()
           .realtime_alerts()
@@ -65,7 +65,7 @@ void account::statistics::tags(const size_t count) {
 }
 void account::statistics::links(const size_t count) {
   if (count > activity::account::LinkFacetThreshold) {
-    if (bsky::alert_needed(++_links, FacetFactor)) {
+    if (alert_needed(++_links, FacetFactor)) {
       REL_INFO("Account flagged link-facets {} {}", _did, _links);
       metrics::instance()
           .realtime_alerts()
@@ -77,7 +77,7 @@ void account::statistics::links(const size_t count) {
 }
 void account::statistics::mentions(const size_t count) {
   if (count > activity::account::MentionFacetThreshold) {
-    if (bsky::alert_needed(++_mentions, FacetFactor)) {
+    if (alert_needed(++_mentions, FacetFactor)) {
       REL_INFO("Account flagged mention-facets {} {}", _did, _mentions);
       metrics::instance()
           .realtime_alerts()
@@ -89,7 +89,7 @@ void account::statistics::mentions(const size_t count) {
 }
 void account::statistics::facets(const size_t count) {
   if (count > activity::account::TotalFacetThreshold) {
-    if (bsky::alert_needed(++_facets, FacetFactor)) {
+    if (alert_needed(++_facets, FacetFactor)) {
       REL_INFO("Account flagged total-facets {} {}", _did, _facets);
       metrics::instance()
           .realtime_alerts()
@@ -103,7 +103,7 @@ void account::statistics::facets(const size_t count) {
 void account::statistics::record(event_cache &parent_cache,
                                  timed_event const &event) {
   std::visit(augment_account_event(parent_cache, *this), event._event);
-  if (bsky::alert_needed(++_event_count, EventFactor)) {
+  if (alert_needed(++_event_count, EventFactor)) {
     std::ostringstream oss;
     restc_cpp::SerializeToJson(*this, oss);
     REL_INFO("Account flagged events: {}", oss.str());
@@ -120,7 +120,7 @@ void account::record(event_cache &parent_cache, timed_event const &event) {
 }
 
 void account::statistics::alert() {
-  if (bsky::alert_needed(++_alert_count, AlertFactor)) {
+  if (alert_needed(++_alert_count, AlertFactor)) {
     std::ostringstream oss;
     restc_cpp::SerializeToJson(*this, oss);
     REL_INFO("Account flagged alerts: {}", oss.str());
@@ -132,7 +132,7 @@ void account::statistics::alert() {
 }
 
 void account::statistics::post(atproto::at_uri const &) {
-  if (bsky::alert_needed(++_posts, PostFactor)) {
+  if (alert_needed(++_posts, PostFactor)) {
     REL_INFO("Account flagged posts {} {}", _did, _posts);
     metrics::instance()
         .realtime_alerts()
@@ -143,7 +143,7 @@ void account::statistics::post(atproto::at_uri const &) {
 }
 
 void account::statistics::replied_to() {
-  if (bsky::alert_needed(++_replied_to, RepliedToFactor)) {
+  if (alert_needed(++_replied_to, RepliedToFactor)) {
     REL_INFO("Account flagged replied-to {} {}", _did, _replied_to);
     metrics::instance()
         .realtime_alerts()
@@ -153,7 +153,7 @@ void account::statistics::replied_to() {
   }
 }
 void account::statistics::reply() {
-  if (bsky::alert_needed(++_replies, ReplyFactor)) {
+  if (alert_needed(++_replies, ReplyFactor)) {
     REL_INFO("Account flagged replies {} {}", _did, _replies);
     metrics::instance()
         .realtime_alerts()
@@ -163,7 +163,7 @@ void account::statistics::reply() {
   }
 }
 void account::statistics::quoted() {
-  if (bsky::alert_needed(++_quoted, QuotedFactor)) {
+  if (alert_needed(++_quoted, QuotedFactor)) {
     REL_INFO("Account flagged quoted {} {}", _did, _quoted);
     metrics::instance()
         .realtime_alerts()
@@ -173,7 +173,7 @@ void account::statistics::quoted() {
   }
 }
 void account::statistics::quote() {
-  if (bsky::alert_needed(++_quotes, QuoteFactor)) {
+  if (alert_needed(++_quotes, QuoteFactor)) {
     REL_INFO("Account flagged quotes {} {}", _did, _quotes);
     metrics::instance()
         .realtime_alerts()
@@ -184,7 +184,7 @@ void account::statistics::quote() {
 }
 void account::statistics::reposted() {
   ++_reposted;
-  if (bsky::alert_needed(++_reposted, RepostedFactor)) {
+  if (alert_needed(++_reposted, RepostedFactor)) {
     REL_INFO("Account flagged reposted {} {}", _did, _reposted);
     metrics::instance()
         .realtime_alerts()
@@ -194,7 +194,7 @@ void account::statistics::reposted() {
   }
 }
 void account::statistics::repost() {
-  if (bsky::alert_needed(++_reposts, RepostFactor)) {
+  if (alert_needed(++_reposts, RepostFactor)) {
     REL_INFO("Account flagged reposts {} {}", _did, _reposts);
     metrics::instance()
         .realtime_alerts()
@@ -204,7 +204,7 @@ void account::statistics::repost() {
   }
 }
 void account::statistics::liked() {
-  if (bsky::alert_needed(++_liked, LikedFactor)) {
+  if (alert_needed(++_liked, LikedFactor)) {
     REL_INFO("Account flagged liked {} {}", _did, _liked);
     metrics::instance()
         .realtime_alerts()
@@ -214,7 +214,7 @@ void account::statistics::liked() {
   }
 }
 void account::statistics::like() {
-  if (bsky::alert_needed(++_likes, LikeFactor)) {
+  if (alert_needed(++_likes, LikeFactor)) {
     REL_INFO("Account flagged likes {} {}", _did, _likes);
     metrics::instance()
         .realtime_alerts()
@@ -374,7 +374,7 @@ void account::statistics::deleted(std::string const &path) {
 }
 
 void account::statistics::blocks() {
-  if (bsky::alert_needed(++_blocks, BlocksFactor)) {
+  if (alert_needed(++_blocks, BlocksFactor)) {
     REL_INFO("Account flagged blocks {} {}", _did, _blocks);
     metrics::instance()
         .realtime_alerts()
@@ -384,7 +384,7 @@ void account::statistics::blocks() {
   }
 }
 void account::statistics::blocked_by() {
-  if (bsky::alert_needed(++_blocked_by, BlockedByFactor)) {
+  if (alert_needed(++_blocked_by, BlockedByFactor)) {
     REL_INFO("Account flagged blocked-by {} {}", _did, _blocked_by);
     metrics::instance()
         .realtime_alerts()
@@ -394,7 +394,7 @@ void account::statistics::blocked_by() {
   }
 }
 void account::statistics::follows() {
-  if (bsky::alert_needed(++_follows, FollowsFactor)) {
+  if (alert_needed(++_follows, FollowsFactor)) {
     REL_INFO("Account flagged follows {} {}", _did, _follows);
     metrics::instance()
         .realtime_alerts()
@@ -404,7 +404,7 @@ void account::statistics::follows() {
   }
 }
 void account::statistics::followed_by() {
-  if (bsky::alert_needed(++_followed_by, FollowedByFactor)) {
+  if (alert_needed(++_followed_by, FollowedByFactor)) {
     REL_INFO("Account flagged followed-by {} {}", _did, _followed_by);
     metrics::instance()
         .realtime_alerts()
@@ -435,7 +435,7 @@ void augment_account_event::augment_account_event::operator()(
   auto post_account(_cache.get_account(value._post._authority));
   post_account->get_statistics().reposted();
   auto content(post_account->get_content_item(value._post));
-  if (bsky::alert_needed(++content->_reposts, account::ContentRepostFactor)) {
+  if (alert_needed(++content->_reposts, account::ContentRepostFactor)) {
     content->alert();
     REL_INFO("Account flagged content-reposts {} {}", value._post._authority,
              content->_reposts);
@@ -452,7 +452,7 @@ void augment_account_event::augment_account_event::operator()(
   auto post_account(_cache.get_account(value._post._authority));
   post_account->get_statistics().quoted();
   auto content(post_account->get_content_item(value._post));
-  if (bsky::alert_needed(++content->_quotes, account::ContentQuoteFactor)) {
+  if (alert_needed(++content->_quotes, account::ContentQuoteFactor)) {
     content->alert();
     REL_INFO("Account flagged content-quotes {} {}", value._post._authority,
              content->_quotes);
@@ -490,7 +490,7 @@ void augment_account_event::augment_account_event::operator()(
   auto liked_account(_cache.get_account(value._content._authority));
   liked_account->get_statistics().liked();
   auto content(liked_account->get_content_item(value._content));
-  if (bsky::alert_needed(++content->_likes, account::ContentLikeFactor)) {
+  if (alert_needed(++content->_likes, account::ContentLikeFactor)) {
     content->alert();
     REL_INFO("Account flagged content-likes {} {}", value._content._authority,
              content->_likes);
@@ -548,7 +548,7 @@ void augment_account_event::augment_account_event::reply_to(
   auto account(_cache.get_account(uri._authority));
   account->get_statistics().replied_to();
   auto content(account->get_content_item(uri));
-  if (bsky::alert_needed(++content->_replies, account::ContentReplyFactor)) {
+  if (alert_needed(++content->_replies, account::ContentReplyFactor)) {
     content->alert();
     REL_INFO("Account flagged content-replies {} {}", uri._authority,
              content->_replies);

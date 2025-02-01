@@ -21,10 +21,12 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/list_manager.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/rest_utils.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "restc-cpp/RequestBuilder.h"
+#include "restc-cpp/SerializeJson.h"
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 

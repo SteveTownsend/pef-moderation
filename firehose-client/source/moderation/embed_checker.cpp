@@ -20,14 +20,16 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/moderation/report_agent.hpp"
+#include "common/rest_utils.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/action_router.hpp"
-#include "moderation/report_agent.hpp"
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <ranges>
+
 
 namespace bsky {
 namespace moderation {
@@ -140,7 +142,7 @@ void embed_checker::image_seen(std::string const &repo, std::string const &path,
   std::lock_guard<std::mutex> guard(_lock);
   auto inserted(_checked_images.insert({cid, 1}));
   if (!inserted.second) {
-    if (bsky::alert_needed(++(inserted.first->second), ImageFactor)) {
+    if (alert_needed(++(inserted.first->second), ImageFactor)) {
       REL_INFO("Image repetition count {:6} {} at {}/{}",
                inserted.first->second, print_cid(cid), repo, path);
       metrics::instance()
@@ -165,7 +167,7 @@ void embed_checker::record_seen(std::string const &repo,
   std::lock_guard<std::mutex> guard(_lock);
   auto inserted(_checked_records.insert({uri, 1}));
   if (!inserted.second) {
-    if (bsky::alert_needed(++(inserted.first->second), RecordFactor)) {
+    if (alert_needed(++(inserted.first->second), RecordFactor)) {
       REL_INFO("Record repetition count {:6} {} at {}/{}",
                inserted.first->second, uri, repo, path);
       metrics::instance()
@@ -190,7 +192,7 @@ bool embed_checker::uri_seen(std::string const &repo, std::string const &path,
   std::lock_guard<std::mutex> guard(_lock);
   auto inserted(_checked_uris.insert({uri, 1}));
   if (!inserted.second) {
-    if (bsky::alert_needed(++(inserted.first->second), LinkFactor)) {
+    if (alert_needed(++(inserted.first->second), LinkFactor)) {
       REL_INFO("Link repetition count {:6} {} at {}/{}", inserted.first->second,
                uri, repo, path);
       metrics::instance()
@@ -397,7 +399,7 @@ void embed_checker::video_seen(std::string const &repo, std::string const &path,
   std::lock_guard<std::mutex> guard(_lock);
   auto inserted(_checked_videos.insert({cid, 1}));
   if (!inserted.second) {
-    if (bsky::alert_needed(++(inserted.first->second), VideoFactor)) {
+    if (alert_needed(++(inserted.first->second), VideoFactor)) {
       REL_INFO("Video repetition count {:6} {} at {}/{}",
                inserted.first->second, print_cid(cid), repo, path);
       metrics::instance()

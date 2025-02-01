@@ -19,8 +19,10 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "helpers.hpp"
+// #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
+#include "restc-cpp/RequestBody.h"
+#include "restc-cpp/restc-cpp.h"
 
 namespace bsky {
 

@@ -23,8 +23,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "db_crawler_config.hpp"
-// #include "moderation/ozone_adapter.hpp"
-// #include "moderation/report_agent.hpp"
+// #include "common/moderation/ozone_adapter.hpp"
+// #include "common/moderation/report_agent.hpp"
 #include "restc-cpp/logging.h"
 #include <chrono>
 #include <iostream>

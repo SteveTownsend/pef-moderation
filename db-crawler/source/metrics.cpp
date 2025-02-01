@@ -23,7 +23,14 @@ http://www.fsf.org/licensing/licenses
 
 metrics::metrics()
     : _tagged_records(metrics_factory::instance().add_counter(
-          "tagged_records", "Number of records flagged with a given tag")) {}
+          "tagged_records", "Number of records flagged with a given tag")),
+      _operational_stats(metrics_factory::instance().add_gauge(
+          "operational_stats", "Statistics about client internals")),
+      _realtime_alerts(metrics_factory::instance().add_counter(
+          "realtime_alerts", "Alerts generated for possibly suspect activity")),
+      _automation_stats(metrics_factory::instance().add_counter(
+          "automation_stats",
+          "Automated moderation activity - block-list, report")) {}
 
 metrics &metrics::instance() {
   static metrics my_instance;

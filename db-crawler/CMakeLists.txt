@@ -2,12 +2,20 @@ project(db_crawler VERSION 1.0.0 LANGUAGES C CXX)
 
 configure_file(./cmake/db_crawler_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/db_crawler_config.hpp)
 
+add_compile_definitions(
+  _DB_CRAWLER
+)
+
 add_executable(db_crawler
   ./source/main.cpp
   ./source/metrics.cpp
   ../source/common/config.cpp
   ../source/common/log_wrapper.cpp
-  ../source/common/metrics_factory.cpp)
+  ../source/common/metrics_factory.cpp
+  ../source/common/rest_utils.cpp
+  ../source/common/moderation/ozone_adapter.cpp
+  ../source/common/moderation/report_agent.cpp
+  ../source/common/moderation/session_manager.cpp)
 
 target_include_directories(db_crawler PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(db_crawler ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}

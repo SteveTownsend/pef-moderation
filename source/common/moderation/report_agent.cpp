@@ -18,12 +18,13 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "moderation/report_agent.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/rest_utils.hpp"
 #include "metrics.hpp"
-#include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
+#include "restc-cpp/SerializeJson.h"
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
 #include <functional>
