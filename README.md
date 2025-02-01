@@ -1,21 +1,22 @@
-# nafo-forum-moderation
-Various moderation tools in support of the work of [NAFO Forum](https://nafoforum.org/)
+# pef-forum-moderation
+Various moderation tools in support of the work of [Public Education Forum](https://nafoforum.org/)
 
-Supports [Bluesky](https://bsky.app/) [NAFO Forum custom labeler](nafo-moderation.bsky.social) on domain [nafo-moderation.org](https://ozone.nafo-moderation.org/xrpc/_health?version=0.1.1)  
+Supports [Bluesky](https://bsky.app/) [Public Education Forum custom labeler](nafo-moderation.bsky.social) on domain [pef-moderation.org](https://ozone.pef-moderation.org/xrpc/_health?version=0.1.1)  
 Set up using [Installation instructions for Bluesky's Ozone](https://github.com/bluesky-social/ozone/blob/main/HOSTING.md)  
 Suggestions welcome via any of the following:  
-- [Issues tab on this repository](https://github.com/SteveTownsend/ozone-bsky/issues)  
-- Email to [service admin](mailto:admin@nafo-moderation.org)  
+- [Issues tab on this repository](https://github.com/SteveTownsend/pef-forum-moderation/issues)  
+- Email to [service admin](mailto:admin@pef-moderation.org)  
 - DM or public post to [service account](nafo-moderation.bsky.social)
 
 # Moderation Policy
-The target community is **NAFO and allies**. Broadly, this covers anybody involved in the fight for democracy  
+The target community is anybody involved in the fight for democracy  
 against authoritarianism rising. State-sponsored disinformation is a cancer. Viral social media is one of its  
 primary vehicles to metastasize.  
-Content moderation is not limited to support of Ukraine. The scope of the service aligns with [NAFO Forum](https://nafoforum.org/)  
+Content moderation is not limited to support of Ukraine. The scope of the service aligns with [Public Education Forum](https://nafoforum.org/)  
 rather than with [Official NAFO](https://nafo-ofan.org/), which is exclusively focused on support for Ukraine.  
-All moderation requires human review before a label is applied to content. In the future, conservative automated   
-labeling may be implemented.  
+Most moderation requires human review before a label is applied to content. Conservative automated labeling is implemented  
+where possible, to support the missions of fast response to viral disinformation and avoidance of nuisance and  
+disruption to users.  
 This service labels asymmetrically:  
 - Offending accounts outside the community of NAFO and allies are usually labeled at the account level so abuse is highlighted universally. Experience on X shows that one-time abusers are typically repeat offenders. Post-by-post moderation does not scale.
 - For offenders within the community, granular content labeling is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
@@ -25,7 +26,7 @@ violations before they engage with an account. Specifically, 60/40 propagandists
 to sow disruption in democracies.  A user innocently engaging with the account based on the factual content needs  
 to know the context.  
 There is no plan to act as a verifier of friendly accounts.  
-Send moderation **Appeals** and other inquiries to [here](mailto:admin@nafo-moderation.org). Appeals of **Label** actions that  
+Send moderation **Appeals** and other inquiries to [here](mailto:admin@pef-moderation.org). Appeals of **Label** actions that  
 are not justified in the service's immutable history will be automatically approved. Denial appeals will be supported by   
 provision of relevant moderation history, redacted to remove private information for the protection of moderators.  
 We do not use platform labels like _!warn_, _!hide_, ... Platform labels may be used for the very worst offenders like CSAM,  
@@ -33,7 +34,7 @@ human or animal torture, which have been observed _ad hoc_ by the team and will 
 catches up.
 Target SLA for report moderation and appeals is 24 hours.  
 As team grows, the goal is to do better. This may be revised based on real-world constraints and experience.  
-Costs and funding are public domain information available on request from [admin](mailto:admin@nafo-moderation.org).
+Costs and funding are public domain information available on request from [admin](mailto:admin@pef-moderation.org).
 
 # Reporting Guidelines
 For people who are familiar with social media reporting guidelines, the rules for this service are different. The  
@@ -70,7 +71,7 @@ All moderators agree to the following:
 - There is zero tolerance for prohibited behaviour deemed by [current service admin](https://bsky.app/profile/stevetownsend0.bsky.social) to be intentional.  
 
 New moderators will be provided access to the web UI on written agreement to these guidelines.  
-Registration at [NAFO Forum](https://nafoforum.org/) to track ongoing efforts to fight disinformation is strongly suggested  
+Registration at [Public Education Forum](https://nafoforum.org/) to track ongoing efforts to fight disinformation is strongly suggested  
 but not required.
 
 # Moderator Safety
@@ -115,14 +116,14 @@ Metrics:
 - SQL server reports are needed: reports, labeled/not labeled, moderator activity 
 
 # Installation Notes
-Server is a VPS hosted by Digital Ocean, to the specs suggested, with backups at a small extra cost.  
-Four domains: nafo-moderation.org/com/net/info set up at Squarespace. They are just the registrar,  
+Service runs on VPSs hosted by Digital Ocean, to the specs suggested, with backups at a small extra cost.  
+DNS domains: pef-moderation.org/com/net set up at Squarespace. They are just the registrar,  
 all DNS setup is done in the Digital Ocean web UI.  
-Web server Installation via the Console on the Digital Ocean "Droplet", which is what they call a VPS.    
+Web server Installation via the Console on each Digital Ocean "Droplet", which is what they call a VPS.    
 Reports arrive once it's all working properly, and can be managed using a serviceable, but not perfect, [web UI](https://github.com/bluesky-social/ozone/blob/main/docs/userguide.md).  
-Service account is nafo-moderation.bsky.social.  
-The endpoint targeted by the reporting API is ozone.moderation.org. I had to add a CNAME record to  
-make that work by redirecting it to nafo-moderation.org. I got confused with domain naming during  
+Service account is pef-moderation.bsky.social.  
+The endpoint targeted by the reporting API is ozone.pef-moderation.org. I had to add a CNAME record to  
+make that work by redirecting it to pef-moderation.org. I got confused with domain naming during  
 installation.  
-Set up nafo-moderation.org is a supported domain in [Proton email](https://proton.me/mail) to support appeals and other  
+pef-moderation.org is a supported domain in [Proton email](https://proton.me/mail) to support appeals and other  
 stuff. Possibly for other users to help out down the line, too.  
