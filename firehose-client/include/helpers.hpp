@@ -1,7 +1,7 @@
 #ifndef __helpers_hpp__
 #define __helpers_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>

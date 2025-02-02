@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/moderation/report_agent.hpp"
+#include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/rest_utils.hpp"
@@ -38,24 +39,6 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
                           (std::string,
                            descriptor)(std::string,
                                        path)(std::vector<std::string>, uris))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
-                          (std::string, _type), (std::string, did))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_request,
-                          (std::string, reasonType), (std::string, reason),
-                          (bsky::moderation::report_subject, subject))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
-                          (std::string, createdAt), (int64_t, id),
-                          (std::string, reportedBy))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
-                          (std::vector<std::string>, createLabelVals),
-                          (std::vector<std::string>, negateLabelVals))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
-                          (bsky::moderation::label_event, event),
-                          (bsky::moderation::report_subject, subject),
-                          (std::string, createdBy))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_response,
-                          (std::string, createdAt), (int64_t, id),
-                          (std::string, createdBy))
 
 namespace bsky {
 namespace moderation {
@@ -110,6 +93,7 @@ void report_agent::start() {
 
           std::visit(report_content_visitor(*this, report._did),
                      report._content);
+          reported(report._did);
         }
         // check session status
         _session->check_refresh();
@@ -136,7 +120,6 @@ void report_agent::string_match_report(std::string const &did,
                                        std::vector<std::string> const &paths) {
   restc_cpp::serialize_properties_t properties;
   properties.name_mapping = &json::TypeFieldMapping;
-  reported(did);
   if (_dry_run) {
     REL_INFO("Dry-run Report of {} for rules {} on paths {}", did,
              format_vector(filters), format_vector(paths));
@@ -238,7 +221,6 @@ void report_agent::link_redirection_report(
     std::vector<std::string> const &uri_chain) {
   restc_cpp::serialize_properties_t properties;
   properties.name_mapping = &json::TypeFieldMapping;
-  reported(did);
   if (_dry_run) {
     REL_INFO("Dry-run Report of {} for link-redirection chain {}", did,
              format_vector(uri_chain));
@@ -339,7 +321,6 @@ void report_agent::link_redirection_report(
 void report_agent::blocks_moderation_report(std::string const &did) {
   restc_cpp::serialize_properties_t properties;
   properties.name_mapping = &json::TypeFieldMapping;
-  reported(did);
   if (_dry_run) {
     REL_INFO("Dry-run Report of {} as blocks-moderation", did);
     return;

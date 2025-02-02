@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024, 2025
 
 >>> SOURCE LICENSE >>>
@@ -349,7 +349,7 @@ void firehose_payload::handle_content(
     // Check facets
     // 1. look for Matryoshka post - embed video/images, multiple facet
     // mentions/tags
-    // https://github.com/SteveTownsend/nafo-forum-moderation/issues/68
+    // https://github.com/SteveTownsend/pef-forum-moderation/issues/68
     // 2. check URIs for toxic content
     size_t tags(0);
     if (content.contains("tags")) {

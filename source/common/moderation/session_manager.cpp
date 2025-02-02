@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -37,7 +37,8 @@ pds_session::pds_session(restc_cpp::RestClient &client, std::string const &host)
 void pds_session::connect(bsky::login_info const &credentials) {
   // Create and instantiate a Post from data received from the server.
   size_t retries(0);
-  while (retries < 5) {
+  constexpr size_t MaxRetries = 5;
+  while (retries < MaxRetries) {
     try {
       _tokens =
           _client
@@ -78,10 +79,11 @@ void pds_session::connect(bsky::login_info const &credentials) {
       REL_INFO("bsky session refresh token expires at {}", _refresh_expiry);
       break;
     } catch (std::exception const &exc) {
+      if (++retries >= MaxRetries)
+        throw;
       REL_ERROR("create-session failed for {} exception {}, retry", _host,
                 exc.what());
-      std::this_thread::sleep_for(std::chrono::seconds(5));
-      ++retries;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
 }

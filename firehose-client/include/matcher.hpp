@@ -1,7 +1,7 @@
 #ifndef __matcher_hpp__
 #define __matcher_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -28,7 +28,6 @@ http://www.fsf.org/licensing/licenses
 #include <tuple>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
-
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 

@@ -1,7 +1,6 @@
-#ifndef __report_agent__
-#define __report_agent__
+#pragma once
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -24,14 +23,12 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/session_manager.hpp"
 #if defined(_DB_CRAWLER)
 #include "db_crawler_config.hpp"
-#else
-#if defined(_FIREHOSE_CLIENT)
+#elif defined(_FIREHOSE_CLIENT)
 #include "firehost_client_config.hpp"
-#endif
+#elif defined(_LABELER_UPDATE)
+#include "labeler_update_config.hpp"
 #endif
 #include "common/bluesky/platform.hpp"
-#include "restc-cpp/RequestBody.h"
-#include "restc-cpp/restc-cpp.h"
 #include "yaml-cpp/yaml.h"
 #include <thread>
 
@@ -47,42 +44,6 @@ struct link_redirection_info {
   std::string descriptor = std::string(PROJECT_NAME);
   std::string path;
   std::vector<std::string> uris;
-};
-struct report_subject {
-  std::string _type = std::string(atproto::AdminDefsRepoRef);
-  // TODO should be optional, add std::optional<strong_ref> for content, if
-  // needed
-  std::string did;
-};
-// always report the account. Report content indicates context.
-struct report_request {
-  std::string reasonType = std::string(bsky::moderation::ReasonOther);
-  std::string reason;
-  report_subject subject;
-};
-struct report_response {
-  // ignore other fields
-  std::string createdAt;
-  int64_t id;
-  std::string reportedBy;
-};
-
-struct label_event {
-  std::string _type = std::string(bsky::moderation::EventLabel);
-  std::vector<std::string> createLabelVals;
-  std::vector<std::string> negateLabelVals;
-};
-// Label auto-reported account. Associated eport indicates context
-struct emit_event_label_request {
-  label_event event;
-  report_subject subject;
-  std::string createdBy;
-};
-struct emit_event_label_response {
-  // ignore other fields
-  std::string createdAt;
-  int64_t id;
-  std::string createdBy;
 };
 
 struct no_content {};
@@ -179,4 +140,3 @@ private:
 
 } // namespace moderation
 } // namespace bsky
-#endif

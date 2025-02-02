@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation DB Crawler
+Public Education Forum Moderation DB Crawler
 Copyright (c) Steve Townsend 2025
 
 >>> SOURCE LICENSE >>>

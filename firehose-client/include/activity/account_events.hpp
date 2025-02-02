@@ -1,7 +1,7 @@
 #ifndef __account_events_hpp__
 #define __account_events_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -111,7 +111,7 @@ struct timed_event {
 typedef std::deque<timed_event> events;
 
 // evict LFU content-items to mitigate unbounded memory growth
-// See https://github.com/SteveTownsend/nafo-forum-moderation/issues/82
+// See https://github.com/SteveTownsend/pef-forum-moderation/issues/82
 constexpr size_t MaxContentItems = 30;
 struct content_hit_count {
   int32_t _likes = 0;
@@ -276,7 +276,7 @@ public:
   };
 
   // per-post facet abuse thresholds - hashtag, links, mentions, total
-  // See https://github.com/SteveTownsend/nafo-forum-moderation/issues/75
+  // See https://github.com/SteveTownsend/pef-forum-moderation/issues/75
   // 99.9% threshold based on observed metrics
   static constexpr size_t TagFacetThreshold = 32;
   static constexpr size_t LinkFacetThreshold = 10;

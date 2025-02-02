@@ -1,7 +1,7 @@
 #ifndef __payload_hpp__
 #define __payload_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2025
 
 >>> SOURCE LICENSE >>>

@@ -1,7 +1,7 @@
 #ifndef __ozone_adapter__
 #define __ozone_adapter__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>

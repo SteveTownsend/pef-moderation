@@ -33,7 +33,7 @@ RUN mkdir _build
 RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
-WORKDIR /usr/src/nafo-forum-moderation
+WORKDIR /usr/src/pef-forum-moderation
 COPY . .
 RUN cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
   rm -rf /var/lib/apt/lists/* && \
@@ -52,7 +52,7 @@ RUN cmake --install .
 
 WORKDIR /firehose-client
 RUN mkdir -p /firehose-client/logs /etc/firehose-client
-COPY --from=build /usr/src/nafo-forum-moderation/release-gcc/firehose-client/firehose_client /firehose-client
+COPY --from=build /usr/src/pef-forum-moderation/release-gcc/firehose-client/firehose_client /firehose-client
 
 RUN rm -rf /usr/src && \
   rm -rf /var/lib/apt/lists/* && \
@@ -62,6 +62,6 @@ ENTRYPOINT ["/firehose-client/firehose_client", "/etc/firehose-client/full_confi
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
 
-LABEL org.opencontainers.image.source=https://github.com/SteveTownsend/nafo-forum-moderation
-LABEL org.opencontainers.image.description="NAFO Moderation Firehose Client"
+LABEL org.opencontainers.image.source=https://github.com/SteveTownsend/pef-forum-moderation
+LABEL org.opencontainers.image.description="Publc Education Forum Moderation Firehose Client"
 LABEL org.opencontainers.image.licenses=MIT

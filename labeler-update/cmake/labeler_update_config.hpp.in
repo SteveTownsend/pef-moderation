@@ -1,0 +1,7 @@
+// the configured options and settings for
+// clang-format off
+#define PROJECT_NAME_VERSION_MAJOR @labeler_update_VERSION_MAJOR@
+#define PROJECT_NAME_VERSION_MINOR @labeler_update_VERSION_MINOR@
+#define PROJECT_NAME_VERSION_PATCH @labeler_update_VERSION_PATCH@
+#define PROJECT_NAME "@PROJECT_NAME@"
+// clang-format on
