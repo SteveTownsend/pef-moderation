@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # executable build options
 option(DB_CRAWLER_BUILD "build db crawler" ON)
 option(FIREHOSE_CLIENT_BUILD "build firehose client" ON)
+option(LABELER_UPDATE_BUILD "build labeler update agent" ON)
 
 # #######################################################################################################################
 # # Configuration for all targets
@@ -19,6 +20,12 @@ if(WIN32)
           NOMINMAX
           _AMD64_
           WIN32_LEAN_AND_MEAN)
+  if (MSVC)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("/std:c++20" COMPILER_SUPPORTS_CXX20)
+    check_cxx_compiler_flag("/std:c++17" COMPILER_SUPPORTS_CXX17)
+    add_compile_options(/Zc:__cplusplus)
+  endif()
 endif()
 if(${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
   add_compile_definitions(
@@ -218,4 +225,7 @@ if (DB_CRAWLER_BUILD)
 endif()
 if (FIREHOSE_CLIENT_BUILD)
 add_subdirectory(firehose-client)
+endif()
+if (LABELER_UPDATE_BUILD)
+add_subdirectory(labeler-update)
 endif()

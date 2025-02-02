@@ -1,7 +1,7 @@
 #ifndef __rest_utils_
 #define __rest_utils_
 /*************************************************************************
-NAFO Forum Moderation Tools
+Public Education Forum Moderation Tools
 Copyright (c) Steve Townsend 2025
 
 >>> SOURCE LICENSE >>>

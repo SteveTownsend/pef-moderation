@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -29,7 +29,6 @@ http://www.fsf.org/licensing/licenses
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <ranges>
-
 
 namespace bsky {
 namespace moderation {

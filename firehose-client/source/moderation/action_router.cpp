@@ -1,5 +1,5 @@
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -25,7 +25,6 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "metrics.hpp"
 #include "moderation/list_manager.hpp"
-
 
 action_router &action_router::instance() {
   static action_router my_instance;

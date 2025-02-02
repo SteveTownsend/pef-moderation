@@ -122,8 +122,8 @@ Download the `compose.yaml` to run your Grafana instance, which includes the fol
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/loki/compose.yaml | sudo tee /loki/compose.yaml
-curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/firehose-client/config/loki-config.yaml | sudo tee /loki/loki-config.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/pef-forum-moderation/main/loki/compose.yaml | sudo tee /loki/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/pef-forum-moderation/main/firehose-client/config/loki-config.yaml | sudo tee /loki/loki-config.yaml
 ```
 
 ##### Create the systemd service
@@ -131,8 +131,8 @@ curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/
 ```bash
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/loki.service
 [Unit]
-Description=NAFO Forum Moderation Loki Service
-Documentation=https://github.com/SteveTownsend/nafo-forum-moderation
+Description=Public Education Forum Moderation Loki Service
+Documentation=https://github.com/SteveTownsend/pef-forum-moderation
 Requires=docker.service
 After=docker.service
 

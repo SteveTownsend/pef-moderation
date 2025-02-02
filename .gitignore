@@ -6,4 +6,7 @@ firehose-client/config/full_config_dev.yml
 debug-msvc/
 logging-msvc/
 release-msvc/
-db-crawler/config/crawler_dev.yml
+db-crawler/config/db_crawler_dev.yml
+db-crawler/logs/
+labeler-update/config/labeler_update_dev.yml
+labeler-update/logs/

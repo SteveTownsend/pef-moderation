@@ -179,7 +179,7 @@ Download the `compose.yaml` to run your Grafana instance, which includes the fol
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/grafana/compose.yaml | sudo tee /grafana/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/pef-forum-moderation/main/grafana/compose.yaml | sudo tee /grafana/compose.yaml
 ```
 
 ##### Create the systemd service
@@ -187,8 +187,8 @@ curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/
 ```bash
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/grafana.service
 [Unit]
-Description=NAFO Forum Moderation Grafana Service
-Documentation=https://github.com/SteveTownsend/nafo-forum-moderation
+Description=Public Education Forum Moderation Grafana Service
+Documentation=https://github.com/SteveTownsend/pef-forum-moderation
 Requires=docker.service
 After=docker.service
 

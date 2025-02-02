@@ -1,24 +1,24 @@
 # pef-forum-moderation
 Various moderation tools in support of the work of [Public Education Forum](https://nafoforum.org/)
 
-Supports [Bluesky](https://bsky.app/) [Public Education Forum custom labeler](nafo-moderation.bsky.social) on domain [pef-moderation.org](https://ozone.pef-moderation.org/xrpc/_health?version=0.1.1)  
+Supports [Bluesky](https://bsky.app/) [Public Education Forum custom labeler](pef-moderation.bsky.social) on domain [pef-moderation.org](https://ozone.pef-moderation.org/xrpc/_health?version=0.1.1)  
 Set up using [Installation instructions for Bluesky's Ozone](https://github.com/bluesky-social/ozone/blob/main/HOSTING.md)  
 Suggestions welcome via any of the following:  
 - [Issues tab on this repository](https://github.com/SteveTownsend/pef-forum-moderation/issues)  
 - Email to [service admin](mailto:admin@pef-moderation.org)  
-- DM or public post to [service account](nafo-moderation.bsky.social)
+- DM or public post to [service account](pef-moderation.bsky.social)
 
 # Moderation Policy
-The target community is anybody involved in the fight for democracy  
-against authoritarianism rising. State-sponsored disinformation is a cancer. Viral social media is one of its  
-primary vehicles to metastasize.  
+The target community is anybody involved in the fight for democracy against authoritarianism rising.  
+State-sponsored disinformation is a cancer. Viral social media is one of its primary vehicles to  
+metastasize.  
 Content moderation is not limited to support of Ukraine. The scope of the service aligns with [Public Education Forum](https://nafoforum.org/)  
 rather than with [Official NAFO](https://nafo-ofan.org/), which is exclusively focused on support for Ukraine.  
 Most moderation requires human review before a label is applied to content. Conservative automated labeling is implemented  
 where possible, to support the missions of fast response to viral disinformation and avoidance of nuisance and  
 disruption to users.  
 This service labels asymmetrically:  
-- Offending accounts outside the community of NAFO and allies are usually labeled at the account level so abuse is highlighted universally. Experience on X shows that one-time abusers are typically repeat offenders. Post-by-post moderation does not scale.
+- Offending accounts outside the community are usually labeled at the account level so abuse is highlighted universally. Experience on X shows that one-time abusers are typically repeat offenders. Post-by-post moderation does not scale.
 - For offenders within the community, granular content labeling is preferred. Account-level labeling is reserved for the worst offenders and requires a two-thirds super-majority of the team to approve. The moderation service must not become a disruptor.  
 
 This approach helps with managing the load as the platform grows, and to ensure users are aware of content  
@@ -50,7 +50,7 @@ Please report illegal or especially egregious content to the platform as well as
 All moderators agree to the following:  
 - moderators accept the risks inherent in performing this work
 - Foundational are the [Bluesky Community Guidelines](https://bsky.social/about/support/community-guidelines)
-- Moderation philosophy [seminal post](https://bsky.app/profile/nafo-moderation.bsky.social/post/3laz2efafo22x)
+- Moderation philosophy [seminal post](https://bsky.app/profile/pef-moderation.bsky.social/post/3laz2efafo22x)
 - Personal bias, as distinct from this service's inherent editorial bias, must be left at the door. Emotive issues must be handled impartially. Be conservative. Solicit team discussion in controversial or grey areas. When team size reaches six, a two-thirds supermajority is the tiebreaker.
 - Must be a proactive volunteer. Solicitation of candidates is prohibited. New moderators attest that they were not solicited to participate.
 - Must speak English sufficiently fluent to participate in team discussions

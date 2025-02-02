@@ -13,8 +13,8 @@ add_executable(db_crawler
   ../source/common/log_wrapper.cpp
   ../source/common/metrics_factory.cpp
   ../source/common/rest_utils.cpp
+  ../source/common/bluesky/client.cpp
   ../source/common/moderation/ozone_adapter.cpp
-  ../source/common/moderation/report_agent.cpp
   ../source/common/moderation/session_manager.cpp)
 
 target_include_directories(db_crawler PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})

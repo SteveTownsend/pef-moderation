@@ -21,7 +21,7 @@ firehose_client:
     #   subscribe?wantedCollections=app.bsky.actor.profile&wantedCollections=app.bsky.feed.post
 
   datasink:
-    url: "https://ozone.nafo-moderation.org"
+    url: "https://ozone.pef-moderation.org"
     requestType: "POST"
     path: "/xrpc/com.atproto.moderation.createReport"
 

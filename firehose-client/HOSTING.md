@@ -136,7 +136,7 @@ Download the `firehose-client/compose.yaml` to run your Firehose Client instance
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/firehose-client/compose.yaml | sudo tee /firehose-client/compose.yaml
+curl https://raw.githubusercontent.com/SteveTownsend/pef-forum-moderation/main/firehose-client/compose.yaml | sudo tee /firehose-client/compose.yaml
 ```
 
 ##### Create the systemd service
@@ -144,8 +144,8 @@ curl https://raw.githubusercontent.com/SteveTownsend/nafo-forum-moderation/main/
 ```bash
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/firehose-client.service
 [Unit]
-Description=NAFO Forum Firehose Client
-Documentation=https://github.com/SteveTownsend/nafo-forum-moderation
+Description=Public Education Forum Firehose Client
+Documentation=https://github.com/SteveTownsend/pef-forum-moderation
 Requires=docker.service
 After=docker.service
 

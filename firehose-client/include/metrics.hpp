@@ -1,7 +1,7 @@
 #ifndef __metrics_hpp__
 #define __metrics_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -25,7 +25,6 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/family.h>
 #include <prometheus/gauge.h>
 #include <prometheus/histogram.h>
-
 
 class metrics {
 public:

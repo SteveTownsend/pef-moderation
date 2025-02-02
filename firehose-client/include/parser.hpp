@@ -1,7 +1,7 @@
 #ifndef __parser_hpp__
 #define __parser_hpp__
 /*************************************************************************
-NAFO Forum Moderation Firehose Client
+Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
 
 >>> SOURCE LICENSE >>>
@@ -30,7 +30,6 @@ http://www.fsf.org/licensing/licenses
 #include <string_view>
 #include <tuple>
 #include <unordered_set>
-
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;

@@ -18,35 +18,19 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
-#include "common/controller.hpp"
 #include "metrics.hpp"
+#include "common/metrics_factory.hpp"
 
-namespace activity {
-event_recorder::event_recorder() : _queue(MaxBacklog) {
-  _thread = std::thread([&, this] {
-    static size_t matches(0);
-    while (controller::instance().is_active()) {
-      timed_event my_payload;
-      _queue.wait_dequeue(my_payload);
-      metrics::instance()
-          .operational_stats()
-          .Get({{"events", "backlog"}})
-          .Decrement();
+metrics::metrics()
+    : _operational_stats(metrics_factory::instance().add_gauge(
+          "operational_stats", "Statistics about client internals")),
+      _realtime_alerts(metrics_factory::instance().add_counter(
+          "realtime_alerts", "Alerts generated for possibly suspect activity")),
+      _automation_stats(metrics_factory::instance().add_counter(
+          "automation_stats",
+          "Automated moderation activity - block-list, report")) {}
 
-      // record the activity
-      _events.record(my_payload);
-    }
-    REL_INFO("event_recorder stopping");
-  });
+metrics &metrics::instance() {
+  static metrics my_instance;
+  return my_instance;
 }
-
-void event_recorder::wait_enqueue(timed_event &&value) {
-  _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
-      .Get({{"events", "backlog"}})
-      .Increment();
-}
-
-} // namespace activity

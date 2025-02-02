@@ -1,3 +1,4 @@
+#pragma once
 /*************************************************************************
 Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -19,29 +20,34 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/config.hpp"
-#include "common/log_wrapper.hpp"
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/gauge.h>
+#include <prometheus/histogram.h>
+#include <prometheus/info.h>
+#include <prometheus/registry.h>
+#include <prometheus/summary.h>
 
-std::string build_db_connection_string(YAML::Node const &config_section) {
-  bool first(true);
-  std::ostringstream oss;
-  for (auto field : config_section) {
-    if (!first) {
-      oss << ' ';
-    } else {
-      first = false;
-    }
-    oss << field.first.as<std::string>() << '='
-        << field.second.as<std::string>();
+class metrics {
+public:
+  static metrics &instance();
+  void set_config(std::shared_ptr<config> &settings);
+
+  inline prometheus::Family<prometheus::Gauge> &operational_stats() {
+    return _operational_stats;
   }
-  return oss.str();
-}
-
-config::config(std::string const &filename) {
-  try {
-    _config = YAML::LoadFile(filename);
-  } catch (std::exception const &exc) {
-    REL_CRITICAL("Error processing config file {}:{}", filename, exc.what());
+  inline prometheus::Family<prometheus::Counter> &realtime_alerts() {
+    return _realtime_alerts;
   }
-}
+  inline prometheus::Family<prometheus::Counter> &automation_stats() {
+    return _automation_stats;
+  }
 
-YAML::Node const &config::get_config() const { return _config; }
+private:
+  metrics();
+  ~metrics() = default;
+
+  prometheus::Family<prometheus::Gauge> &_operational_stats;
+  prometheus::Family<prometheus::Counter> &_realtime_alerts;
+  prometheus::Family<prometheus::Counter> &_automation_stats;
+};

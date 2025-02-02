@@ -36,7 +36,7 @@ firehose_client:
     # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
     host: "the-pds"
     port: 443
-    # nafo forum moderation service
+    # Public Education Forum moderation service
     service_did: "service-did"
     dry_run: true
 
