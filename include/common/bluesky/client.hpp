@@ -203,7 +203,8 @@ public:
         if (exc.code().value() == boost::asio::error::eof &&
             exc.code().category() == boost::asio::error::get_misc_category()) {
           REL_WARNING("IoReaderImpl::ReadSome(getRecord): asio eof, retry");
-          ++retries;
+          if (++retries >= 5)
+            throw;
         } else {
           // unrecoverable error
           REL_ERROR("getRecord for {} {} {} Boost exception {}", did,
