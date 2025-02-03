@@ -40,7 +40,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "datasource.hpp"
-#include "firehost_client_config.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
@@ -48,6 +47,7 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/list_manager.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
+#include "project_defs.hpp"
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -130,17 +130,23 @@ int main(int argc, char **argv) {
              !bsky::moderation::embed_checker::instance().is_ready());
 
     if (is_full(*settings)) {
+      metrics_factory::instance().add_counter(
+          "automation",
+          "Automated moderation activity: block-list, report, emit-event");
+      metrics_factory::instance().add_counter(
+          "realtime_alerts", "Alerts generated for possibly suspect activity");
+      metrics_factory::instance().add_gauge(
+          "process_operation", "Statistics about process internals");
       datasource<firehose_payload>::instance().set_config(settings);
       datasource<firehose_payload>::instance().start();
 
       // prepare action handlers after we start processing firehose messages
       // this is time consuming - allow a backlog for handlers while
       // existing members load
-      bsky::moderation::report_agent::instance().set_config(
-          settings->get_config()[PROJECT_NAME]["auto_reporter"]);
       bsky::moderation::report_agent::instance().set_moderation_data(
           moderation_data);
-      bsky::moderation::report_agent::instance().start();
+      bsky::moderation::report_agent::instance().start(
+          settings->get_config()[PROJECT_NAME]["auto_reporter"], PROJECT_NAME);
 
       action_router::instance().start();
 #if _DEBUG
@@ -151,10 +157,9 @@ int main(int argc, char **argv) {
           settings->get_config()[PROJECT_NAME]["embed_checker"]);
       bsky::moderation::embed_checker::instance().start();
 
-      list_manager::instance().set_config(
-          settings->get_config()[PROJECT_NAME]["list_manager"]);
       list_manager::instance().set_moderation_data(moderation_data);
-      list_manager::instance().start();
+      list_manager::instance().start(
+          settings->get_config()[PROJECT_NAME]["list_manager"]);
 
       // continue as long as firehose runs OK
       datasource<firehose_payload>::instance().wait_for_end_thread();

@@ -1,24 +1,16 @@
 project(labeler_update VERSION 1.0.0 LANGUAGES C CXX)
 
-configure_file(./cmake/labeler_update_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/labeler_update_config.hpp)
+configure_file(./cmake/labeler_update_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 
 add_compile_definitions(
   _LABELER_UPDATE
 )
 
-add_executable(labeler_update
-  ./source/main.cpp
-  ./source/metrics.cpp
-  ../source/common/config.cpp
-  ../source/common/log_wrapper.cpp
-  ../source/common/metrics_factory.cpp
-  ../source/common/rest_utils.cpp
-  ../source/common/bluesky/client.cpp
-  ../source/common/moderation/session_manager.cpp)
+add_executable(labeler_update ./source/main.cpp)
 
 target_include_directories(labeler_update PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(labeler_update ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
-nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp)
+nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp pef-tools::common)
 if (UNIX)
 	target_link_libraries(labeler_update stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})
 else()

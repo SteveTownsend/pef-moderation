@@ -24,25 +24,6 @@ http://www.fsf.org/licensing/licenses
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
-                          (std::string, _type), (std::string, did))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_request,
-                          (std::string, reasonType), (std::string, reason),
-                          (bsky::moderation::report_subject, subject))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
-                          (std::string, createdAt), (int64_t, id),
-                          (std::string, reportedBy))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
-                          (std::vector<std::string>, createLabelVals),
-                          (std::vector<std::string>, negateLabelVals))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
-                          (bsky::moderation::label_event, event),
-                          (bsky::moderation::report_subject, subject),
-                          (std::string, createdBy))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_response,
-                          (std::string, createdAt), (int64_t, id),
-                          (std::string, createdBy))
-
 namespace bsky {
 
 void client::set_config(YAML::Node const &settings) {
@@ -65,13 +46,68 @@ void client::set_config(YAML::Node const &settings) {
     // bootstrap self-managed session from the returned tokens
     if (!_password.empty()) {
       _use_token = true;
-      _session = std::make_unique<bsky::pds_session>(*_rest_client, _host);
+      _session = std::make_unique<bsky::pds_session>(*this, _host);
       _session->connect(bsky::login_info({_handle, _password}));
     }
     _is_ready = true;
   } catch (std::exception const &exc) {
     REL_ERROR("Error processing Bluesky client config {}", exc.what());
   }
+}
+
+inline std::string client::raw_get(std::string const &relative_path,
+                                   std::optional<get_callback_t> callback) {
+  std::string response;
+  size_t retries(0);
+  while (retries < 5) {
+    try {
+      restc_cpp::SerializeProperties properties;
+      properties.name_mapping = &json::TypeFieldMapping;
+      response =
+          _rest_client
+              ->ProcessWithPromiseT<std::string>([&](restc_cpp::Context &ctx) {
+                // This is a co-routine, running in a worker-thread
+                // Construct a request to the server
+                // Send the request
+                restc_cpp::RequestBuilder builder(ctx);
+                builder.Get(_host + relative_path);
+                if (_use_token) {
+                  builder.Header(
+                      "Authorization",
+                      std::string("Bearer " + _session->access_token()));
+                }
+                // Collect overrides if present
+                if (callback.has_value()) {
+                  callback.value()(builder);
+                }
+                auto reply = builder.Execute();
+
+                // Return the list record instance through C++
+                // future<>
+                return reply->GetBodyAsString();
+              })
+
+              // Get the Post instance from the future<>, or any C++
+              // exception thrown within the lambda.
+              .get();
+      REL_INFO("GET for {} returned '{}'", relative_path, response);
+      break;
+    } catch (boost::system::system_error const &exc) {
+      if (exc.code().value() == boost::asio::error::eof &&
+          exc.code().category() == boost::asio::error::get_misc_category()) {
+        REL_WARNING("IoReaderImpl::ReadSome(GET): asio eof, retry");
+        ++retries;
+      } else {
+        // unrecoverable error
+        REL_ERROR("GET for {} Boost exception {}", relative_path, exc.what())
+        throw;
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("GET for {} exception {}", relative_path, exc.what())
+      throw;
+    }
+  }
+  return response;
 }
 
 std::string client::raw_post(std::string const &relative_path,
@@ -130,15 +166,15 @@ std::string client::raw_post(std::string const &relative_path,
 
 void client::label_account(std::string const &did,
                            std::vector<std::string> const &labels) {
-  restc_cpp::serialize_properties_t properties;
-  properties.name_mapping = &json::TypeFieldMapping;
-  properties.ignore_empty_fileds =
-      0; // negateLabelsVals is mandatory but unused
   if (_dry_run) {
     REL_INFO("Dry-run Label of {} for {}", did, format_vector(labels));
     return;
   }
 
+  restc_cpp::serialize_properties_t properties;
+  properties.name_mapping = &json::TypeFieldMapping;
+  properties.ignore_empty_fileds =
+      0; // negateLabelsVals is mandatory but unused
   size_t retries(0);
   bsky::moderation::emit_event_label_response response;
   while (retries < 5) {

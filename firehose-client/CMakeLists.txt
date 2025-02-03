@@ -1,6 +1,6 @@
-project(firehose_client VERSION 2.5.7 LANGUAGES C CXX)
+project(firehose_client VERSION 2.5.8 LANGUAGES C CXX)
 
-configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/firehost_client_config.hpp)
+configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 
 add_compile_definitions(
   _FIREHOSE_CLIENT
@@ -11,7 +11,6 @@ add_executable(firehose_client
   ./source/content_handler.cpp
   ./source/helpers.cpp
   ./source/matcher.cpp
-  ./source/metrics.cpp
   ./source/parser.cpp
   ./source/payload.cpp
   ./source/activity/account_events.cpp
@@ -20,17 +19,10 @@ add_executable(firehose_client
   ./source/moderation/action_router.cpp
   ./source/moderation/auxiliary_data.cpp
   ./source/moderation/embed_checker.cpp
-  ./source/moderation/list_manager.cpp
-  ../source/common/config.cpp
-  ../source/common/log_wrapper.cpp
-  ../source/common/metrics_factory.cpp
-  ../source/common/rest_utils.cpp
-  ../source/common/moderation/ozone_adapter.cpp
-  ../source/common/moderation/report_agent.cpp
-  ../source/common/moderation/session_manager.cpp)
+  ./source/moderation/list_manager.cpp)
 
 target_include_directories(firehose_client PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(firehose_client ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
+target_link_libraries(firehose_client pef-tools::common ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
 nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp)
 if (UNIX)
 	target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})

@@ -21,7 +21,7 @@ http://www.fsf.org/licensing/licenses
 #include "helpers.hpp"
 #include "common/config.hpp"
 #include "common/log_wrapper.hpp"
-#include "firehost_client_config.hpp"
+#include "project_defs.hpp"
 #include <unicode/errorcode.h>
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>

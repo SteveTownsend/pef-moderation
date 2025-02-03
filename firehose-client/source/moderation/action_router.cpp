@@ -21,9 +21,9 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/action_router.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "matcher.hpp"
-#include "metrics.hpp"
 #include "moderation/list_manager.hpp"
 
 action_router &action_router::instance() {
@@ -39,8 +39,8 @@ void action_router::start() {
       account_filter_matches matches;
       _queue.wait_dequeue(matches);
       // process the item
-      metrics::instance()
-          .operational_stats()
+      metrics_factory::instance()
+          .get_gauge("process_operation")
           .Get({{"action_router", "backlog"}})
           .Decrement();
       matcher::shared().report_if_needed(matches);
@@ -51,8 +51,8 @@ void action_router::start() {
 
 void action_router::wait_enqueue(account_filter_matches &&value) {
   _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
+  metrics_factory::instance()
+      .get_gauge("process_operation")
       .Get({{"action_router", "backlog"}})
       .Increment();
 }

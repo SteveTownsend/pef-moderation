@@ -20,10 +20,10 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
-#include "firehost_client_config.hpp"
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
+#include "project_defs.hpp"
 #include "restc-cpp/restc-cpp.h"
 #include "yaml-cpp/yaml.h"
 #include <boost/url.hpp>
@@ -32,6 +32,7 @@ http://www.fsf.org/licensing/licenses
 #include <optional>
 #include <thread>
 #include <unordered_set>
+
 
 inline std::string print_cid(std::string const &cid) {
   std::ostringstream oss;

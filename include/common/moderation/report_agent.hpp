@@ -19,15 +19,9 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
+#include "common/bluesky/client.hpp"
 #include "common/moderation/ozone_adapter.hpp"
-#include "common/moderation/session_manager.hpp"
-#if defined(_DB_CRAWLER)
-#include "db_crawler_config.hpp"
-#elif defined(_FIREHOSE_CLIENT)
-#include "firehost_client_config.hpp"
-#elif defined(_LABELER_UPDATE)
-#include "labeler_update_config.hpp"
-#endif
+
 #include "common/bluesky/platform.hpp"
 #include "yaml-cpp/yaml.h"
 #include <thread>
@@ -36,14 +30,30 @@ namespace bsky {
 namespace moderation {
 
 struct filter_match_info {
-  std::string descriptor = std::string(PROJECT_NAME);
+  filter_match_info() = delete;
+  inline filter_match_info(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
   std::vector<std::string> filters;
   std::vector<std::string> paths;
+  constexpr std::string get_name() const { return "filter_match"; }
 };
 struct link_redirection_info {
-  std::string descriptor = std::string(PROJECT_NAME);
+  link_redirection_info() = delete;
+  inline link_redirection_info(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
   std::string path;
   std::vector<std::string> uris;
+  constexpr std::string get_name() const { return "link_redirection"; }
+};
+
+struct blocks_moderation_info {
+  blocks_moderation_info() = delete;
+  inline blocks_moderation_info(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
+  constexpr std::string get_name() const { return "blocks_moderation"; }
 };
 
 struct no_content {};
@@ -94,13 +104,12 @@ public:
       std::chrono::milliseconds(10000);
 
   static report_agent &instance();
-  void set_config(YAML::Node const &settings);
   void
   set_moderation_data(std::shared_ptr<bsky::moderation::ozone_adapter> &ozone) {
     _moderation_data = ozone;
   }
 
-  void start();
+  void start(YAML::Node const &settings, std::string const &project_name);
   void wait_enqueue(account_report &&value);
 
   void string_match_report(std::string const &did,
@@ -109,7 +118,7 @@ public:
   void link_redirection_report(std::string const &did, std::string const &path,
                                std::vector<std::string> const &uri_chain);
   void blocks_moderation_report(std::string const &did);
-  void label_account(std::string const &did,
+  void label_account(std::string const &subject_did,
                      std::vector<std::string> const &labels);
   std::string service_did() const { return _service_did; }
 
@@ -123,15 +132,12 @@ private:
   inline void reported(std::string const &did) { _reported_dids.insert(did); }
 
   std::thread _thread;
-  std::unique_ptr<restc_cpp::RestClient> _rest_client;
-  std::unique_ptr<pds_session> _session;
+  std::unique_ptr<bsky::client> _pds_client;
+  std::string _project_name;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<account_report> _queue;
   std::string _handle;
-  std::string _password;
   std::string _did;
-  std::string _host;
-  std::string _port;
   std::string _service_did;
   bool _dry_run = true;
   std::shared_ptr<ozone_adapter> _moderation_data;

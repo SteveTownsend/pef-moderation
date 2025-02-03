@@ -23,9 +23,9 @@ http://www.fsf.org/licensing/licenses
 #include "activity/event_recorder.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "helpers.hpp"
 #include "matcher.hpp"
-#include "metrics.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 #include "readerwriterqueue.h"
@@ -108,8 +108,8 @@ public:
           T my_payload;
           try {
             _queue.wait_dequeue(my_payload);
-            metrics::instance()
-                .operational_stats()
+            metrics_factory::instance()
+                .get_gauge("process_operation")
                 .Get({{"message", "backlog"}})
                 .Decrement();
 
@@ -129,8 +129,8 @@ public:
   ~post_processor() = default;
   void wait_enqueue(T &&value) {
     _queue.enqueue(value);
-    metrics::instance()
-        .operational_stats()
+    metrics_factory::instance()
+        .get_gauge("process_operation")
         .Get({{"message", "backlog"}})
         .Increment();
   }

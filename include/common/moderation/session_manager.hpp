@@ -1,5 +1,4 @@
-#ifndef __session_manager__
-#define __session_manager__
+#pragma once
 /*************************************************************************
 Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -19,12 +18,12 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-// #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "restc-cpp/RequestBody.h"
 #include "restc-cpp/restc-cpp.h"
 
 namespace bsky {
+class client;
 
 // com.atproto.server.createSession
 // com.atproto.server.refreshSession
@@ -40,7 +39,7 @@ struct login_info {
 
 class pds_session {
 public:
-  pds_session(restc_cpp::RestClient &client, std::string const &host);
+  pds_session(bsky::client &client, std::string const &host);
   pds_session() = delete;
 
   void connect(login_info const &credentials);
@@ -53,7 +52,7 @@ public:
       std::chrono::milliseconds(60000 * 30);
 
 private:
-  restc_cpp::RestClient &_client;
+  bsky::client &_client;
   std::string _host;
   session_tokens _tokens;
   //  Log excerpt:
@@ -67,5 +66,3 @@ private:
 };
 
 } // namespace bsky
-
-#endif
