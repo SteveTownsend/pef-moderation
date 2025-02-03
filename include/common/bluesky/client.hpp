@@ -20,9 +20,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include "common/bluesky/platform.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "common/moderation/session_manager.hpp"
 #include "common/rest_utils.hpp"
-#include "metrics.hpp"
 
 // clang-format off
 #include "restc-cpp/restc-cpp.h"
@@ -73,11 +73,15 @@ struct emit_event_label_response {
 };
 } // namespace moderation
 
+template <typename OBJ> std::string as_string(OBJ const &obj) {
+  std::ostringstream oss;
+  restc_cpp::SerializeToJson(obj, oss);
+  return oss.str();
+}
+
 class client {
 public:
-  struct empty_response {
-    inline std::string as_string() { return {}; }
-  };
+  struct empty {};
   client() = default;
   ~client() = default;
 
@@ -93,6 +97,65 @@ public:
 
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
+
+  template <typename RECORD>
+  atproto::create_record_response create_record(RECORD const &record) {
+    size_t retries(0);
+    atproto::create_record_response response;
+    std::string record_str(as_string<RECORD>(record));
+    while (retries < 5) {
+      try {
+        restc_cpp::SerializeProperties properties;
+        properties.name_mapping = &json::TypeFieldMapping;
+        response =
+            _rest_client
+                ->ProcessWithPromiseT<atproto::create_record_response>(
+                    [&](restc_cpp::Context &ctx) {
+                      // This is a co-routine, running in a worker-thread
+                      // Serialize response asynchronously. The asynchronous
+                      // part does not really matter here, but it may if you
+                      // receive huge data structures.
+                      restc_cpp::SerializeFromJson(
+                          response,
+
+                          // Construct a request to the server
+                          restc_cpp::RequestBuilder(ctx)
+                              .Post(_host + "com.atproto.repo.createRecord")
+                              .Header("Content-Type", "application/json")
+                              .Header("Authorization",
+                                      std::string("Bearer " +
+                                                  _session->access_token()))
+                              .Data(record_str)
+                              // Send the request
+                              .Execute());
+
+                      // Return the session instance through C++ future<>
+                      return response;
+                    })
+
+                // Get the Post instance from the future<>, or any C++ exception
+                // thrown within the lambda.
+                .get();
+        REL_INFO("createRecord for {} yielded uri {}", record_str,
+                 response.uri);
+        break;
+      } catch (boost::system::system_error const &exc) {
+        if (exc.code().value() == boost::asio::error::eof &&
+            exc.code().category() == boost::asio::error::get_misc_category()) {
+          REL_WARNING(
+              "IoReaderImpl::ReadSome(createListItem): asio eof, retry");
+          ++retries;
+        } else {
+          // unrecoverable error
+          throw;
+        }
+      } catch (std::exception const &exc) {
+        REL_ERROR("createRecord {} exception {}", record_str, exc.what());
+        throw;
+      }
+    }
+    return response;
+  }
 
   template <typename RESPONSE>
   RESPONSE get_record(std::string const &did, std::string const &collection,
@@ -135,12 +198,13 @@ public:
                 // exception thrown within the lambda.
                 .get();
         REL_INFO("getRecord OK for {} {} {}", did, collection, rkey);
-        return response;
+        break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
             exc.code().category() == boost::asio::error::get_misc_category()) {
           REL_WARNING("IoReaderImpl::ReadSome(getRecord): asio eof, retry");
-          ++retries;
+          if (++retries >= 5)
+            throw;
         } else {
           // unrecoverable error
           REL_ERROR("getRecord for {} {} {} Boost exception {}", did,
@@ -153,26 +217,99 @@ public:
         throw;
       }
     }
+    return response;
   }
 
-  template <typename REPORT>
-  void send_report(std::string const &did, REPORT const &report) {
-    if (!_is_ready) {
-      REL_ERROR("Bluesky client not ready, skip report of {} for {}", did,
-                report.as_string());
+  template <typename RECORD>
+  atproto::put_record_response put_record(RECORD const &record) {
+    size_t retries(0);
+    atproto::put_record_response response;
+    std::string record_str(as_string<RECORD>(record));
+    while (retries < 5) {
+      try {
+        restc_cpp::SerializeProperties properties;
+        properties.name_mapping = &json::TypeFieldMapping;
+        response =
+            _rest_client
+                ->ProcessWithPromiseT<atproto::put_record_response>(
+                    [&](restc_cpp::Context &ctx) {
+                      // This is a co-routine, running in a worker-thread
+                      // Serialize it asynchronously. The asynchronous
+                      // part does not really matter here, but it may if you
+                      // receive huge data structures.
+                      restc_cpp::SerializeFromJson(
+                          response,
+
+                          // Construct a request to the server
+                          restc_cpp::RequestBuilder(ctx)
+                              .Post(_host + "com.atproto.repo.putRecord")
+                              .Header("Content-Type", "application/json")
+                              .Header("Authorization",
+                                      std::string("Bearer " +
+                                                  _session->access_token()))
+                              .Data(record_str)
+                              // Send the request
+                              .Execute());
+
+                      // Return the record instance through C++
+                      // future<>
+                      return response;
+                    })
+
+                // Get the Post instance from the future<>, or any C++
+                // exception thrown within the lambda.
+                .get();
+        REL_INFO("putRecord OK for {}", record_str);
+        break;
+      } catch (boost::system::system_error const &exc) {
+        if (exc.code().value() == boost::asio::error::eof &&
+            exc.code().category() == boost::asio::error::get_misc_category()) {
+          REL_WARNING("IoReaderImpl::ReadSome(putRecord): asio eof, retry");
+          ++retries;
+        } else {
+          // unrecoverable error
+          throw;
+        }
+      } catch (std::exception const &exc) {
+        REL_ERROR("putRecord for {} exception {}", record_str, exc.what())
+        throw;
+      }
     }
+    return response;
+  }
+
+  template <typename REASON>
+  void send_report(std::string const &did, REASON const &reason) {
+    // serialize the report-reason and request-body only once
     restc_cpp::serialize_properties_t properties;
     properties.name_mapping = &json::TypeFieldMapping;
+
+    bsky::moderation::report_request request;
+    request.subject.did = did;
+
+    std::ostringstream oss;
+    restc_cpp::SerializeToJson(reason, oss, properties);
+    request.reason = oss.str();
+
+    // Instantiate a report_response structure.
+    bsky::moderation::report_response response;
+    std::ostringstream body;
+    restc_cpp::SerializeToJson(request, body, properties);
+
+    if (!_is_ready) {
+      REL_ERROR("Bluesky client not ready, skip report of {}", body.str());
+    }
     if (_dry_run) {
-      REL_INFO("Dry-run Report of {} {}", did, report.as_string());
+      REL_INFO("Dry-run Report of {}", body.str());
       return;
     }
+
     // check session status
     check_session();
 
     bool done(false);
     size_t retries(0);
-    bsky::moderation::report_response response;
+
     while (retries < 5) {
       try {
         response =
@@ -180,13 +317,6 @@ public:
                 ->ProcessWithPromiseT<bsky::moderation::report_response>(
                     [&](restc_cpp::Context &ctx) {
                       // This is a co-routine, running in a worker-thread
-
-                      // Instantiate a report_response structure.
-                      bsky::moderation::report_request request;
-                      request.reason = report.reason();
-
-                      std::ostringstream body;
-                      restc_cpp::SerializeToJson(request, body, properties);
 
                       // Serialize it asynchronously. The asynchronously part
                       // does not really matter here, but it may if you receive
@@ -220,11 +350,11 @@ public:
                 .get();
         REL_INFO("Report of {} {} recorded at {}, reporter "
                  "{} id={}",
-                 did, report.as_string(), response.createdAt,
-                 response.reportedBy, response.id);
-        metrics::instance()
-            .automation_stats()
-            .Get({{"report", report.get_name()}})
+                 did, request.reason, response.createdAt, response.reportedBy,
+                 response.id);
+        metrics_factory::instance()
+            .get_counter("automation")
+            .Get({{"report", reason.get_name()}})
             .Increment();
         done = true;
         break;
@@ -236,25 +366,30 @@ public:
         } else {
           // unrecoverable error
           REL_ERROR("Create report of {} {} Boost exception {}", did,
-                    report.as_string(), exc.what());
+                    request.reason, exc.what());
           break;
         }
       } catch (std::exception const &exc) {
-        REL_ERROR("Create report of {} {} exception {}", did,
-                  report.as_string(), exc.what());
+        REL_ERROR("Create report of {} {} exception {}", did, request.reason,
+                  exc.what());
         break;
       }
     }
     if (!done) {
-      metrics::instance()
-          .automation_stats()
-          .Get({{"report_error", report.get_name()}})
+      metrics_factory::instance()
+          .get_counter("automation")
+          .Get({{"report_error", reason.get_name()}})
           .Increment();
     }
   }
 
+  typedef std::function<void(restc_cpp::RequestBuilder &builder)>
+      get_callback_t;
+
   template <typename RESPONSE>
-  RESPONSE do_get(std::string const &relative_path) {
+  RESPONSE do_get(std::string const &relative_path,
+                  std::optional<get_callback_t> callback =
+                      std::optional<get_callback_t>()) {
     size_t retries(0);
     RESPONSE response;
 
@@ -273,6 +408,10 @@ public:
                     builder.Header(
                         "Authorization",
                         std::string("Bearer " + _session->access_token()));
+                  }
+                  // Collect overrides if present
+                  if (callback.has_value()) {
+                    callback.value()(builder);
                   }
                   restc_cpp::SerializeFromJson(response,
                                                // Send the request
@@ -307,68 +446,23 @@ public:
     return response;
   }
 
-  inline std::string raw_get(std::string const &relative_path) {
-    std::string response;
-    size_t retries(0);
-    while (retries < 5) {
-      try {
-        restc_cpp::SerializeProperties properties;
-        properties.name_mapping = &json::TypeFieldMapping;
-        response =
-            _rest_client
-                ->ProcessWithPromiseT<std::string>(
-                    [&](restc_cpp::Context &ctx) {
-                      // This is a co-routine, running in a worker-thread
-                      // Construct a request to the server
-                      // Send the request
-                      restc_cpp::RequestBuilder builder(ctx);
-                      builder.Get(_host + relative_path);
-                      if (_use_token) {
-                        builder.Header(
-                            "Authorization",
-                            std::string("Bearer " + _session->access_token()));
-                      }
-                      auto reply = builder.Execute();
-
-                      // Return the list record instance through C++
-                      // future<>
-                      return reply->GetBodyAsString();
-                    })
-
-                // Get the Post instance from the future<>, or any C++
-                // exception thrown within the lambda.
-                .get();
-        REL_INFO("GET for {} returned '{}'", relative_path, response);
-        break;
-      } catch (boost::system::system_error const &exc) {
-        if (exc.code().value() == boost::asio::error::eof &&
-            exc.code().category() == boost::asio::error::get_misc_category()) {
-          REL_WARNING("IoReaderImpl::ReadSome(GET): asio eof, retry");
-          ++retries;
-        } else {
-          // unrecoverable error
-          REL_ERROR("GET for {} Boost exception {}", relative_path, exc.what())
-          throw;
-        }
-      } catch (std::exception const &exc) {
-        REL_ERROR("GET for {} exception {}", relative_path, exc.what())
-        throw;
-      }
-    }
-    return response;
-  }
+  std::string raw_get(
+      std::string const &relative_path,
+      std::optional<get_callback_t> callback = std::optional<get_callback_t>());
 
   std::string raw_post(std::string const &relative_path,
                        const std::string &&body = std::string());
 
   template <typename BODY, typename RESPONSE>
-  RESPONSE do_post(std::string const &relative_path, BODY const &body) {
+  RESPONSE do_post(std::string const &relative_path, BODY const &body,
+                   restc_cpp::serialize_properties_t properties =
+                       restc_cpp::serialize_properties_t()) {
     RESPONSE response;
+    // invariant, others can  be overridden by caller
+    properties.name_mapping = &json::TypeFieldMapping;
     size_t retries(0);
     while (retries < 5) {
       try {
-        restc_cpp::SerializeProperties properties;
-        properties.name_mapping = &json::TypeFieldMapping;
         response =
             _rest_client
                 ->ProcessWithPromiseT<RESPONSE>([&](restc_cpp::Context &ctx) {
@@ -402,13 +496,16 @@ public:
                 // exception thrown within the lambda.
                 .get();
         REL_INFO("POST for {} returned '{}'", relative_path,
-                 response.as_string());
+                 bsky::as_string<RESPONSE>(response));
         break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
             exc.code().category() == boost::asio::error::get_misc_category()) {
-          REL_WARNING("IoReaderImpl::ReadSome(POST): asio eof, retry");
-          ++retries;
+          if (++retries >= 5) {
+            throw;
+          } else {
+            REL_WARNING("IoReaderImpl::ReadSome(POST): asio eof, retry");
+          }
         } else {
           // unrecoverable error
           REL_ERROR("POST for {} Boost exception {}", relative_path, exc.what())
@@ -436,5 +533,10 @@ private:
   bool _use_token = false;
   bool _is_ready = false;
 };
+
+template <>
+inline std::string as_string<bsky::client::empty>(bsky::client::empty const &) {
+  return {};
+}
 
 } // namespace bsky

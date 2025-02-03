@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/moderation/session_manager.hpp"
+#include "common/bluesky/client.hpp"
 #include "common/log_wrapper.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include <boost/fusion/adapted.hpp>
@@ -31,61 +32,19 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::login_info,
                           (std::string, identifier)(std::string, password))
 
 namespace bsky {
-pds_session::pds_session(restc_cpp::RestClient &client, std::string const &host)
+pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
 void pds_session::connect(bsky::login_info const &credentials) {
-  // Create and instantiate a Post from data received from the server.
-  size_t retries(0);
-  constexpr size_t MaxRetries = 5;
-  while (retries < MaxRetries) {
-    try {
-      _tokens =
-          _client
-              .ProcessWithPromiseT<bsky::session_tokens>(
-                  [&](restc_cpp::Context &ctx) {
-                    // This is a co-routine, running in a worker-thread
+  _tokens = _client.do_post<bsky::login_info, bsky::session_tokens>(
+      "com.atproto.server.createSession", credentials);
 
-                    // Serialize it asynchronously. The asynchronously part
-                    // does not really matter here, but it may if you receive
-                    // huge data structures.
-                    restc_cpp::SerializeFromJson(
-                        _tokens,
-
-                        // Construct a request to the server
-                        restc_cpp::RequestBuilder(ctx)
-                            .Post(_host + "com.atproto.server.createSession")
-                            .Header("Content-Type", "application/json")
-                            .Data(credentials)
-                            // Send the request
-                            .Execute());
-
-                    // Return the session instance through C++ future<>
-                    return _tokens;
-                  })
-
-              // Get the Post instance from the future<>, or any C++ exception
-              // thrown within the lambda.
-              .get();
-
-      // store the response refresh and access JWTs
-      auto access_token =
-          jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
-      _access_expiry = access_token.get_expires_at();
-      REL_INFO("bsky session access token expires at {}", _access_expiry);
-      auto refresh_token =
-          jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
-      _refresh_expiry = refresh_token.get_expires_at();
-      REL_INFO("bsky session refresh token expires at {}", _refresh_expiry);
-      break;
-    } catch (std::exception const &exc) {
-      if (++retries >= MaxRetries)
-        throw;
-      REL_ERROR("create-session failed for {} exception {}, retry", _host,
-                exc.what());
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-  }
+  auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
+  _access_expiry = access_token.get_expires_at();
+  REL_INFO("bsky session access token expires at {}", _access_expiry);
+  auto refresh_token = jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
+  _refresh_expiry = refresh_token.get_expires_at();
+  REL_INFO("bsky session refresh token expires at {}", _refresh_expiry);
 }
 
 void pds_session::check_refresh() {
@@ -96,58 +55,18 @@ void pds_session::check_refresh() {
   if (time_to_expiry <
       static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count())) {
     REL_INFO("Refresh access token,expiry in {} ms", time_to_expiry);
-    size_t retries(0);
-    while (retries < 5) {
-      try {
-        _tokens =
-            _client
-                .ProcessWithPromiseT<bsky::session_tokens>(
-                    [&](restc_cpp::Context &ctx) {
-                      // This is a co-routine, running in a worker-thread
-
-                      // Serialize it asynchronously. The asynchronously part
-                      // does not really matter here, but it may if you receive
-                      // huge data structures.
-                      restc_cpp::SerializeFromJson(
-                          _tokens,
-
-                          // Construct a request to the server
-                          restc_cpp::RequestBuilder(ctx)
-                              .Post(_host + "com.atproto.server.refreshSession")
-                              .Header("Content-Type", "application/json")
-                              .Header(
-                                  "Authorization",
-                                  std::string("Bearer " + _tokens.refreshJwt))
-                              // Send the request
-                              .Execute());
-
-                      // Return the session instance through C++ future<>
-                      return _tokens;
-                    })
-
-                // Get the Post instance from the future<>, or any C++ exception
-                // thrown within the lambda.
-                .get();
-
-        // assumes refresh and access JWTs have expiry, we are out of luck
-        // otherwise
-        auto access_token =
-            jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
-        _access_expiry = access_token.get_expires_at();
-        REL_INFO("bsky session access token now expires at {}", _access_expiry);
-        auto refresh_token =
-            jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
-        _refresh_expiry = refresh_token.get_expires_at();
-        REL_INFO("bsky session refresh token now expires at {}",
-                 _refresh_expiry);
-        break;
-      } catch (std::exception const &exc) {
-        REL_ERROR("refresh-session failed for {} exception {}, retry", _host,
-                  exc.what());
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        ++retries;
-      }
-    }
+    bsky::client::empty empty_body;
+    _tokens = _client.do_post<bsky::client::empty, bsky::session_tokens>(
+        "com.atproto.server.refreshSession", empty_body);
+    // assumes refresh and access JWTs have expiry, we are out of luck
+    // otherwise
+    auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
+    _access_expiry = access_token.get_expires_at();
+    REL_INFO("bsky session access token now expires at {}", _access_expiry);
+    auto refresh_token =
+        jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
+    _refresh_expiry = refresh_token.get_expires_at();
+    REL_INFO("bsky session refresh token now expires at {}", _refresh_expiry);
   }
 }
 

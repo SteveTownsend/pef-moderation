@@ -28,6 +28,7 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/info.h>
 #include <prometheus/registry.h>
 #include <prometheus/summary.h>
+#include <unordered_map>
 
 class metrics_factory {
 public:
@@ -35,12 +36,16 @@ public:
   void set_config(std::shared_ptr<config> &settings,
                   std::string const &project_name);
 
-  prometheus::Family<prometheus::Counter> &add_counter(std::string const &name,
-                                                       std::string const &help);
-  prometheus::Family<prometheus::Gauge> &add_gauge(std::string const &name,
-                                                   std::string const &help);
+  void add_counter(std::string const &name, std::string const &help);
+  void add_gauge(std::string const &name, std::string const &help);
+  void add_histogram(std::string const &name, std::string const &help);
+
+  prometheus::Family<prometheus::Counter> &
+  get_counter(std::string const &name) const;
+  prometheus::Family<prometheus::Gauge> &
+  get_gauge(std::string const &name) const;
   prometheus::Family<prometheus::Histogram> &
-  add_histogram(std::string const &name, std::string const &help);
+  get_histogram(std::string const &name) const;
 
 private:
   metrics_factory();
@@ -50,5 +55,18 @@ private:
   std::shared_ptr<config> _settings;
   std::unique_ptr<prometheus::Exposer> _exposer;
   std::shared_ptr<prometheus::Registry> _registry;
+
+  std::unordered_map<
+      std::string,
+      std::pair<std::string, prometheus::Family<prometheus::Counter> &>>
+      _counters;
+  std::unordered_map<
+      std::string,
+      std::pair<std::string, prometheus::Family<prometheus::Gauge> &>>
+      _gauges;
+  std::unordered_map<
+      std::string,
+      std::pair<std::string, prometheus::Family<prometheus::Histogram> &>>
+      _histograms;
 };
 #endif

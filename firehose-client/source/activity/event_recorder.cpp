@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 
 #include "activity/event_recorder.hpp"
 #include "common/controller.hpp"
-#include "metrics.hpp"
+#include "common/metrics_factory.hpp"
 
 namespace activity {
 event_recorder::event_recorder() : _queue(MaxBacklog) {
@@ -29,8 +29,8 @@ event_recorder::event_recorder() : _queue(MaxBacklog) {
     while (controller::instance().is_active()) {
       timed_event my_payload;
       _queue.wait_dequeue(my_payload);
-      metrics::instance()
-          .operational_stats()
+      metrics_factory::instance()
+          .get_gauge("process_operation")
           .Get({{"events", "backlog"}})
           .Decrement();
 
@@ -43,8 +43,8 @@ event_recorder::event_recorder() : _queue(MaxBacklog) {
 
 void event_recorder::wait_enqueue(timed_event &&value) {
   _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
+  metrics_factory::instance()
+      .get_gauge("process_operation")
       .Get({{"events", "backlog"}})
       .Increment();
 }

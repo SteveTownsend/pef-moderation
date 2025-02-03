@@ -22,7 +22,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
-#include "labeler_update_config.hpp"
+#include "project_defs.hpp"
 #include "restc-cpp/logging.h"
 #include <chrono>
 #include <iostream>
@@ -65,22 +65,24 @@ struct labeler_update_operation {
   std::vector<std::string> alsoKnownAs;
   verification_methods verificationMethods;
   std::string sig;
-  std::string as_string() {
-    std::ostringstream oss;
-    restc_cpp::SerializeProperties properties;
-    static std::set<std::string> omit = {"sig"};
-    properties.excluded_names = &omit;
-    restc_cpp::SerializeToJson(*this, oss, properties);
-    return oss.str();
-  }
 };
 
 struct labeler_update_signed {
   labeler_update_operation operation;
-  std::string as_string() { return operation.as_string(); }
 };
 
 } // namespace moderation
+
+template <>
+inline std::string as_string<bsky::moderation::labeler_update_signed>(
+    bsky::moderation::labeler_update_signed const &obj) {
+  std::ostringstream oss;
+  restc_cpp::SerializeProperties properties;
+  static std::set<std::string> omit = {"sig"};
+  properties.excluded_names = &omit;
+  restc_cpp::SerializeToJson(obj, oss, properties);
+  return oss.str();
+}
 } // namespace bsky
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::labeler_service,
@@ -218,9 +220,9 @@ int main(int argc, char **argv) {
           pds_client.do_post<bsky::moderation::labeler_update,
                              bsky::moderation::labeler_update_signed>(
               "com.atproto.identity.signPlcOperation", update));
-      bsky::client::empty_response ignored(
+      bsky::client::empty ignored(
           pds_client.do_post<bsky::moderation::labeler_update_signed,
-                             bsky::client::empty_response>(
+                             bsky::client::empty>(
               "com.atproto.identity.submitPlcOperation", signed_update));
     }
 

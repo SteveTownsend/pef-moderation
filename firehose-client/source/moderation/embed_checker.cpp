@@ -20,11 +20,11 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "common/rest_utils.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
 #include "matcher.hpp"
-#include "metrics.hpp"
 #include "moderation/action_router.hpp"
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
@@ -49,6 +49,19 @@ void embed_checker::set_config(YAML::Node const &settings) {
 }
 
 void embed_checker::start() {
+  metrics_factory::instance().add_counter(
+      "embedded_content",
+      "Checks performed on 'embeds': post, video, image, link");
+  metrics_factory::instance().add_histogram("web_links",
+                                            "Statistics from link analysis");
+  // Histogram metrics have to be added by hand, on-demand instantiation is not
+  // possible
+  prometheus::Histogram::BucketBoundaries hop_count = {
+      0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+  metrics_factory::instance()
+      .get_histogram("web_links")
+      .Add({{"redirection", "hops"}}, hop_count);
+
   restc_cpp::Request::Properties properties;
   properties.maxRedirects = UrlRedirectLimit;
   properties.maxRetries = 3;
@@ -70,8 +83,8 @@ void embed_checker::start() {
           embed::embed_info_list embed_list;
           _queue.wait_dequeue(embed_list);
           // process the item
-          metrics::instance()
-              .operational_stats()
+          metrics_factory::instance()
+              .get_gauge("process_operation")
               .Get({{"embed_checker", "backlog"}})
               .Decrement();
 
@@ -102,8 +115,8 @@ void embed_checker::start() {
 
 void embed_checker::wait_enqueue(embed::embed_info_list &&value) {
   _queue.enqueue(value);
-  metrics::instance()
-      .operational_stats()
+  metrics_factory::instance()
+      .get_gauge("process_operation")
       .Get({{"embed_checker", "backlog"}})
       .Increment();
 }
@@ -134,8 +147,8 @@ void embed_checker::refresh_hosts(std::unordered_set<std::string> &&new_hosts) {
 void embed_checker::image_seen(std::string const &repo, std::string const &path,
                                std::string const &cid) {
   // return true if insert fails, we already know this one
-  metrics::instance()
-      .embed_stats()
+  metrics_factory::instance()
+      .get_counter("embedded_content")
       .Get({{"embed_checker", "image_checks"}})
       .Increment();
   std::lock_guard<std::mutex> guard(_lock);
@@ -144,8 +157,8 @@ void embed_checker::image_seen(std::string const &repo, std::string const &path,
     if (alert_needed(++(inserted.first->second), ImageFactor)) {
       REL_INFO("Image repetition count {:6} {} at {}/{}",
                inserted.first->second, print_cid(cid), repo, path);
-      metrics::instance()
-          .embed_stats()
+      metrics_factory::instance()
+          .get_counter("embedded_content")
           .Get({{"images", "repetition"}})
           .Increment();
     }
@@ -159,8 +172,8 @@ void embed_handler::operator()(embed::image const &value) {
 void embed_checker::record_seen(std::string const &repo,
                                 std::string const &path,
                                 std::string const &uri) {
-  metrics::instance()
-      .embed_stats()
+  metrics_factory::instance()
+      .get_counter("embedded_content")
       .Get({{"embed_checker", "record_checks"}})
       .Increment();
   std::lock_guard<std::mutex> guard(_lock);
@@ -169,8 +182,8 @@ void embed_checker::record_seen(std::string const &repo,
     if (alert_needed(++(inserted.first->second), RecordFactor)) {
       REL_INFO("Record repetition count {:6} {} at {}/{}",
                inserted.first->second, uri, repo, path);
-      metrics::instance()
-          .embed_stats()
+      metrics_factory::instance()
+          .get_counter("embedded_content")
           .Get({{"records", "repetition"}})
           .Increment();
     }
@@ -184,8 +197,8 @@ void embed_handler::operator()(embed::record const &value) {
 bool embed_checker::uri_seen(std::string const &repo, std::string const &path,
                              std::string const &uri) {
   // return true if insert fails, we already know this one
-  metrics::instance()
-      .embed_stats()
+  metrics_factory::instance()
+      .get_counter("embedded_content")
       .Get({{"embed_checker", "link_checks"}})
       .Increment();
   std::lock_guard<std::mutex> guard(_lock);
@@ -194,8 +207,8 @@ bool embed_checker::uri_seen(std::string const &repo, std::string const &path,
     if (alert_needed(++(inserted.first->second), LinkFactor)) {
       REL_INFO("Link repetition count {:6} {} at {}/{}", inserted.first->second,
                uri, repo, path);
-      metrics::instance()
-          .embed_stats()
+      metrics_factory::instance()
+          .get_counter("embedded_content")
           .Get({{"links", "repetition"}})
           .Increment();
     }
@@ -225,13 +238,16 @@ bool embed_checker::should_process_uri(std::string const &uri) {
     // https://bsky.app/profile/did:plc:j5k6e6hf2rp4bkqk5sao56ad/post/3lg6hohjsg422
     REL_WARNING("Skip malformed URI {}, error {}", uri,
                 parsed_uri.error().message());
-    metrics::instance().embed_stats().Get({{"links", "malformed"}}).Increment();
+    metrics_factory::instance()
+        .get_counter("embedded_content")
+        .Get({{"links", "malformed"}})
+        .Increment();
     return false;
   }
   auto host(parsed_uri->host());
   if (is_popular_host(host)) {
-    metrics::instance()
-        .embed_stats()
+    metrics_factory::instance()
+        .get_counter("embedded_content")
         .Get({{"links", "whitelist_skipped"}})
         .Increment();
     return false;
@@ -339,23 +355,23 @@ void embed_handler::operator()(embed::external const &value) {
     }
   }
   if (completed) {
-    metrics::instance()
-        .embed_stats()
+    metrics_factory::instance()
+        .get_counter("embedded_content")
         .Get({{"link", "redirect_ok"}})
         .Increment();
   } else if (overflow) {
-    metrics::instance()
-        .embed_stats()
+    metrics_factory::instance()
+        .get_counter("embedded_content")
         .Get({{"link", "redirect_limit_exceeded"}})
         .Increment();
   } else {
-    metrics::instance()
-        .embed_stats()
+    metrics_factory::instance()
+        .get_counter("embedded_content")
         .Get({{"link", "redirect_error"}})
         .Increment();
   }
-  metrics::instance()
-      .link_stats()
+  metrics_factory::instance()
+      .get_histogram("web_links")
       .GetAt({{"redirection", "hops"}})
       .Observe(static_cast<double>(_uri_chain.size()));
   REL_INFO("Redirect check complete {} hops for {}", _uri_chain.size(),
@@ -372,13 +388,16 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
     return false; // stop following the chain
   };
 
-  metrics::instance().embed_stats().Get({{"link", "redirections"}}).Increment();
+  metrics_factory::instance()
+      .get_counter("embedded_content")
+      .Get({{"link", "redirections"}})
+      .Increment();
   candidate_list candidate = {{_root_url, "redirected_url", url}};
   match_results results(
       matcher::shared().all_matches_for_candidates(candidate));
   if (!results.empty()) {
-    metrics::instance()
-        .embed_stats()
+    metrics_factory::instance()
+        .get_counter("embedded_content")
         .Get({{"link", "redirect_matched_rule"}})
         .Increment();
 
@@ -391,8 +410,8 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
 void embed_checker::video_seen(std::string const &repo, std::string const &path,
                                std::string const &cid) {
   // return true if insert fails, we already know this one
-  metrics::instance()
-      .embed_stats()
+  metrics_factory::instance()
+      .get_counter("embedded_content")
       .Get({{"embed_checker", "video_checks"}})
       .Increment();
   std::lock_guard<std::mutex> guard(_lock);
@@ -401,8 +420,8 @@ void embed_checker::video_seen(std::string const &repo, std::string const &path,
     if (alert_needed(++(inserted.first->second), VideoFactor)) {
       REL_INFO("Video repetition count {:6} {} at {}/{}",
                inserted.first->second, print_cid(cid), repo, path);
-      metrics::instance()
-          .embed_stats()
+      metrics_factory::instance()
+          .get_counter("embedded_content")
           .Get({{"videos", "repetition"}})
           .Increment();
     }

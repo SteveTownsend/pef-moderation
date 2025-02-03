@@ -20,13 +20,14 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
+#include "common/bluesky/client.hpp"
+#include "common/metrics_factory.hpp"
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/session_manager.hpp"
-#include "firehost_client_config.hpp"
 #include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
-#include "metrics.hpp"
+#include "project_defs.hpp"
 #include "yaml-cpp/yaml.h"
 #include <optional>
 #include <thread>
@@ -74,13 +75,6 @@ struct listitem {
 };
 
 // app.bsky.graph.getLists
-struct get_lists_request {
-  std::string actor;
-  // currently we know for a fact there are not more than 100 lists
-  int32_t limit = 50;
-  std::string cursor;
-};
-
 struct list_definition {
   std::string uri;
   std::string name;
@@ -116,18 +110,6 @@ struct get_list_response {
 } // namespace bsky
 
 namespace atproto {
-
-// com.atproto.repo.createRecord (any)
-struct create_record_response {
-  std::string uri;
-  std::string cid;
-};
-
-// com.atproto.repo.putRecord (any)
-struct put_record_response {
-  std::string uri;
-  std::string cid;
-};
 
 struct create_record_list_request {
   std::string repo;
@@ -182,13 +164,12 @@ public:
   static constexpr size_t MaxItemsInList = 5000;
 
   static list_manager &instance();
-  void set_config(YAML::Node const &settings);
   void
   set_moderation_data(std::shared_ptr<bsky::moderation::ozone_adapter> &ozone) {
     _moderation_data = ozone;
   }
 
-  void start();
+  void start(YAML::Node const &settings);
   void wait_enqueue(block_list_addition &&value);
   void register_block_reason(std::string const &list_name,
                              std::string const &reason) {
@@ -238,8 +219,8 @@ private:
     } else {
       this_list_group->second.insert(did);
     }
-    metrics::instance()
-        .automation_stats()
+    metrics_factory::instance()
+        .get_counter("automation")
         .Get({{"block_list", "list_group"},
               {"members", as_list_group_name(list_name)}})
         .Increment();
@@ -309,7 +290,7 @@ private:
 
   std::shared_ptr<bsky::moderation::ozone_adapter> _moderation_data;
   std::thread _thread;
-  std::unique_ptr<restc_cpp::RestClient> _rest_client;
+  std::unique_ptr<bsky::client> _client;
   std::unique_ptr<bsky::pds_session> _session;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<block_list_addition> _queue;

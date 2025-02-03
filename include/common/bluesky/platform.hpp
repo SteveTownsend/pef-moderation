@@ -126,6 +126,18 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time);
 
 namespace atproto {
 
+// com.atproto.repo.createRecord (any)
+struct create_record_response {
+  std::string uri;
+  std::string cid;
+};
+
+// com.atproto.repo.putRecord (any)
+struct put_record_response {
+  std::string uri;
+  std::string cid;
+};
+
 constexpr std::string_view RepoStrongRef = "com.atproto.repo.strongRef";
 constexpr std::string_view AdminDefsRepoRef = "com.atproto.admin.defs#repoRef";
 constexpr std::string_view ProxyLabelerSuffix = "#atproto_labeler";

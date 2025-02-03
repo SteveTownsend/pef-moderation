@@ -1,0 +1,30 @@
+labeler_update:
+  logging:
+    filename: "./logs/labeler_update.log"
+    level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
+
+  # unauthenticated for read
+  plc_directory:
+    host: "https://plc.directory/"
+    port: 443
+    service_did: "my_labeler_service_did"
+
+  pds:
+    handle: "my_labeler_service_handle"
+    password: "my_labeler_service_pasword"
+    did: "my_labeler_service_did"
+    # this has to be the home PDS of the moderation service
+    # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
+    host: "https://parasol.us-east.host.bsky.network/xrpc/"
+    port: 443
+    service_did: "my_labeler_service_did"
+    dry_run: true
+
+  # run twice: leave token blank to get email; then use emailed token for the update
+  token: "LWHU7-O47CK"
+
+  # updates
+  services:
+    # not tested yet for PDS self-update
+    atproto_labeler:
+      endpoint: "my_labeler_Service_new_endpoint"

@@ -44,7 +44,10 @@ void jetstream_payload::handle(post_processor<jetstream_payload> &) {
           {{"type", result._candidate._type},
            {"field", result._candidate._field},
            {"filter", wstring_to_utf8(match.get_keyword())}});
-      metrics::instance().matched_elements().Get(labels).Increment();
+      metrics_factory::instance()
+          .get_counter("message_string_matches")
+          .Get(labels)
+          .Increment();
     }
   }
 }
@@ -69,12 +72,18 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
   REL_DEBUG("         message: {}", dump_json(message));
   int op(header["op"].template get<int>());
   if (op == static_cast<int>(firehose::op::error)) {
-    metrics::instance().firehose_stats().Get({{"op", "error"}}).Increment();
+    metrics_factory::instance()
+        .get_counter("firehose_content")
+        .Get({{"op", "error"}})
+        .Increment();
   } else if (op == static_cast<int>(firehose::op::message)) {
-    metrics::instance().firehose_stats().Get({{"op", "message"}}).Increment();
+    metrics_factory::instance()
+        .get_counter("firehose_content")
+        .Get({{"op", "message"}})
+        .Increment();
     std::string op_type(header["t"].template get<std::string>());
-    metrics::instance()
-        .firehose_stats()
+    metrics_factory::instance()
+        .get_counter("firehose_content")
         .Get({{"op", "message"}, {"type", op_type}})
         .Increment();
     std::string repo;
@@ -106,8 +115,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             if (field.empty())
               throw std::invalid_argument("Blank collection in op.path " +
                                           path);
-            metrics::instance()
-                .firehose_stats()
+            metrics_factory::instance()
+                .get_counter("firehose_content")
                 .Get({{"op", "message"},
                       {"type", op_type},
                       {"collection", field},
@@ -173,8 +182,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
     } else if (op_type == firehose::OpTypeAccount) {
       repo = message["did"].template get<std::string>();
       bool active(message["active"].template get<bool>());
-      metrics::instance()
-          .firehose_stats()
+      metrics_factory::instance()
+          .get_counter("firehose_content")
           .Get({{"op", "message"},
                 {"type", op_type},
                 {"status", active ? "active" : "inactive"}})
@@ -231,7 +240,10 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
                   {{"type", next_match._candidate._type},
                    {"field", next_match._candidate._field},
                    {"filter", wstring_to_utf8(match.get_keyword())}});
-              metrics::instance().matched_elements().Get(labels).Increment();
+              metrics_factory::instance()
+                  .get_counter("message_string_matches")
+                  .Get(labels)
+                  .Increment();
             }
           }
         }
@@ -367,8 +379,8 @@ void firehose_payload::handle_content(
           // count languages in video
           auto langs(embed["langs"].template get<std::vector<std::string>>());
           for (auto const &lang : langs) {
-            metrics::instance()
-                .firehose_stats()
+            metrics_factory::instance()
+                .get_counter("firehose_content")
                 .Get({{"embed", this_context._embed_type_str},
                       {"language", lang}})
                 .Increment();
@@ -399,41 +411,43 @@ void firehose_payload::handle_content(
         }
         // record metrics for facet types by embed type
         if (mentions > 0) {
-          metrics::instance()
-              .firehose_facets()
+          metrics_factory::instance()
+              .get_histogram("firehose_facets")
               .GetAt(
                   {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}})
               .Observe(static_cast<double>(mentions));
         }
         if (links > 0) {
-          metrics::instance()
-              .firehose_facets()
+          metrics_factory::instance()
+              .get_histogram("firehose_facets")
               .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
               .Observe(static_cast<double>(links));
         }
         if (tags > 0) {
-          metrics::instance()
-              .firehose_facets()
+          metrics_factory::instance()
+              .get_histogram("firehose_facets")
               .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
               .Observe(static_cast<double>(tags));
         }
         if (has_facets) {
           size_t total(mentions + tags + links);
-          metrics::instance()
-              .firehose_facets()
+          metrics_factory::instance()
+              .get_histogram("firehose_facets")
               .GetAt({{"facet", "total"}})
               .Observe(static_cast<double>(total));
           processor.request_recording(
               {repo,
                bsky::time_stamp_from_iso_8601(
                    content["createdAt"].template get<std::string>()),
-               activity::facets(tags, mentions, links)});
+               activity::facets(static_cast<unsigned short>(tags),
+                                static_cast<unsigned short>(mentions),
+                                static_cast<unsigned short>(links))});
         }
         if (content.contains("langs")) {
           auto langs(content["langs"].template get<std::vector<std::string>>());
           for (auto const &lang : langs) {
-            metrics::instance()
-                .firehose_stats()
+            metrics_factory::instance()
+                .get_counter("firehose_content")
                 .Get({{"collection", collection}, {"language", lang}})
                 .Increment();
           }

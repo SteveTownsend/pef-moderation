@@ -35,9 +35,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "content_handler.hpp"
-#include "firehost_client_config.hpp"
 #include "matcher.hpp"
-#include "metrics.hpp"
+#include "project_defs.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -52,11 +51,7 @@ public:
     static datasource my_source;
     return my_source;
   }
-  datasource()
-      : _input_messages(metrics_factory::instance().add_counter(
-            "websocket_inbound_messages", "Number of inbound messages")),
-        _input_message_bytes(metrics_factory::instance().add_counter(
-            "websocket_inbound_bytes", "Number of inbound message bytes")) {}
+  datasource() {}
   ~datasource() = default;
 
   void set_config(std::shared_ptr<config> &settings) {
@@ -71,6 +66,38 @@ public:
   }
 
   void start() {
+    metrics_factory::instance().add_counter("websocket_inbound_messages",
+                                            "Number of inbound messages");
+    metrics_factory::instance().add_counter("websocket_inbound_bytes",
+                                            "Number of inbound message bytes");
+    metrics_factory::instance().add_counter(
+        "message_string_matches",
+        "Number of matches within each field of message");
+    metrics_factory::instance().add_counter(
+        "firehose_content", "Statistics about received firehose data");
+    metrics_factory::instance().add_histogram(
+        "firehose_facets", "Statistics about received firehose facets");
+    // Histogram metrics have to be added by hand, on-demand instantiation is
+    // not possible
+    prometheus::Histogram::BucketBoundaries boundaries = {
+        0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0,
+        12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
+        24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0};
+    metrics_factory::instance()
+        .get_histogram("firehose_facets")
+        .Add({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}},
+             boundaries);
+    metrics_factory::instance()
+        .get_histogram("firehose_facets")
+        .Add({{"facet", std::string(bsky::AppBskyRichtextFacetMention)}},
+             boundaries);
+    metrics_factory::instance()
+        .get_histogram("firehose_facets")
+        .Add({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}},
+             boundaries);
+    metrics_factory::instance()
+        .get_histogram("firehose_facets")
+        .Add({{"facet", "total"}}, boundaries);
     _thread = std::thread([&, this] {
       REL_INFO("client startup for {}:{} at {}", _host, _port, _subscription);
       try {
@@ -121,8 +148,6 @@ private:
   std::string _subscription;
   content_handler<PAYLOAD> _handler;
   std::shared_ptr<config> _settings;
-  prometheus::Family<prometheus::Counter> &_input_messages;
-  prometheus::Family<prometheus::Counter> &_input_message_bytes;
   std::thread _thread;
   std::unique_ptr<datasource> _instance;
 
@@ -199,8 +224,13 @@ private:
         return fail(ec, "read");
 
       // update stats
-      _input_messages.Get({{"host", _host}}).Increment();
-      _input_message_bytes.Get({{"host", _host}})
+      metrics_factory::instance()
+          .get_counter("websocket_inbound_bytes")
+          .Get({{"host", _host}})
+          .Increment();
+      metrics_factory::instance()
+          .get_counter("websocket_inbound_bytes")
+          .Get({{"host", _host}})
           .Increment(static_cast<double>(buffer.size()));
 
       _handler.handle(buffer);

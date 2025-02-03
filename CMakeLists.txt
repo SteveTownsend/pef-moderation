@@ -220,6 +220,7 @@ FetchContent_Declare(jwt-cpp
 )
 FetchContent_MakeAvailable(jwt-cpp)
 
+add_subdirectory(source/common)
 if (DB_CRAWLER_BUILD)
   add_subdirectory(db-crawler)
 endif()
