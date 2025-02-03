@@ -198,7 +198,7 @@ public:
                 // exception thrown within the lambda.
                 .get();
         REL_INFO("getRecord OK for {} {} {}", did, collection, rkey);
-        return response;
+        break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
             exc.code().category() == boost::asio::error::get_misc_category()) {
@@ -217,6 +217,7 @@ public:
         throw;
       }
     }
+    return response;
   }
 
   template <typename RECORD>
