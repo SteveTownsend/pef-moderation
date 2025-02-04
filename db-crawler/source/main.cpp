@@ -110,8 +110,14 @@ int main(int argc, char **argv) {
     auto pending(moderation_data->get_pending_reports());
     std::vector<std::string> candidate_profiles;
     candidate_profiles.reserve(pending.size());
+#ifdef __GNUC__
+    candidate_profiles.insert_range(candidate_profiles.end(),
+                                    std::views::keys(pending).cbegin(),
+                                    std::views::keys(pending).cend());
+#else
     candidate_profiles.insert_range(candidate_profiles.end(),
                                     std::views::keys(pending));
+#endif
     auto active_profiles(appview_client.get_profiles(candidate_profiles));
 
     // iterate a view of the pending reports that includes only *inactive*
