@@ -18,8 +18,17 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "common/moderation/ozone_adapter.hpp"
+#include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include <boost/fusion/adapted.hpp>
+#include <functional>
+#include <unordered_set>
+
+// app.bsky.actor.getProfiles
+BOOST_FUSION_ADAPT_STRUCT(bsky::profile, (std::string, did))
+BOOST_FUSION_ADAPT_STRUCT(bsky::get_profiles_response,
+                          (std::vector<bsky::profile>, profiles))
 
 namespace bsky {
 namespace moderation {
@@ -39,7 +48,7 @@ void ozone_adapter::start() {
         // load the list of labeled accounts
         check_refresh_processed();
       } catch (pqxx::broken_connection const &exc) {
-        // will reconnect on net loop
+        // will reconnect on next loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
         _cx.reset();
       } catch (std::exception const &exc) {
@@ -78,6 +87,42 @@ void ozone_adapter::check_refresh_processed() {
     _labeled_accounts.swap(new_labeled);
     _processed_accounts.swap(new_done);
     _last_refresh = std::chrono::steady_clock::now();
+  }
+}
+
+void ozone_adapter::load_pending_reports() {
+  try {
+    if (!_cx) {
+      _cx = std::make_unique<pqxx::connection>(_connection_string);
+    }
+    // load the list of open/escalated reports
+    std::unordered_set<std::string> deleted_accounts;
+    pqxx::work tx(*_cx);
+    for (auto [did, record_path] : tx.query<std::string, std::string>(
+             "SELECT did, \"recordPath\" FROM moderation_subject_status WHERE "
+             "\"reviewState\" in ('tools.ozone.moderation.defs#reviewOpen', "
+             "'tools.ozone.moderation.defs#reviewEscalated')")) {
+      auto account_list(_pending_reports.find(did));
+      if (account_list == _pending_reports.end()) {
+        account_list = _pending_reports.insert({did, {}}).first;
+        REL_INFO("{} recorded", did);
+      }
+      if (!record_path.empty()) {
+        if (account_list->second.insert(record_path).second) {
+          REL_INFO("{} {} recorded");
+        } else {
+          REL_INFO("{} {} duplicate");
+        }
+      }
+    }
+  } catch (pqxx::broken_connection const &exc) {
+    // will reconnect on net loop
+    REL_ERROR("pqxx::broken_connection {}", exc.what());
+    _cx.reset();
+  } catch (std::exception const &exc) {
+    // try to reconnect on next loop, unlikely to work though
+    REL_ERROR("database exception {}", exc.what());
+    _cx.reset();
   }
 }
 

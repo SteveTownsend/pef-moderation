@@ -248,4 +248,27 @@ void client::label_account(std::string const &did,
   }
 }
 
+std::vector<bsky::profile> client::get_profiles(std::vector<std::string> dids) {
+  std::vector<bsky::profile> profiles;
+  profiles.reserve(dids.size());
+  size_t next(0);
+  std::vector<std::string> batch;
+  batch.reserve(bsky::GetProfilesMax);
+  bsky::client::get_callback_t callback =
+      [&](restc_cpp::RequestBuilder &builder) {
+        // builder.argument
+      };
+  for (std::string const &did : dids) {
+    batch.emplace_back(did);
+    if (++next == bsky::GetProfilesMax) {
+      // request batch from Bluesky API
+      next = 0;
+      bsky::get_profiles_response response =
+          do_get<bsky::get_profiles_response>("app.bsky.actor.getProfiles",
+                                              callback);
+    }
+  }
+  return profiles;
+}
+
 } // namespace bsky
