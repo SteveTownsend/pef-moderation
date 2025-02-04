@@ -34,6 +34,16 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 
 namespace bsky {
+struct empty {};
+
+struct profile {
+  // all we need right now
+  std::string did;
+};
+struct get_profiles_response {
+  std::vector<profile> profiles;
+};
+
 namespace moderation {
 struct report_subject {
   std::string _type = std::string(atproto::AdminDefsRepoRef);
@@ -73,15 +83,16 @@ struct emit_event_label_response {
 };
 } // namespace moderation
 
-template <typename OBJ> std::string as_string(OBJ const &obj) {
+template <typename OBJ>
+std::string as_string(OBJ const &obj,
+                      restc_cpp::serialize_properties_t properties = {}) {
   std::ostringstream oss;
-  restc_cpp::SerializeToJson(obj, oss);
+  restc_cpp::SerializeToJson(obj, oss, properties);
   return oss.str();
 }
 
 class client {
 public:
-  struct empty {};
   client() = default;
   ~client() = default;
 
@@ -456,7 +467,8 @@ public:
   template <typename BODY, typename RESPONSE>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
                    restc_cpp::serialize_properties_t properties =
-                       restc_cpp::serialize_properties_t()) {
+                       restc_cpp::serialize_properties_t(),
+                   const bool use_refresh = false) {
     RESPONSE response;
     // invariant, others can  be overridden by caller
     properties.name_mapping = &json::TypeFieldMapping;
@@ -473,10 +485,14 @@ public:
                   if (_use_token) {
                     builder.Header(
                         "Authorization",
-                        std::string("Bearer " + _session->access_token()));
+                        std::string("Bearer " +
+                                    (use_refresh ? _session->refresh_token()
+                                                 : _session->access_token())));
                   }
-                  std::ostringstream raw_body;
-                  restc_cpp::SerializeToJson(body, raw_body, properties);
+                  std::string body_str(as_string<BODY>(body, properties));
+                  if (!body_str.empty()) {
+                    builder.Data(body_str);
+                  }
 
                   // Serialize it asynchronously. The asynchronously part
                   // does not really matter here, but it may if you receive
@@ -486,7 +502,6 @@ public:
                       // Send the request
                       builder.Post(_host + relative_path)
                           .Header("Content-Type", "application/json")
-                          .Data(raw_body.str())
                           .Execute(),
                       &json::TypeFieldMapping);
                   return response;
@@ -519,6 +534,8 @@ public:
     return response;
   }
 
+  std::vector<bsky::profile> get_profiles(std::vector<std::string> dids);
+
 private:
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::unique_ptr<pds_session> _session;
@@ -535,7 +552,9 @@ private:
 };
 
 template <>
-inline std::string as_string<bsky::client::empty>(bsky::client::empty const &) {
+inline std::string
+as_string<bsky::empty>(bsky::empty const &,
+                       restc_cpp::serialize_properties_t properties) {
   return {};
 }
 

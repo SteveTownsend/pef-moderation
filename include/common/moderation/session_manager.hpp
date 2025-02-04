@@ -45,6 +45,7 @@ public:
   void connect(login_info const &credentials);
   void check_refresh();
   inline std::string access_token() const { return _tokens.accessJwt; }
+  inline std::string refresh_token() const { return _tokens.refreshJwt; }
 
   static constexpr std::chrono::milliseconds AccessExpiryBuffer =
       std::chrono::milliseconds(60000 * 2);
