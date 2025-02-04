@@ -75,9 +75,9 @@ struct labeler_update_signed {
 
 template <>
 inline std::string as_string<bsky::moderation::labeler_update_signed>(
-    bsky::moderation::labeler_update_signed const &obj) {
+    bsky::moderation::labeler_update_signed const &obj,
+    restc_cpp::serialize_properties_t properties) {
   std::ostringstream oss;
-  restc_cpp::SerializeProperties properties;
   static std::set<std::string> omit = {"sig"};
   properties.excluded_names = &omit;
   restc_cpp::SerializeToJson(obj, oss, properties);
@@ -220,10 +220,10 @@ int main(int argc, char **argv) {
           pds_client.do_post<bsky::moderation::labeler_update,
                              bsky::moderation::labeler_update_signed>(
               "com.atproto.identity.signPlcOperation", update));
-      bsky::client::empty ignored(
-          pds_client.do_post<bsky::moderation::labeler_update_signed,
-                             bsky::client::empty>(
-              "com.atproto.identity.submitPlcOperation", signed_update));
+      bsky::empty ignored(
+          pds_client
+              .do_post<bsky::moderation::labeler_update_signed, bsky::empty>(
+                  "com.atproto.identity.submitPlcOperation", signed_update));
     }
 
     return EXIT_SUCCESS;
