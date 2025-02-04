@@ -1,4 +1,4 @@
-project(labeler_update VERSION 1.0.0 LANGUAGES C CXX)
+project(labeler_update VERSION 1.1.0 LANGUAGES C CXX)
 
 configure_file(./cmake/labeler_update_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 

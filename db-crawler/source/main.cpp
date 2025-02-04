@@ -18,16 +18,19 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include "common/bluesky/client.hpp"
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/moderation/ozone_adapter.hpp"
 #include "project_defs.hpp"
-// #include "common/moderation/report_agent.hpp"
 #include "restc-cpp/logging.h"
+#include <boost/fusion/adapted.hpp>
 #include <chrono>
+#include <functional>
 #include <iostream>
+#include <ranges>
 #include <thread>
 
 int main(int argc, char **argv) {
@@ -85,6 +88,14 @@ int main(int argc, char **argv) {
         "automation",
         "Automated moderation activity: block-list, report, emit-event");
 
+    // use AppView for account/content checking, auth client for moderation
+    // actions
+    bsky::client appview_client;
+    appview_client.set_config(
+        settings->get_config()[PROJECT_NAME]["appview_client"]);
+    bsky::client pds_client;
+    pds_client.set_config(settings->get_config()[PROJECT_NAME]["pds_client"]);
+
     // for Escalated or Open subjects, check that account and post are still
     // present and if not, auto-acknowledge the subject
     std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
@@ -92,6 +103,54 @@ int main(int argc, char **argv) {
             build_db_connection_string(
                 settings->get_config()[PROJECT_NAME]["moderation_data"]));
     moderation_data->load_pending_reports();
+
+    // Confirm validity of did and content on pending reports
+    // Confirmed in testing that auth and non-auth clients see the same response
+    // counts
+    auto pending(moderation_data->get_pending_reports());
+    std::vector<std::string> candidate_profiles;
+    candidate_profiles.reserve(pending.size());
+    candidate_profiles.insert_range(candidate_profiles.end(),
+                                    std::views::keys(pending));
+    auto active_profiles(appview_client.get_profiles(candidate_profiles));
+
+    // iterate a view of the pending reports that includes only *inactive*
+    // accounts
+    std::ranges::for_each(
+        candidate_profiles |
+            std::views::filter(
+                [&active_profiles](std::string const &candidate) {
+                  return !active_profiles.contains(
+                      bsky::profile_view_detailed(candidate));
+                }),
+        [&appview_client, &pending, &pds_client](std::string const &match) {
+          // double check account status before garbage collceting the reports
+          try {
+            bsky::profile_view_detailed profile(
+                appview_client.get_profile(match));
+            REL_ERROR("Skip deleted account {}, getProfile returned OK", match);
+          } catch (std::exception &exc) {
+            // expected to fail
+            REL_INFO("Scrub reports for deleted account {}", match);
+            auto to_scrub(pending.find(match));
+            if (to_scrub != pending.cend()) {
+              for (auto subject : to_scrub->second) {
+                std::ostringstream oss;
+                bsky::moderation::acknowledge_event_comment comment(
+                    PROJECT_NAME);
+                comment.context = exc.what();
+                comment.did = match;
+                if (subject == match) {
+                  // TODO reports of content not yet supported - move this when
+                  // they are
+                  pds_client.acknowledge_subject(match, comment);
+                } else {
+                  comment.path = subject;
+                }
+              }
+            }
+          }
+        });
 
     return EXIT_SUCCESS;
   } catch (std::exception const &exc) {
