@@ -61,6 +61,8 @@ constexpr std::string_view ReasonOther =
     "com.atproto.moderation.defs#reasonOther";
 constexpr std::string_view EventLabel =
     "tools.ozone.moderation.defs#modEventLabel";
+constexpr std::string_view EventAcknowledge =
+    "tools.ozone.moderation.defs#modEventAcknowledge";
 } // namespace moderation
 
 constexpr std::string_view DownReasonDeactivated = "deactivated";

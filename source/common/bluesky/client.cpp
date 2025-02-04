@@ -24,6 +24,39 @@ http://www.fsf.org/licensing/licenses
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 
+// app.bsky.actor.getProfiles
+BOOST_FUSION_ADAPT_STRUCT(bsky::profile_view_detailed, (std::string, did))
+BOOST_FUSION_ADAPT_STRUCT(bsky::get_profiles_response,
+                          (std::vector<bsky::profile_view_detailed>, profiles))
+
+// tools.ozone.moderation.emitEvent
+// Shared
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
+                          (std::string, _type), (std::string, did))
+// Label
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
+                          (std::vector<std::string>, createLabelVals),
+                          (std::vector<std::string>, negateLabelVals))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
+                          (bsky::moderation::label_event, event),
+                          (bsky::moderation::report_subject, subject),
+                          (std::string, createdBy))
+// Acknowledge
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::acknowledge_event_comment,
+                          (std::string, descriptor), (std::string, context),
+                          (std::string, did), (std::string, path))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::acknowledge_event,
+                          (std::string, _type), (std::string, comment),
+                          (bool, acknowledgeAccountSubjects))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_acknowledge_request,
+                          (bsky::moderation::acknowledge_event, event),
+                          (bsky::moderation::report_subject, subject),
+                          (std::string, createdBy))
+// Response
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_response,
+                          (std::string, createdAt), (int64_t, id),
+                          (std::string, createdBy))
+
 namespace bsky {
 
 void client::set_config(YAML::Node const &settings) {
@@ -170,93 +203,69 @@ void client::label_account(std::string const &did,
     REL_INFO("Dry-run Label of {} for {}", did, format_vector(labels));
     return;
   }
-
-  restc_cpp::serialize_properties_t properties;
-  properties.name_mapping = &json::TypeFieldMapping;
-  properties.ignore_empty_fileds =
-      0; // negateLabelsVals is mandatory but unused
-  size_t retries(0);
-  bsky::moderation::emit_event_label_response response;
-  while (retries < 5) {
-    try {
-      response =
-          _rest_client
-              ->ProcessWithPromiseT<
-                  bsky::moderation::emit_event_label_response>(
-                  [&](restc_cpp::Context &ctx) {
-                    // This is a co-routine, running in a worker-thread
-
-                    // Instantiate a report_response structure.
-                    bsky::moderation::emit_event_label_request request;
-                    request.subject.did = did;
-                    request.createdBy = _did;
-                    request.event.createLabelVals = labels;
-
-                    std::ostringstream body;
-                    restc_cpp::SerializeToJson(request, body, properties);
-
-                    // Serialize it asynchronously. The asynchronously part does
-                    // not really matter here, but it may if you receive huge
-                    // data structures.
-                    restc_cpp::SerializeFromJson(
-                        response,
-
-                        // Construct a request to the server
-                        restc_cpp::RequestBuilder(ctx)
-                            .Post(_host + "tools.ozone.moderation.emitEvent")
-                            .Header("Content-Type", "application/json")
-                            .Header("Atproto-Accept-Labelers", _service_did)
-                            .Header(
-                                "Atproto-Proxy",
-                                _service_did +
-                                    std::string(atproto::ProxyLabelerSuffix))
-                            .Header("Authorization",
-                                    std::string("Bearer " +
-                                                _session->access_token()))
-                            .Data(body.str())
-                            // Send the request
-                            .Execute());
-
-                    // Return the session instance through C++ future<>
-                    return response;
-                  })
-
-              // Get the Post instance from the future<>, or any C++ exception
-              // thrown within the lambda.
-              .get();
-      REL_INFO("Label of {} for {} recorded at {}, reporter "
-               "{} id={}",
-               did, format_vector(labels), response.createdAt,
-               response.createdBy, response.id);
-      break;
-    } catch (boost::system::system_error const &exc) {
-      if (exc.code().value() == boost::asio::error::eof &&
-          exc.code().category() == boost::asio::error::get_misc_category()) {
-        REL_WARNING("IoReaderImpl::ReadSome(emitEvent): asio eof, retry");
-        ++retries;
-      } else {
-        // unrecoverable error
-        REL_ERROR("emitEvent(label) of {} for {} Boost exception {}", did,
-                  format_vector(labels), exc.what());
-        break;
-      }
-    } catch (std::exception const &exc) {
-      REL_ERROR("emitEvent(label) of {} for {} exception {}", did,
-                format_vector(labels), exc.what());
-      break;
-    }
+  bsky::moderation::emit_event_label_request request;
+  request.subject.did = did;
+  request.createdBy = _did;
+  request.event.createLabelVals = labels;
+  try {
+    bsky::moderation::emit_event_response response =
+        emit_event<bsky::moderation::emit_event_label_request>(request);
+    REL_INFO("Labeled {} as {} at {}", did, format_vector(labels),
+             response.createdAt);
+  } catch (std::exception const &exc) {
+    REL_ERROR("Label {} as {} error {}", did, format_vector(labels),
+              exc.what());
   }
 }
 
-std::vector<bsky::profile> client::get_profiles(std::vector<std::string> dids) {
-  std::vector<bsky::profile> profiles;
+void client::acknowledge_subject(
+    std::string const &did,
+    bsky::moderation::acknowledge_event_comment const &comment,
+    std::string const &path) {
+  std::ostringstream oss;
+  restc_cpp::SerializeToJson(comment, oss);
+  if (_dry_run) {
+    REL_INFO("Dry-run acknowledge of subject {}/{} reason {}", did, path,
+             oss.str());
+    return;
+  }
+  if (comment.context.empty()) {
+    REL_ERROR("Acknowledge of moderation subject must have comment context");
+    return;
+  }
+  if (!path.empty()) {
+    REL_WARNING(
+        "Acknowledge of moderation subject for content not yet supported");
+    return;
+  }
+  try {
+    // TODO use a variant to branch for account/content
+    bsky::moderation::emit_event_acknowledge_request request;
+    request.subject.did = did;
+    request.createdBy = _did;
+    request.event.comment = oss.str();
+
+    bsky::moderation::emit_event_response response = emit_event(request);
+    REL_INFO("Acknowledge OK: subject {}/{} reason {} at {}", did, path,
+             oss.str(), response.createdAt);
+  } catch (std::exception const &exc) {
+    REL_ERROR("Acknowledge error: subject {}/{} reason {} error {}", did, path,
+              oss.str(), exc.what());
+  }
+}
+
+std::unordered_set<bsky::profile_view_detailed>
+client::get_profiles(std::vector<std::string> const &dids) {
+  std::unordered_set<bsky::profile_view_detailed> profiles;
   profiles.reserve(dids.size());
   size_t next(0);
   std::vector<std::string> batch;
   batch.reserve(bsky::GetProfilesMax);
   bsky::client::get_callback_t callback =
       [&](restc_cpp::RequestBuilder &builder) {
-        // builder.argument
+        for (auto &actor : batch) {
+          builder.Argument("actors[]", actor);
+        }
       };
   for (std::string const &did : dids) {
     batch.emplace_back(did);
@@ -266,9 +275,24 @@ std::vector<bsky::profile> client::get_profiles(std::vector<std::string> dids) {
       bsky::get_profiles_response response =
           do_get<bsky::get_profiles_response>("app.bsky.actor.getProfiles",
                                               callback);
+      REL_INFO("getProfiles request for {} returned {}", batch.size(),
+               response.profiles.size());
+      batch.clear();
+      profiles.insert_range(response.profiles);
     }
   }
+  REL_INFO("get_profiles request for {} returned {}", dids.size(),
+           profiles.size());
   return profiles;
+}
+
+bsky::profile_view_detailed client::get_profile(std::string const &did) {
+  bsky::client::get_callback_t callback =
+      [&](restc_cpp::RequestBuilder &builder) {
+        builder.Argument("actor", did);
+      };
+  return do_get<bsky::profile_view_detailed>("app.bsky.actor.getProfile",
+                                             callback);
 }
 
 } // namespace bsky

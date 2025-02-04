@@ -50,17 +50,6 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::blocks_moderation_info,
                           (std::string, descriptor))
 
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
-                          (std::vector<std::string>, createLabelVals),
-                          (std::vector<std::string>, negateLabelVals))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
-                          (bsky::moderation::label_event, event),
-                          (bsky::moderation::report_subject, subject),
-                          (std::string, createdBy))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_response,
-                          (std::string, createdAt), (int64_t, id),
-                          (std::string, createdBy))
-
 namespace bsky {
 namespace moderation {
 

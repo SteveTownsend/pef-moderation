@@ -25,11 +25,6 @@ http://www.fsf.org/licensing/licenses
 #include <functional>
 #include <unordered_set>
 
-// app.bsky.actor.getProfiles
-BOOST_FUSION_ADAPT_STRUCT(bsky::profile, (std::string, did))
-BOOST_FUSION_ADAPT_STRUCT(bsky::get_profiles_response,
-                          (std::vector<bsky::profile>, profiles))
-
 namespace bsky {
 namespace moderation {
 
@@ -107,11 +102,19 @@ void ozone_adapter::load_pending_reports() {
         account_list = _pending_reports.insert({did, {}}).first;
         REL_INFO("{} recorded", did);
       }
+      // explicitly record the absence of a reported account as well as each
+      // reported post
       if (!record_path.empty()) {
         if (account_list->second.insert(record_path).second) {
-          REL_INFO("{} {} recorded");
+          REL_INFO("{} {} recorded", did, record_path);
         } else {
-          REL_INFO("{} {} duplicate");
+          REL_INFO("{} {} duplicate", did, record_path);
+        }
+      } else {
+        if (account_list->second.insert(did).second) {
+          REL_INFO("{} recorded", did);
+        } else {
+          REL_INFO("{} duplicate", did);
         }
       }
     }

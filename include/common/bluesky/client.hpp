@@ -32,16 +32,17 @@ http://www.fsf.org/licensing/licenses
 #include "restc-cpp/SerializeJson.h"
 #include "yaml-cpp/yaml.h"
 #include <thread>
+#include <unordered_set>
 
 namespace bsky {
 struct empty {};
 
-struct profile {
+struct profile_view_detailed {
   // all we need right now
   std::string did;
 };
 struct get_profiles_response {
-  std::vector<profile> profiles;
+  std::vector<profile_view_detailed> profiles;
 };
 
 namespace moderation {
@@ -75,7 +76,26 @@ struct emit_event_label_request {
   report_subject subject;
   std::string createdBy;
 };
-struct emit_event_label_response {
+struct acknowledge_event_comment {
+  acknowledge_event_comment() = delete;
+  inline acknowledge_event_comment(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
+  std::string context;
+  std::string did;
+  std::string path;
+};
+struct acknowledge_event {
+  std::string _type = std::string(bsky::moderation::EventAcknowledge);
+  std::string comment;
+  bool acknowledgeAccountSubjects = false;
+};
+struct emit_event_acknowledge_request {
+  acknowledge_event event;
+  report_subject subject;
+  std::string createdBy;
+};
+struct emit_event_response {
   // ignore other fields
   std::string createdAt;
   int64_t id;
@@ -108,6 +128,10 @@ public:
 
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
+  void acknowledge_subject(
+      std::string const &did,
+      bsky::moderation::acknowledge_event_comment const &comment,
+      std::string const &path = {});
 
   template <typename RECORD>
   atproto::create_record_response create_record(RECORD const &record) {
@@ -534,9 +558,83 @@ public:
     return response;
   }
 
-  std::vector<bsky::profile> get_profiles(std::vector<std::string> dids);
+  std::unordered_set<bsky::profile_view_detailed>
+  get_profiles(std::vector<std::string> const &dids);
+  bsky::profile_view_detailed get_profile(std::string const &did);
 
 private:
+  template <typename EVENT_REQUEST>
+  bsky::moderation::emit_event_response
+  emit_event(EVENT_REQUEST const &request) {
+    restc_cpp::serialize_properties_t properties;
+    properties.name_mapping = &json::TypeFieldMapping;
+    properties.ignore_empty_fileds =
+        0; // negateLabelsVals is mandatory but unused
+    size_t retries(0);
+    bsky::moderation::emit_event_response response;
+    // Serialize the body only once
+    std::ostringstream body;
+    restc_cpp::SerializeToJson(request, body, properties);
+    while (retries < 5) {
+      try {
+        response =
+            _rest_client
+                ->ProcessWithPromiseT<bsky::moderation::emit_event_response>(
+                    [&](restc_cpp::Context &ctx) {
+                      // This is a co-routine, running in a worker-thread
+
+                      // Serialize it asynchronously. The asynchronously part
+                      // does not really matter here, but it may if you receive
+                      // huge data structures.
+                      restc_cpp::SerializeFromJson(
+                          response,
+
+                          // Construct a request to the server
+                          restc_cpp::RequestBuilder(ctx)
+                              .Post(_host + "tools.ozone.moderation.emitEvent")
+                              .Header("Content-Type", "application/json")
+                              .Header("Atproto-Accept-Labelers", _service_did)
+                              .Header(
+                                  "Atproto-Proxy",
+                                  _service_did +
+                                      std::string(atproto::ProxyLabelerSuffix))
+                              .Header("Authorization",
+                                      std::string("Bearer " +
+                                                  _session->access_token()))
+                              .Data(body.str())
+                              // Send the request
+                              .Execute());
+
+                      // Return the session instance through C++ future<>
+                      return response;
+                    })
+
+                // Get the Post instance from the future<>, or any C++ exception
+                // thrown within the lambda.
+                .get();
+        REL_INFO("emit-event {} recorded at {}, reporter "
+                 "{} id={}",
+                 body.str(), response.createdAt, response.createdBy,
+                 response.id);
+        break;
+      } catch (boost::system::system_error const &exc) {
+        if (exc.code().value() == boost::asio::error::eof &&
+            exc.code().category() == boost::asio::error::get_misc_category()) {
+          REL_WARNING("IoReaderImpl::ReadSome(emitEvent): asio eof, retry");
+          ++retries;
+        } else {
+          // unrecoverable error
+          REL_ERROR("emitEvent {} Boost exception {}", body.str(), exc.what());
+          throw;
+        }
+      } catch (std::exception const &exc) {
+        REL_ERROR("emitEvent {} exception {}", body.str(), exc.what());
+        throw;
+      }
+    }
+    return response;
+  }
+
   std::unique_ptr<restc_cpp::RestClient> _rest_client;
   std::unique_ptr<pds_session> _session;
 
@@ -552,10 +650,22 @@ private:
 };
 
 template <>
-inline std::string
-as_string<bsky::empty>(bsky::empty const &,
-                       restc_cpp::serialize_properties_t properties) {
+inline std::string as_string<bsky::empty>(bsky::empty const &,
+                                          restc_cpp::serialize_properties_t) {
   return {};
 }
 
 } // namespace bsky
+namespace std {
+template <> struct equal_to<bsky::profile_view_detailed> {
+  inline bool operator()(bsky::profile_view_detailed const &lhs,
+                         bsky::profile_view_detailed const &rhs) const {
+    return lhs.did == rhs.did;
+  }
+};
+template <> struct hash<bsky::profile_view_detailed> {
+  inline size_t operator()(bsky::profile_view_detailed const &profile) const {
+    return std::hash<std::string>()(profile.did);
+  }
+};
+} // namespace std
