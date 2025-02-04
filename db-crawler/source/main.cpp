@@ -111,9 +111,9 @@ int main(int argc, char **argv) {
     std::vector<std::string> candidate_profiles;
     candidate_profiles.reserve(pending.size());
 #ifdef __GNUC__
-    candidate_profiles.insert_range(candidate_profiles.end(),
-                                    std::views::keys(pending).cbegin(),
-                                    std::views::keys(pending).cend());
+    candidate_profiles.insert(candidate_profiles.end(),
+                              std::views::keys(pending).cbegin(),
+                              std::views::keys(pending).cend());
 #else
     candidate_profiles.insert_range(candidate_profiles.end(),
                                     std::views::keys(pending));
