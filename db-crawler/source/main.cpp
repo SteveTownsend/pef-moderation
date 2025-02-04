@@ -22,8 +22,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
+#include "common/moderation/ozone_adapter.hpp"
 #include "project_defs.hpp"
-// #include "common/moderation/ozone_adapter.hpp"
 // #include "common/moderation/report_agent.hpp"
 #include "restc-cpp/logging.h"
 #include <chrono>
@@ -80,58 +80,18 @@ int main(int argc, char **argv) {
 #endif
     REL_INFO("db_crawler v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
-    // std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
-    //     std::make_shared<bsky::moderation::ozone_adapter>(
-    //         settings->build_db_connection_string("moderation_data"));
+    // auto-reporting metrics
+    metrics_factory::instance().add_counter(
+        "automation",
+        "Automated moderation activity: block-list, report, emit-event");
 
-    // seed database monitors before we start post-processing firehose
-    // messages
-    // moderation_data->start();
-
-    //     // wait for matcher and embed checker to be ready
-    //     do {
-    //       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //     } while (!matcher::shared().is_ready() ||
-    //              !bsky::moderation::embed_checker::instance().is_ready());
-
-    //     if (is_full(*settings)) {
-    //       datasource<firehose_payload>::instance().set_config(settings);
-    //       datasource<firehose_payload>::instance().start();
-
-    //       // prepare action handlers after we start processing firehose
-    //       messages
-    //       // this is time consuming - allow a backlog for handlers while
-    //       // existing members load
-    //       bsky::moderation::report_agent::instance().set_config(
-    //           settings->get_config()[PROJECT_NAME]["auto_reporter"]);
-    //       bsky::moderation::report_agent::instance().set_moderation_data(
-    //           moderation_data);
-    //       bsky::moderation::report_agent::instance().start();
-
-    //       action_router::instance().start();
-    // #if _DEBUG
-    //       //
-    //       std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
-    // #endif
-
-    //       bsky::moderation::embed_checker::instance().set_config(
-    //           settings->get_config()[PROJECT_NAME]["embed_checker"]);
-    //       bsky::moderation::embed_checker::instance().start();
-
-    //       list_manager::instance().set_config(
-    //           settings->get_config()[PROJECT_NAME]["list_manager"]);
-    //       list_manager::instance().set_moderation_data(moderation_data);
-    //       list_manager::instance().start();
-
-    //       // continue as long as firehose runs OK
-    //       datasource<firehose_payload>::instance().wait_for_end_thread();
-    //     } else {
-    //       datasource<jetstream_payload>::instance().set_config(settings);
-    //       datasource<jetstream_payload>::instance().start();
-
-    //       // continue as long as data feed runs OK
-    //       datasource<jetstream_payload>::instance().wait_for_end_thread();
-    //     }
+    // for Escalated or Open subjects, check that account and post are still
+    // present and if not, auto-acknowledge the subject
+    std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
+        std::make_shared<bsky::moderation::ozone_adapter>(
+            build_db_connection_string(
+                settings->get_config()[PROJECT_NAME]["moderation_data"]));
+    moderation_data->load_pending_reports();
 
     return EXIT_SUCCESS;
   } catch (std::exception const &exc) {

@@ -31,9 +31,13 @@ namespace moderation {
 
 class ozone_adapter {
 public:
+  typedef std::unordered_map<std::string, std::unordered_set<std::string>>
+      pending_reports;
   ozone_adapter(std::string const &connection_string);
   void start();
   bool already_processed(std::string const &did) const;
+  void load_pending_reports();
+  const pending_reports &get_pending_reports() { return _pending_reports; }
 
 private:
   void check_refresh_processed();
@@ -50,6 +54,7 @@ private:
   std::unordered_set<std::string> _labeled_accounts;
   std::chrono::steady_clock::time_point _last_refresh;
   std::unordered_set<std::string> _processed_accounts;
+  pending_reports _pending_reports;
   mutable std::mutex _lock;
 };
 
