@@ -278,7 +278,11 @@ client::get_profiles(std::vector<std::string> const &dids) {
       REL_INFO("getProfiles request for {} returned {}", batch.size(),
                response.profiles.size());
       batch.clear();
+#ifdef __GNUC__
+      profiles.insert(response.profiles.cbegin(), response.profiles.cend());
+#else
       profiles.insert_range(response.profiles);
+#endif
     }
   }
   REL_INFO("get_profiles request for {} returned {}", dids.size(),
