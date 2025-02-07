@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include <mutex>
 #include <pqxx/pqxx>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace bsky {
@@ -31,13 +32,28 @@ namespace moderation {
 
 class ozone_adapter {
 public:
-  typedef std::unordered_map<std::string, std::unordered_set<std::string>>
-      pending_reports;
   ozone_adapter(std::string const &connection_string);
   void start();
   bool already_processed(std::string const &did) const;
-  void load_pending_reports();
-  const pending_reports &get_pending_reports() { return _pending_reports; }
+  typedef std::unordered_map<
+      std::string, std::unordered_map<std::string, std::vector<std::string>>>
+      pending_report_tags;
+  void load_pending_report_tags();
+  inline const pending_report_tags &get_pending_reports() {
+    return _pending_report_tags;
+  }
+
+  // Stores reported content with a count of automated and manual reports
+  struct reports_by_category {
+    size_t manual = 0;
+    size_t automatic = 0;
+  };
+  typedef std::unordered_map<std::string, reports_by_category>
+      content_reporters;
+  void load_content_reporters(std::string const &auto_reporter);
+  inline const content_reporters &get_content_reporters() {
+    return _content_reporters;
+  }
 
 private:
   void check_refresh_processed();
@@ -54,7 +70,8 @@ private:
   std::unordered_set<std::string> _labeled_accounts;
   std::chrono::steady_clock::time_point _last_refresh;
   std::unordered_set<std::string> _processed_accounts;
-  pending_reports _pending_reports;
+  pending_report_tags _pending_report_tags;
+  content_reporters _content_reporters;
   mutable std::mutex _lock;
 };
 

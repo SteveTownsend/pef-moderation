@@ -52,6 +52,17 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_acknowledge_request,
                           (bsky::moderation::acknowledge_event, event),
                           (bsky::moderation::report_subject, subject),
                           (std::string, createdBy))
+// Tag
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::tag_event_comment,
+                          (std::string, descriptor))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::tag_event, (std::string, _type),
+                          (std::string, comment),
+                          (std::vector<std::string>, add),
+                          (std::vector<std::string>, remove))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_tag_request,
+                          (bsky::moderation::tag_event, event),
+                          (bsky::moderation::report_subject, subject),
+                          (std::string, createdBy))
 // Response
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_response,
                           (std::string, createdAt), (int64_t, id),
@@ -251,6 +262,40 @@ void client::acknowledge_subject(
   } catch (std::exception const &exc) {
     REL_ERROR("Acknowledge error: subject {}/{} reason {} error {}", did, path,
               oss.str(), exc.what());
+  }
+}
+
+void client::tag_report_subject(
+    std::string const &did, std::string const &path,
+    bsky::moderation::tag_event_comment const &comment,
+    std::vector<std::string> const &add_tags,
+    std::vector<std::string> const &remove_tags) {
+  std::ostringstream oss;
+  restc_cpp::SerializeToJson(comment, oss);
+  if (_dry_run) {
+    REL_INFO("Dry-run Tag of {} add: {} remove: {} comment: {}", did,
+             format_vector(add_tags), format_vector(remove_tags), oss.str());
+    return;
+  }
+  if (!path.empty()) {
+    REL_WARNING("Tag of moderation subject for content not yet supported");
+    return;
+  }
+  bsky::moderation::emit_event_tag_request request;
+  request.subject.did = did;
+  request.createdBy = _did;
+  request.event.add = add_tags;
+  request.event.remove = remove_tags;
+  try {
+    bsky::moderation::emit_event_response response =
+        emit_event<bsky::moderation::emit_event_tag_request>(request);
+    REL_INFO("Tagged {} add: {} remove: {} comment: {} at {}", did,
+             format_vector(add_tags), format_vector(remove_tags), oss.str(),
+             response.createdAt);
+  } catch (std::exception const &exc) {
+    REL_ERROR("Tagged {} add: {} remove: {} comment: {} error {}", did,
+              format_vector(add_tags), format_vector(remove_tags), oss.str(),
+              exc.what());
   }
 }
 

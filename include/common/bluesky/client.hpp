@@ -95,6 +95,24 @@ struct emit_event_acknowledge_request {
   report_subject subject;
   std::string createdBy;
 };
+struct tag_event_comment {
+  tag_event_comment() = delete;
+  inline tag_event_comment(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
+};
+struct tag_event {
+  std::string _type = std::string(bsky::moderation::EventTag);
+  std::string comment;
+  // both lists are mandatory
+  std::vector<std::string> add;
+  std::vector<std::string> remove;
+};
+struct emit_event_tag_request {
+  tag_event event;
+  report_subject subject;
+  std::string createdBy;
+};
 struct emit_event_response {
   // ignore other fields
   std::string createdAt;
@@ -132,6 +150,10 @@ public:
       std::string const &did,
       bsky::moderation::acknowledge_event_comment const &comment,
       std::string const &path = {});
+  void tag_report_subject(std::string const &did, std::string const &path,
+                          bsky::moderation::tag_event_comment const &comment,
+                          std::vector<std::string> const &add_tags,
+                          std::vector<std::string> const &remove_tags);
 
   template <typename RECORD>
   atproto::create_record_response create_record(RECORD const &record) {

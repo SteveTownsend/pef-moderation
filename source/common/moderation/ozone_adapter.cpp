@@ -85,7 +85,7 @@ void ozone_adapter::check_refresh_processed() {
   }
 }
 
-void ozone_adapter::load_pending_reports() {
+void ozone_adapter::load_pending_report_tags() {
   try {
     if (!_cx) {
       _cx = std::make_unique<pqxx::connection>(_connection_string);
@@ -93,29 +93,99 @@ void ozone_adapter::load_pending_reports() {
     // load the list of open/escalated reports
     std::unordered_set<std::string> deleted_accounts;
     pqxx::work tx(*_cx);
-    for (auto [did, record_path] : tx.query<std::string, std::string>(
-             "SELECT did, \"recordPath\" FROM moderation_subject_status WHERE "
-             "\"reviewState\" in ('tools.ozone.moderation.defs#reviewOpen', "
+    for (auto [did, record_path, json_tags] :
+         tx.query<std::string, std::string, std::optional<std::string>>(
+             "SELECT did, \"recordPath\", tags FROM "
+             "moderation_subject_status WHERE \"reviewState\""
+             " in ('tools.ozone.moderation.defs#reviewOpen', "
              "'tools.ozone.moderation.defs#reviewEscalated')")) {
-      auto account_list(_pending_reports.find(did));
-      if (account_list == _pending_reports.end()) {
-        account_list = _pending_reports.insert({did, {}}).first;
-        REL_INFO("{} recorded", did);
+      auto account_pending_reports(_pending_report_tags.find(did));
+      if (account_pending_reports == _pending_report_tags.end()) {
+        account_pending_reports = _pending_report_tags.insert({did, {}}).first;
+        REL_INFO("{} registered as pending", did);
       }
       // explicitly record the absence of a reported account as well as each
       // reported post
+      std::vector<std::string> tags;
+      if (json_tags.has_value() && !json_tags.value().empty()) {
+        try {
+          nlohmann::json parsed_tags(nlohmann::json::parse(json_tags.value()));
+          if (parsed_tags.is_array()) {
+            for (auto tag : parsed_tags) {
+              tags.push_back(tag);
+            }
+          }
+        } catch (std::exception const &exc) {
+          REL_ERROR("({}) ({}) error on tags {}", did, record_path,
+                    json_tags.value());
+        }
+      }
       if (!record_path.empty()) {
-        if (account_list->second.insert(record_path).second) {
-          REL_INFO("{} {} recorded", did, record_path);
+        if (account_pending_reports->second.insert({record_path, tags})
+                .second) {
+          REL_INFO("{} {} pending with tags {}", did, record_path,
+                   json_tags.value_or(""));
         } else {
-          REL_INFO("{} {} duplicate", did, record_path);
+          REL_INFO("{} {} pending duplicate", did, record_path);
         }
       } else {
-        if (account_list->second.insert(did).second) {
-          REL_INFO("{} recorded", did);
+        if (account_pending_reports->second.insert({did, tags}).second) {
+          REL_INFO("{} pending with tags {}", did, json_tags.value_or(""));
         } else {
-          REL_INFO("{} duplicate", did);
+          REL_INFO("{} pending duplicate", did);
         }
+      }
+    }
+  } catch (pqxx::broken_connection const &exc) {
+    // will reconnect on net loop
+    REL_ERROR("pqxx::broken_connection {}", exc.what());
+    _cx.reset();
+  } catch (std::exception const &exc) {
+    // try to reconnect on next loop, unlikely to work though
+    REL_ERROR("database exception {}", exc.what());
+    _cx.reset();
+  }
+}
+
+void ozone_adapter::load_content_reporters(std::string const &auto_reporter) {
+  try {
+    if (!_cx) {
+      _cx = std::make_unique<pqxx::connection>(_connection_string);
+    }
+    // load the list of open/escalated reports
+    pqxx::work tx(*_cx);
+    // default target is DID
+    for (auto [target, full_path, reporter, reason] :
+         tx.query<std::string, std::optional<std::string>, std::string,
+                  std::optional<std::string>>(
+             "SELECT \"subjectDid\", \"subjectUri\", \"createdBy\","
+             " \"comment\" FROM public.moderation_event"
+             " WHERE action = 'tools.ozone.moderation.defs#modEventReport' "
+             "  AND meta->>'reportType' <> "
+             "'com.atproto.moderation.defs#reasonAppeal';")) {
+      if (full_path.has_value() && !full_path.value().empty()) {
+        target = full_path.value();
+      }
+      auto subject_reports(_content_reporters.find(target));
+      if (subject_reports == _content_reporters.end()) {
+        subject_reports = _content_reporters.insert({target, {}}).first;
+        REL_INFO("{} registered as reported", target);
+      }
+      bool is_auto(false);
+      if (reason.has_value()) {
+        try {
+          nlohmann::json parsed_reason(nlohmann::json::parse(reason.value()));
+          is_auto = parsed_reason.contains("descriptor") &&
+                    parsed_reason["descriptor"].template get<std::string>() ==
+                        auto_reporter;
+        } catch (std::exception &) {
+          // must be a manual report
+        }
+      }
+      if (is_auto) {
+        ++subject_reports->second.automatic;
+      } else {
+        ++subject_reports->second.manual;
       }
     }
   } catch (pqxx::broken_connection const &exc) {
