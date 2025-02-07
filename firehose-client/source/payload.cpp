@@ -179,6 +179,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
                  message["time"].template get<std::string>()),
              activity::handle(handle)});
       }
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
     } else if (op_type == firehose::OpTypeAccount) {
       repo = message["did"].template get<std::string>();
       bool active(message["active"].template get<bool>());
@@ -208,6 +209,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
                  message["time"].template get<std::string>()),
              activity::inactive(bsky::down_reason::unknown)});
       }
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
     } else if (op_type == firehose::OpTypeTombstone) {
       repo = message["did"].template get<std::string>();
       processor.request_recording(
@@ -215,6 +217,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
            bsky::time_stamp_from_iso_8601(
                message["time"].template get<std::string>()),
            activity::inactive(bsky::down_reason::tombstone)});
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
     } else if (op_type == firehose::OpTypeMigrate ||
                op_type == firehose::OpTypeInfo) {
       // no-op

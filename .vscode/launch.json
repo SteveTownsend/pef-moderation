@@ -1,0 +1,190 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "firehose Client Tests (Debug)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-msvc/firehose-client/test/firehose_client_tests.exe",
+            "args": [
+                "--gtest_filter=*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/debug-msvc/firehose-client/test",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "firehose Client Tests (Logging)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-msvc/firehose-client/test/firehose_client_tests.exe",
+            "args": [
+                "--gtest_filter=*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/logging-msvc/firehose-client/test",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Jetstream Client (Debug)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-msvc/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/live_config.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Firehose Client (Debug)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-msvc/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/full_config_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Jetstream Client (Release)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/release-msvc/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/live_config.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Firehose Client (Release)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/release-msvc/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/full_config_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Firehose Client (Logging)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-msvc/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/full_config_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Jetstream Client (Logging)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/firehose-client/firehose_client.exe",
+            "args": [
+                "./config/live_config.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Labeler Update (Debug)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-msvc/labeler-update/labeler_update.exe",
+            "args": [
+                "./config/labeler_update_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/labeler-update",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Labeler Update (Logging)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-msvc/labeler-update/labeler_update.exe",
+            "args": [
+                "./config/labeler_update_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/labeler-update",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Labeler Update (Release)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/release-msvc/labeler-update/labeler_update.exe",
+            "args": [
+                "./config/labeler_update_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/labeler-update",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "DB Crawler (Debug)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-msvc/db-crawler/db_crawler.exe",
+            "args": [
+                "./config/db_crawler_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/db-crawler",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "DB Crawler (Logging)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-msvc/db-crawler/db_crawler.exe",
+            "args": [
+                "./config/db_crawler_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/db-crawler",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "DB Crawler (Release)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/release-msvc/db-crawler/db_crawler.exe",
+            "args": [
+                "./config/db_crawler_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/db-crawler",
+            "environment": [],
+            "console": "externalTerminal"
+        }
+    ]
+}

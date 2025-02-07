@@ -102,11 +102,9 @@ int main(int argc, char **argv) {
         std::make_shared<bsky::moderation::ozone_adapter>(
             build_db_connection_string(
                 settings->get_config()[PROJECT_NAME]["moderation_data"]));
-    moderation_data->load_pending_reports();
+    moderation_data->load_pending_report_tags();
 
-    // Confirm validity of did and content on pending reports
-    // Confirmed in testing that auth and non-auth clients see the same response
-    // counts
+    // Load pending reports grouped by account
     auto pending(moderation_data->get_pending_reports());
     std::vector<std::string> candidate_profiles;
     candidate_profiles.reserve(pending.size());
@@ -118,45 +116,148 @@ int main(int argc, char **argv) {
     candidate_profiles.insert_range(candidate_profiles.end(),
                                     std::views::keys(pending));
 #endif
+    // get a list of the active profiles only
     auto active_profiles(appview_client.get_profiles(candidate_profiles));
-
-    // iterate a view of the pending reports that includes only *inactive*
-    // accounts
-    std::ranges::for_each(
-        candidate_profiles |
-            std::views::filter(
-                [&active_profiles](std::string const &candidate) {
-                  return !active_profiles.contains(
-                      bsky::profile_view_detailed(candidate));
-                }),
-        [&appview_client, &pending, &pds_client](std::string const &match) {
-          // double check account status before garbage collceting the reports
-          try {
-            bsky::profile_view_detailed profile(
-                appview_client.get_profile(match));
-            REL_ERROR("Skip deleted account {}, getProfile returned OK", match);
-          } catch (std::exception &exc) {
-            // expected to fail
-            REL_INFO("Scrub reports for deleted account {}", match);
-            auto to_scrub(pending.find(match));
-            if (to_scrub != pending.cend()) {
-              for (auto subject : to_scrub->second) {
-                std::ostringstream oss;
-                bsky::moderation::acknowledge_event_comment comment(
-                    PROJECT_NAME);
-                comment.context = exc.what();
-                comment.did = match;
-                if (subject == match) {
-                  // TODO reports of content not yet supported - move this when
-                  // they are
-                  pds_client.acknowledge_subject(match, comment);
-                } else {
-                  comment.path = subject;
+    constexpr bool default_execute(false);
+    if (settings
+            ->get_config()[PROJECT_NAME]["jobs"]["scrub_orphaned"]["execute"]
+            .as<bool>(default_execute)) {
+      // Confirm validity of did and content on pending reports
+      // Confirmed in testing that auth and non-auth clients see the same
+      // response counts
+      // Iterate a view of the pending reports that includes
+      // only *inactive* accounts
+      std::ranges::for_each(
+          candidate_profiles |
+              std::views::filter(
+                  [&active_profiles](std::string const &candidate) {
+                    return !active_profiles.contains(
+                        bsky::profile_view_detailed(candidate));
+                  }),
+          [&appview_client, &pending, &pds_client](std::string const &match) {
+            // double check account status before garbage collceting the reports
+            try {
+              bsky::profile_view_detailed profile(
+                  appview_client.get_profile(match));
+              REL_ERROR("Skip deleted account {}, getProfile returned OK",
+                        match);
+            } catch (std::exception &exc) {
+              // expected to fail
+              REL_INFO("Scrub reports for deleted account {}", match);
+              auto to_scrub(pending.find(match));
+              if (to_scrub != pending.cend()) {
+                for (auto subject : to_scrub->second) {
+                  std::ostringstream oss;
+                  bsky::moderation::acknowledge_event_comment comment(
+                      PROJECT_NAME);
+                  comment.context = exc.what();
+                  comment.did = match;
+                  if (subject.first == match) {
+                    // TODO reports of content not yet supported - move this
+                    // when they are
+                    pds_client.acknowledge_subject(match, comment);
+                  } else {
+                    comment.path = subject.first;
+                  }
                 }
               }
             }
+          });
+    }
+    if (settings
+            ->get_config()[PROJECT_NAME]["jobs"]["tag_manual_and_auto"]
+                          ["execute"]
+            .as<bool>(default_execute)) {
+      // we need moderation events of type report to correlate with the subject
+      std::string automatic_reporter(
+          settings
+              ->get_config()[PROJECT_NAME]["jobs"]["tag_manual_and_auto"]
+                            ["auto-reporter"]
+              .as<std::string>(""));
+      moderation_data->load_content_reporters(automatic_reporter);
+
+      // For active profiles pending review, tag them as manual/auto-reported if
+      // not already done
+      auto const &content_reporters(moderation_data->get_content_reporters());
+      size_t both(0);
+      size_t automatic(0);
+      size_t manual(0);
+      size_t removed_all(0);
+      size_t inactive(0);
+      size_t no_report(0);
+      size_t untouched(0);
+      for (auto &reported : content_reporters) {
+        // check report sources for this content item
+        bool has_auto(reported.second.automatic > 0);
+        bool has_manual(reported.second.manual > 0);
+        // TODO handle non-account reports - we might have an at-uri in hand
+        // here but the pending-subject list contains either DID or relative
+        // record_path
+        std::string subject_did(reported.first);
+        if (active_profiles.contains(
+                bsky::profile_view_detailed(subject_did))) {
+          auto subject(pending.find(subject_did));
+          if (subject != pending.cend()) {
+            // 'subject' points to a list of reported content for the account
+            // and the tags for  each item
+            // we only handle accounts so check for reports on DID
+            auto account_reports(subject->second.find(subject_did));
+            if (account_reports != subject->second.cend()) {
+              std::vector<std::string> current_tags(account_reports->second);
+              std::vector<std::string> add_tags;
+              std::vector<std::string> remove_tags;
+              if (has_auto && has_manual &&
+                  !subject->second.contains("src:both")) {
+                add_tags.push_back("src:both");
+              } else if (has_auto && !subject->second.contains("src:auto")) {
+                add_tags.push_back("src:auto");
+              } else if (has_manual &&
+                         !subject->second.contains("src:manual")) {
+                add_tags.push_back("src:manual");
+              }
+              if (!(has_auto && has_manual) &&
+                  subject->second.contains("src:both")) {
+                remove_tags.push_back("src:both");
+              } else if (!has_auto && subject->second.contains("src:auto")) {
+                remove_tags.push_back("src:auto");
+              } else if (!has_manual &&
+                         subject->second.contains("src:manual")) {
+                remove_tags.push_back("src:manual");
+              }
+              if (!add_tags.empty() || !remove_tags.empty()) {
+                // Record the tags on the Ozone server
+                bsky::moderation::tag_event_comment comment(PROJECT_NAME);
+                pds_client.tag_report_subject(subject_did, {}, comment,
+                                              add_tags, remove_tags);
+                if (has_manual && has_auto) {
+                  ++both;
+                } else if (has_manual) {
+                  ++manual;
+                } else if (has_auto) {
+                  ++automatic;
+                } else {
+                  ++removed_all;
+                }
+              } else {
+                REL_WARNING("Account {} report needs no Tags", subject_did);
+                ++untouched;
+              }
+            } else {
+              REL_WARNING("Account {} has no active report", subject_did);
+              ++no_report;
+            }
+          } else {
+            REL_WARNING("Account {} is inactive", subject_did);
+            ++inactive;
           }
-        });
+        }
+      }
+      REL_INFO("Manual/auto tag updated : {} manual, {} auto, {} both, {} none",
+               manual, automatic, both, removed_all);
+      REL_INFO("Manual/auto tag no update: {} inactive, {} no report, {} "
+               "untouched",
+               inactive, no_report, untouched);
+    }
 
     return EXIT_SUCCESS;
   } catch (std::exception const &exc) {
