@@ -25,7 +25,8 @@ http://www.fsf.org/licensing/licenses
 #include <functional>
 
 // app.bsky.actor.getProfiles
-BOOST_FUSION_ADAPT_STRUCT(bsky::profile_view_detailed, (std::string, did))
+BOOST_FUSION_ADAPT_STRUCT(bsky::profile_view_detailed, (std::string, did),
+                          (std::string, handle))
 BOOST_FUSION_ADAPT_STRUCT(bsky::get_profiles_response,
                           (std::vector<bsky::profile_view_detailed>, profiles))
 

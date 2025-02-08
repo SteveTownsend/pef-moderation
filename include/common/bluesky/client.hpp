@@ -40,6 +40,7 @@ struct empty {};
 struct profile_view_detailed {
   // all we need right now
   std::string did;
+  std::string handle;
 };
 struct get_profiles_response {
   std::vector<profile_view_detailed> profiles;

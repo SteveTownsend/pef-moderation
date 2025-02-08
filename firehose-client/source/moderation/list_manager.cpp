@@ -213,8 +213,9 @@ list_manager::load_or_create_list(std::string const &list_name) {
     atproto::create_record_list_request request;
     request.repo = _client_did;
     request.record.name = list_name;
-    // for rule enforcement
-    request.record.description = block_reasons(list_name);
+    // for rule enforcement - truncate description if too long
+    request.record.description =
+        block_reasons(list_name).substr(0, bsky::GraphListDescriptionLimit);
     atproto::create_record_response response =
         _client->do_post<atproto::create_record_list_request,
                          atproto::create_record_response>(
