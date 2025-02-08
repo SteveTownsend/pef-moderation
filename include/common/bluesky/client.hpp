@@ -159,9 +159,10 @@ public:
 
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
-  void add_comment_for_account(
+  void add_comment_for_subject(
       std::string const &did,
-      bsky::moderation::comment_event_comment const &comment);
+      bsky::moderation::comment_event_comment const &comment,
+      std::string const &path);
   void acknowledge_subject(
       std::string const &did,
       bsky::moderation::acknowledge_event_comment const &comment,

@@ -240,18 +240,23 @@ void client::label_account(std::string const &did,
   }
 }
 
-void client::add_comment_for_account(
+void client::add_comment_for_subject(
     std::string const &did,
-    bsky::moderation::comment_event_comment const &comment) {
+    bsky::moderation::comment_event_comment const &comment,
+    std::string const &path) {
   std::ostringstream oss;
   restc_cpp::SerializeToJson(comment, oss);
   if (_dry_run) {
-    REL_INFO("Dry-run Comment of {} for {}", did, oss.str());
+    REL_INFO("Dry-run Comment on {} for {}", did, oss.str());
     return;
   }
   if (comment.context.empty()) {
-    REL_ERROR("Comment of moderation subject must have context in {}",
+    REL_ERROR("Comment on moderation subject must have context in {}",
               oss.str());
+    return;
+  }
+  if (!path.empty()) {
+    REL_WARNING("Comment on moderation subject for content not yet supported");
     return;
   }
   bsky::moderation::emit_event_comment_request request;

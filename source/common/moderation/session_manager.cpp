@@ -56,7 +56,7 @@ void pds_session::check_refresh() {
       static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count())) {
     REL_INFO("Refresh access token,expiry in {} ms", time_to_expiry);
     bsky::empty empty_body;
-    _tokens = _client.do_post<bsky::empty, bsky::session_tokens>(
+    _tokens = _client.do_post<bsky::empty, bsky::session_tokens, true, true>(
         "com.atproto.server.refreshSession", empty_body,
         restc_cpp::serialize_properties_t());
     // assumes refresh and access JWTs have expiry, we are out of luck
