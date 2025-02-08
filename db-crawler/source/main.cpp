@@ -270,7 +270,9 @@ int main(int argc, char **argv) {
       moderation_data->filter_subjects(
           ack_settings["filter"].as<std::string>());
       auto targets(moderation_data->get_filtered_subjects());
-      for (auto const &subject : targets) {
+      for (auto const &subject_entry : targets) {
+        std::string subject(subject_entry.first);
+        std::string reason(subject_entry.second);
         auto active_profile(
             active_profiles.find(bsky::profile_view_detailed(subject)));
         if (active_profile != active_profiles.cend()) {
@@ -297,10 +299,12 @@ int main(int argc, char **argv) {
     auto label_settings(
         settings->get_config()[PROJECT_NAME]["jobs"]["label_all_in_query"]);
     if (label_settings["execute"].as<bool>(default_execute)) {
-      moderation_data->filter_subjects(
-          label_settings["filter"].as<std::string>());
+      std::string filter(label_settings["filter"].as<std::string>());
+      moderation_data->filter_subjects(filter);
       auto targets(moderation_data->get_filtered_subjects());
-      for (auto const &subject : targets) {
+      for (auto const &subject_entry : targets) {
+        std::string subject(subject_entry.first);
+        std::string reason(subject_entry.second);
         auto active_profile(
             active_profiles.find(bsky::profile_view_detailed(subject)));
         if (active_profile != active_profiles.cend()) {
@@ -311,7 +315,14 @@ int main(int argc, char **argv) {
             pds_client.label_account(
                 subject,
                 label_settings["labels"].as<std::vector<std::string>>());
+
+            // Acknowledge the report to close out workflow
+            bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
+            comment.context = filter + "\n" + reason;
+            comment.did = pds_client.service_did();
+            pds_client.acknowledge_subject(subject, comment);
           } else {
+            // Acknowledge report to get it out of the queue
             REL_INFO("Label: {}/{} has no active reports", subject,
                      active_profile->handle);
           }

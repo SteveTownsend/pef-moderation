@@ -121,6 +121,7 @@ public:
   void label_account(std::string const &subject_did,
                      std::vector<std::string> const &labels);
   std::string service_did() const { return _service_did; }
+  std::string project_name() const { return _project_name; }
 
 private:
   report_agent();

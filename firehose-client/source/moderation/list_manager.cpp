@@ -218,7 +218,7 @@ list_manager::load_or_create_list(std::string const &list_name) {
         block_reasons(list_name).substr(0, bsky::GraphListDescriptionLimit);
     atproto::create_record_response response =
         _client->do_post<atproto::create_record_list_request,
-                         atproto::create_record_response>(
+                         atproto::create_record_response, true, false>(
             "com.atproto.repo.createRecord", request);
     // List was created, is empty, and is ready for use
     return list_uri;

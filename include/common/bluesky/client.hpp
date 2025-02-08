@@ -114,6 +114,24 @@ struct emit_event_tag_request {
   report_subject subject;
   std::string createdBy;
 };
+struct comment_event_comment {
+  comment_event_comment() = delete;
+  inline comment_event_comment(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
+  std::string context;
+  std::string reason;
+};
+struct comment_event {
+  std::string _type = std::string(bsky::moderation::EventComment);
+  std::string comment;
+};
+
+struct emit_event_comment_request {
+  comment_event event;
+  report_subject subject;
+  std::string createdBy;
+};
 struct emit_event_response {
   // ignore other fields
   std::string createdAt;
@@ -141,6 +159,9 @@ public:
 
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
+  void add_comment_for_account(
+      std::string const &did,
+      bsky::moderation::comment_event_comment const &comment);
   void acknowledge_subject(
       std::string const &did,
       bsky::moderation::acknowledge_event_comment const &comment,
@@ -187,8 +208,8 @@ public:
                       return response;
                     })
 
-                // Get the Post instance from the future<>, or any C++ exception
-                // thrown within the lambda.
+                // Get the Post instance from the future<>, or any C++
+                // exception thrown within the lambda.
                 .get();
         REL_INFO("createRecord for {} yielded uri {}", record_str,
                  response.uri);
@@ -372,9 +393,9 @@ public:
                     [&](restc_cpp::Context &ctx) {
                       // This is a co-routine, running in a worker-thread
 
-                      // Serialize it asynchronously. The asynchronously part
-                      // does not really matter here, but it may if you receive
-                      // huge data structures.
+                      // Serialize it asynchronously. The asynchronously
+                      // part does not really matter here, but it may if you
+                      // receive huge data structures.
                       restc_cpp::SerializeFromJson(
                           response,
 
@@ -399,8 +420,8 @@ public:
                       return response;
                     })
 
-                // Get the Post instance from the future<>, or any C++ exception
-                // thrown within the lambda.
+                // Get the Post instance from the future<>, or any C++
+                // exception thrown within the lambda.
                 .get();
         REL_INFO("Report of {} {} recorded at {}, reporter "
                  "{} id={}",
@@ -507,11 +528,11 @@ public:
   std::string raw_post(std::string const &relative_path,
                        const std::string &&body = std::string());
 
-  template <typename BODY, typename RESPONSE>
+  template <typename BODY, typename RESPONSE, bool use_refresh = false,
+            bool no_log = false>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
                    restc_cpp::serialize_properties_t properties =
-                       restc_cpp::serialize_properties_t(),
-                   const bool use_refresh = false) {
+                       restc_cpp::serialize_properties_t()) {
     RESPONSE response;
     // invariant, others can  be overridden by caller
     properties.name_mapping = &json::TypeFieldMapping;
@@ -536,10 +557,16 @@ public:
                   if (!body_str.empty()) {
                     builder.Data(body_str);
                   }
+                  if (no_log) {
+                    REL_INFO("Do POST for {}, body hidden", relative_path);
+                  } else {
+                    REL_INFO("Do POST for {}, body '{}'", relative_path,
+                             body_str);
+                  }
 
-                  // Serialize it asynchronously. The asynchronously part
-                  // does not really matter here, but it may if you receive
-                  // huge data structures.
+                  // Serialize it asynchronously. The asynchronously
+                  // part does not really matter here, but it may if you
+                  // receive huge data structures.
                   restc_cpp::SerializeFromJson(
                       response,
                       // Send the request
@@ -553,8 +580,12 @@ public:
                 // Get the Post instance from the future<>, or any C++
                 // exception thrown within the lambda.
                 .get();
-        REL_INFO("POST for {} returned '{}'", relative_path,
-                 bsky::as_string<RESPONSE>(response));
+        if (no_log) {
+          REL_INFO("POST for {} returned OK, result hidden", relative_path);
+        } else {
+          REL_INFO("POST for {} returned '{}'", relative_path,
+                   bsky::as_string<RESPONSE>(response));
+        }
         break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
@@ -603,9 +634,9 @@ private:
                     [&](restc_cpp::Context &ctx) {
                       // This is a co-routine, running in a worker-thread
 
-                      // Serialize it asynchronously. The asynchronously part
-                      // does not really matter here, but it may if you receive
-                      // huge data structures.
+                      // Serialize it asynchronously. The asynchronously
+                      // part does not really matter here, but it may if you
+                      // receive huge data structures.
                       restc_cpp::SerializeFromJson(
                           response,
 
@@ -629,8 +660,8 @@ private:
                       return response;
                     })
 
-                // Get the Post instance from the future<>, or any C++ exception
-                // thrown within the lambda.
+                // Get the Post instance from the future<>, or any C++
+                // exception thrown within the lambda.
                 .get();
         REL_INFO("emit-event {} recorded at {}, reporter "
                  "{} id={}",
