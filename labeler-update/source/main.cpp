@@ -217,13 +217,14 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
       }
       bsky::moderation::labeler_update_signed signed_update(
-          pds_client.do_post<bsky::moderation::labeler_update,
-                             bsky::moderation::labeler_update_signed>(
-              "com.atproto.identity.signPlcOperation", update));
-      bsky::empty ignored(
           pds_client
-              .do_post<bsky::moderation::labeler_update_signed, bsky::empty>(
-                  "com.atproto.identity.submitPlcOperation", signed_update));
+              .do_post<bsky::moderation::labeler_update,
+                       bsky::moderation::labeler_update_signed, true, true>(
+                  "com.atproto.identity.signPlcOperation", update));
+      bsky::empty ignored(
+          pds_client.do_post<bsky::moderation::labeler_update_signed,
+                             bsky::empty, true, true>(
+              "com.atproto.identity.submitPlcOperation", signed_update));
     }
 
     return EXIT_SUCCESS;

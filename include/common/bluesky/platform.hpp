@@ -65,6 +65,8 @@ constexpr std::string_view EventLabel =
 constexpr std::string_view EventAcknowledge =
     "tools.ozone.moderation.defs#modEventAcknowledge";
 constexpr std::string_view EventTag = "tools.ozone.moderation.defs#modEventTag";
+constexpr std::string_view EventComment =
+    "tools.ozone.moderation.defs#modEventComment";
 } // namespace moderation
 
 constexpr std::string_view DownReasonDeactivated = "deactivated";

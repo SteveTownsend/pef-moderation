@@ -219,10 +219,14 @@ void ozone_adapter::filter_subjects(std::string const &filter) {
       if (full_path.has_value() && !full_path.value().empty()) {
         target = full_path.value();
       }
-      if (_filtered_subjects.insert(target).second) {
-        REL_INFO("{} matched filter", target);
+      auto subject_entry(_filtered_subjects.insert(
+          std::make_pair(target, reason.value_or(""))));
+      if (subject_entry.second) {
+        REL_INFO("{} matched context {}", target, reason.value_or(""));
       } else {
-        REL_INFO("{} duplicate match", target);
+        REL_INFO("{} duplicate match context {}", target, reason.value_or(""));
+        subject_entry.first->second.append("\n");
+        subject_entry.first->second.append(reason.value_or(""));
       }
     }
   } catch (pqxx::broken_connection const &exc) {

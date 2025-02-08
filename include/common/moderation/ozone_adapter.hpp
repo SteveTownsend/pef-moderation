@@ -55,7 +55,7 @@ public:
     return _content_reporters;
   }
 
-  typedef std::unordered_set<std::string> filtered_subjects;
+  typedef std::unordered_map<std::string, std::string> filtered_subjects;
   void filter_subjects(std::string const &filter);
   inline const filtered_subjects &get_filtered_subjects() {
     return _filtered_subjects;

@@ -38,6 +38,11 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
                           (std::string, createdAt), (int64_t, id),
                           (std::string, reportedBy))
 
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_matches,
+                          (std::vector<std::string>, _filters),
+                          (std::vector<std::string>, _paths),
+                          (std::vector<std::string>, _labels))
+
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
                           (std::string,
                            descriptor)(std::vector<std::string>,
@@ -153,6 +158,14 @@ void report_content_visitor::operator()(filter_matches const &value) {
   if (!value._labels.empty()) {
     // auto-label request augments the report
     _agent.label_account(_did, value._labels);
+    // Acknowledge the report to close out workflow
+    bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
+    std::ostringstream oss;
+    restc_cpp::serialize_properties_t properties;
+    properties.ignore_empty_fileds = true;
+    restc_cpp::SerializeToJson(value, oss);
+    comment.context = "filter_matches: " + oss.str();
+    comment.did = _agent.service_did();
   }
 }
 void report_content_visitor::operator()(link_redirection const &value) {
@@ -162,6 +175,10 @@ void report_content_visitor::operator()(blocks_moderation const &value) {
   _agent.blocks_moderation_report(_did);
   // auto-label request augments the report
   _agent.label_account(_did, {"blocks"});
+  // Acknowledge the report to close out workflow
+  bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
+  comment.context = "blocks_moderation_service";
+  comment.did = _agent.service_did();
 }
 } // namespace moderation
 } // namespace bsky

@@ -64,6 +64,16 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_tag_request,
                           (bsky::moderation::tag_event, event),
                           (bsky::moderation::report_subject, subject),
                           (std::string, createdBy))
+// Comment
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::comment_event_comment,
+                          (std::string, descriptor), (std::string, context),
+                          (std::string, reason))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::comment_event, (std::string, _type),
+                          (std::string, comment))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_comment_request,
+                          (bsky::moderation::comment_event, event),
+                          (bsky::moderation::report_subject, subject),
+                          (std::string, createdBy))
 // Response
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_response,
                           (std::string, createdAt), (int64_t, id),
@@ -230,6 +240,38 @@ void client::label_account(std::string const &did,
   }
 }
 
+void client::add_comment_for_subject(
+    std::string const &did,
+    bsky::moderation::comment_event_comment const &comment,
+    std::string const &path) {
+  std::ostringstream oss;
+  restc_cpp::SerializeToJson(comment, oss);
+  if (_dry_run) {
+    REL_INFO("Dry-run Comment on {} for {}", did, oss.str());
+    return;
+  }
+  if (comment.context.empty()) {
+    REL_ERROR("Comment on moderation subject must have context in {}",
+              oss.str());
+    return;
+  }
+  if (!path.empty()) {
+    REL_WARNING("Comment on moderation subject for content not yet supported");
+    return;
+  }
+  bsky::moderation::emit_event_comment_request request;
+  request.subject.did = did;
+  request.createdBy = _did;
+  request.event.comment = oss.str();
+  try {
+    bsky::moderation::emit_event_response response =
+        emit_event<bsky::moderation::emit_event_comment_request>(request);
+    REL_INFO("Comment {} with {}", did, oss.str(), response.createdAt);
+  } catch (std::exception const &exc) {
+    REL_ERROR("Comment {} with {} error {}", did, oss.str(), exc.what());
+  }
+}
+
 void client::acknowledge_subject(
     std::string const &did,
     bsky::moderation::acknowledge_event_comment const &comment,
@@ -242,7 +284,9 @@ void client::acknowledge_subject(
     return;
   }
   if (comment.context.empty()) {
-    REL_ERROR("Acknowledge of moderation subject must have comment context");
+    REL_ERROR(
+        "Acknowledge of moderation subject must have comment context in {}",
+        oss.str());
     return;
   }
   if (!path.empty()) {
