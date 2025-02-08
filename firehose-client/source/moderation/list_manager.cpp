@@ -146,8 +146,6 @@ void list_manager::start(YAML::Node const &settings) {
           // -> 7.406 seconds
           std::this_thread::sleep_for(std::chrono::milliseconds(7000));
         }
-        // check session status
-        _client->check_session();
       }
     } catch (std::exception const &exc) {
       REL_ERROR("list_manager exception {}", exc.what());
@@ -215,8 +213,9 @@ list_manager::load_or_create_list(std::string const &list_name) {
     atproto::create_record_list_request request;
     request.repo = _client_did;
     request.record.name = list_name;
-    // for rule enforcement
-    request.record.description = block_reasons(list_name);
+    // for rule enforcement - truncate description if too long
+    request.record.description =
+        block_reasons(list_name).substr(0, bsky::GraphListDescriptionLimit);
     atproto::create_record_response response =
         _client->do_post<atproto::create_record_list_request,
                          atproto::create_record_response>(

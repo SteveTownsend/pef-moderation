@@ -119,9 +119,9 @@ int main(int argc, char **argv) {
     // get a list of the active profiles only
     auto active_profiles(appview_client.get_profiles(candidate_profiles));
     constexpr bool default_execute(false);
-    if (settings
-            ->get_config()[PROJECT_NAME]["jobs"]["scrub_orphaned"]["execute"]
-            .as<bool>(default_execute)) {
+    auto scrub_orphaned_settings(
+        settings->get_config()[PROJECT_NAME]["jobs"]["scrub_orphaned"]);
+    if (scrub_orphaned_settings["execute"].as<bool>(default_execute)) {
       // Confirm validity of did and content on pending reports
       // Confirmed in testing that auth and non-auth clients see the same
       // response counts
@@ -147,7 +147,6 @@ int main(int argc, char **argv) {
               auto to_scrub(pending.find(match));
               if (to_scrub != pending.cend()) {
                 for (auto subject : to_scrub->second) {
-                  std::ostringstream oss;
                   bsky::moderation::acknowledge_event_comment comment(
                       PROJECT_NAME);
                   comment.context = exc.what();
@@ -164,16 +163,13 @@ int main(int argc, char **argv) {
             }
           });
     }
-    if (settings
-            ->get_config()[PROJECT_NAME]["jobs"]["tag_manual_and_auto"]
-                          ["execute"]
-            .as<bool>(default_execute)) {
+
+    auto tag_source_settings(
+        settings->get_config()[PROJECT_NAME]["jobs"]["tag_manual_and_auto"]);
+    if (tag_source_settings["execute"].as<bool>(default_execute)) {
       // we need moderation events of type report to correlate with the subject
       std::string automatic_reporter(
-          settings
-              ->get_config()[PROJECT_NAME]["jobs"]["tag_manual_and_auto"]
-                            ["auto-reporter"]
-              .as<std::string>(""));
+          tag_source_settings["auto-reporter"].as<std::string>(""));
       moderation_data->load_content_reporters(automatic_reporter);
 
       // For active profiles pending review, tag them as manual/auto-reported if
@@ -194,12 +190,13 @@ int main(int argc, char **argv) {
         // here but the pending-subject list contains either DID or relative
         // record_path
         std::string subject_did(reported.first);
-        if (active_profiles.contains(
-                bsky::profile_view_detailed(subject_did))) {
+        auto active_profile(
+            active_profiles.find(bsky::profile_view_detailed(subject_did)));
+        if (active_profile != active_profiles.cend()) {
           auto subject(pending.find(subject_did));
           if (subject != pending.cend()) {
             // 'subject' points to a list of reported content for the account
-            // and the tags for  each item
+            // and the tags for each item
             // we only handle accounts so check for reports on DID
             auto account_reports(subject->second.find(subject_did));
             if (account_reports != subject->second.cend()) {
@@ -239,17 +236,23 @@ int main(int argc, char **argv) {
                   ++removed_all;
                 }
               } else {
-                REL_WARNING("Account {} report needs no Tags", subject_did);
+                REL_WARNING("Account {}/{} report needs no Tags", subject_did,
+                            active_profile->handle);
                 ++untouched;
               }
             } else {
-              REL_WARNING("Account {} has no active report", subject_did);
+              REL_WARNING("Account {}/{} has only content reports", subject_did,
+                          active_profile->handle);
               ++no_report;
             }
           } else {
-            REL_WARNING("Account {} is inactive", subject_did);
-            ++inactive;
+            REL_WARNING("Account {}/{} has no active reports", subject_did,
+                        active_profile->handle);
+            ++no_report;
           }
+        } else {
+          REL_WARNING("Account {} is inactive", subject_did);
+          ++inactive;
         }
       }
       REL_INFO("Manual/auto tag updated : {} manual, {} auto, {} both, {} none",
@@ -258,7 +261,65 @@ int main(int argc, char **argv) {
                "untouched",
                inactive, no_report, untouched);
     }
+    // Acknowledge all reports that match a given SQL WHERE filter
+    auto ack_settings(settings->get_config()[PROJECT_NAME]["jobs"]
+                                            ["acknowledge_all_in_query"]);
+    if (ack_settings["execute"].as<bool>(default_execute)) {
+      std::string context("acknowledge_all_in_query " +
+                          ack_settings["label"].as<std::string>());
+      moderation_data->filter_subjects(
+          ack_settings["filter"].as<std::string>());
+      auto targets(moderation_data->get_filtered_subjects());
+      for (auto const &subject : targets) {
+        auto active_profile(
+            active_profiles.find(bsky::profile_view_detailed(subject)));
+        if (active_profile != active_profiles.cend()) {
+          auto subject_pending(pending.find(subject));
+          if (subject_pending != pending.cend()) {
+            REL_INFO("Acknowledge: {}/{} has active reports", subject,
+                     active_profile->handle);
+            bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
+            comment.context = context;
+            comment.did = pds_client.service_did();
+            pds_client.acknowledge_subject(subject, comment);
 
+          } else {
+            REL_INFO("Acknowledge: {}/{} has no active reports", subject,
+                     active_profile->handle);
+          }
+        } else {
+          REL_INFO("Acknowledge: {} is inactive", subject);
+        }
+      }
+    }
+
+    // Label all reports that match a given SQL WHERE filter
+    auto label_settings(
+        settings->get_config()[PROJECT_NAME]["jobs"]["label_all_in_query"]);
+    if (label_settings["execute"].as<bool>(default_execute)) {
+      moderation_data->filter_subjects(
+          label_settings["filter"].as<std::string>());
+      auto targets(moderation_data->get_filtered_subjects());
+      for (auto const &subject : targets) {
+        auto active_profile(
+            active_profiles.find(bsky::profile_view_detailed(subject)));
+        if (active_profile != active_profiles.cend()) {
+          auto subject_pending(pending.find(subject));
+          if (subject_pending != pending.cend()) {
+            REL_INFO("Label: {}/{} has active reports", subject,
+                     active_profile->handle);
+            pds_client.label_account(
+                subject,
+                label_settings["labels"].as<std::vector<std::string>>());
+          } else {
+            REL_INFO("Label: {}/{} has no active reports", subject,
+                     active_profile->handle);
+          }
+        } else {
+          REL_INFO("Label: {} is inactive", subject);
+        }
+      }
+    }
     return EXIT_SUCCESS;
   } catch (std::exception const &exc) {
     if (log_ready) {

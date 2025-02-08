@@ -199,6 +199,43 @@ void ozone_adapter::load_content_reporters(std::string const &auto_reporter) {
   }
 }
 
+// This is unsafe, should run with dry_run first to make sure it does what is
+// expected
+void ozone_adapter::filter_subjects(std::string const &filter) {
+  REL_INFO("Filter reports using {}", filter);
+  try {
+    if (!_cx) {
+      _cx = std::make_unique<pqxx::connection>(_connection_string);
+    }
+    // load the list of matching open/escalated reports
+    pqxx::work tx(*_cx);
+    // default target is DID
+    for (auto [target, full_path, reporter, reason] :
+         tx.query<std::string, std::optional<std::string>, std::string,
+                  std::optional<std::string>>(
+             "SELECT \"subjectDid\", \"subjectUri\", \"createdBy\","
+             " \"comment\" FROM public.moderation_event " +
+             filter)) {
+      if (full_path.has_value() && !full_path.value().empty()) {
+        target = full_path.value();
+      }
+      if (_filtered_subjects.insert(target).second) {
+        REL_INFO("{} matched filter", target);
+      } else {
+        REL_INFO("{} duplicate match", target);
+      }
+    }
+  } catch (pqxx::broken_connection const &exc) {
+    // will reconnect on net loop
+    REL_ERROR("pqxx::broken_connection {}", exc.what());
+    _cx.reset();
+  } catch (std::exception const &exc) {
+    // try to reconnect on next loop, unlikely to work though
+    REL_ERROR("database exception {}", exc.what());
+    _cx.reset();
+  }
+}
+
 bool ozone_adapter::already_processed(std::string const &did) const {
   std::lock_guard guard(_lock);
   return _labeled_accounts.contains(did) || _processed_accounts.contains(did);

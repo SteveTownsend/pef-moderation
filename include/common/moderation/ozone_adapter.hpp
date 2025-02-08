@@ -55,6 +55,12 @@ public:
     return _content_reporters;
   }
 
+  typedef std::unordered_set<std::string> filtered_subjects;
+  void filter_subjects(std::string const &filter);
+  inline const filtered_subjects &get_filtered_subjects() {
+    return _filtered_subjects;
+  }
+
 private:
   void check_refresh_processed();
   std::string safe_connection_string() const;
@@ -72,6 +78,7 @@ private:
   std::unordered_set<std::string> _processed_accounts;
   pending_report_tags _pending_report_tags;
   content_reporters _content_reporters;
+  filtered_subjects _filtered_subjects;
   mutable std::mutex _lock;
 };
 

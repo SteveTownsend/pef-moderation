@@ -35,6 +35,7 @@ constexpr std::string_view AppBskyFeedRepost = "app.bsky.feed.repost";
 constexpr std::string_view AppBskyGraphBlock = "app.bsky.graph.block";
 constexpr std::string_view AppBskyGraphFollow = "app.bsky.graph.follow";
 constexpr std::string_view AppBskyGraphList = "app.bsky.graph.list";
+constexpr size_t GraphListDescriptionLimit = 300;
 constexpr std::string_view AppBskyGraphListItem = "app.bsky.graph.listitem";
 constexpr std::string_view AppBskyGraphDefsModlist =
     "app.bsky.graph.defs#modlist";

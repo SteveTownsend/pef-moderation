@@ -97,8 +97,6 @@ void report_agent::start(YAML::Node const &settings,
                      report._content);
           reported(report._did);
         }
-        // check session status
-        _pds_client->check_session();
       }
     } catch (std::exception const &exc) {
       REL_WARNING("report_agent exception {}", exc.what());
