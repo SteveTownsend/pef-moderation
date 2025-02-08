@@ -146,8 +146,6 @@ void list_manager::start(YAML::Node const &settings) {
           // -> 7.406 seconds
           std::this_thread::sleep_for(std::chrono::milliseconds(7000));
         }
-        // check session status
-        _client->check_session();
       }
     } catch (std::exception const &exc) {
       REL_ERROR("list_manager exception {}", exc.what());

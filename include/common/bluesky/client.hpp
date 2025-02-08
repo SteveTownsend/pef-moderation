@@ -137,12 +137,6 @@ public:
   void set_config(YAML::Node const &settings);
   std::string service_did() const { return _service_did; }
   inline bool is_ready() const { return _is_ready; }
-  // check session status
-  inline void check_session() {
-    if (_use_token) {
-      _session->check_refresh();
-    }
-  }
 
   void label_account(std::string const &did,
                      std::vector<std::string> const &labels);
@@ -162,6 +156,8 @@ public:
     std::string record_str(as_string<RECORD>(record));
     while (retries < 5) {
       try {
+        _session->check_refresh();
+
         restc_cpp::SerializeProperties properties;
         properties.name_mapping = &json::TypeFieldMapping;
         response =
@@ -284,6 +280,8 @@ public:
     std::string record_str(as_string<RECORD>(record));
     while (retries < 5) {
       try {
+        _session->check_refresh();
+
         restc_cpp::SerializeProperties properties;
         properties.name_mapping = &json::TypeFieldMapping;
         response =
@@ -361,14 +359,12 @@ public:
       return;
     }
 
-    // check session status
-    check_session();
-
     bool done(false);
     size_t retries(0);
 
     while (retries < 5) {
       try {
+        _session->check_refresh();
         response =
             _rest_client
                 ->ProcessWithPromiseT<bsky::moderation::report_response>(
@@ -599,6 +595,7 @@ private:
     restc_cpp::SerializeToJson(request, body, properties);
     while (retries < 5) {
       try {
+        _session->check_refresh();
         response =
             _rest_client
                 ->ProcessWithPromiseT<bsky::moderation::emit_event_response>(

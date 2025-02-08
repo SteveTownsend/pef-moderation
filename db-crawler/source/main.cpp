@@ -147,7 +147,6 @@ int main(int argc, char **argv) {
               auto to_scrub(pending.find(match));
               if (to_scrub != pending.cend()) {
                 for (auto subject : to_scrub->second) {
-                  std::ostringstream oss;
                   bsky::moderation::acknowledge_event_comment comment(
                       PROJECT_NAME);
                   comment.context = exc.what();
@@ -257,6 +256,37 @@ int main(int argc, char **argv) {
       REL_INFO("Manual/auto tag no update: {} inactive, {} no report, {} "
                "untouched",
                inactive, no_report, untouched);
+    }
+    // Acknowledge all reports that match a given SQL WHERE filter
+    if (settings
+            ->get_config()[PROJECT_NAME]["jobs"]["acknowledge_all_in_query"]
+                          ["execute"]
+            .as<bool>(default_execute)) {
+      std::string context(
+          "acknowledge_all_in_query " +
+          settings
+              ->get_config()[PROJECT_NAME]["jobs"]["acknowledge_all_in_query"]
+                            ["label"]
+              .as<std::string>());
+      moderation_data->filter_subjects(
+          settings
+              ->get_config()[PROJECT_NAME]["jobs"]["acknowledge_all_in_query"]
+                            ["filter"]
+              .as<std::string>());
+      auto targets(moderation_data->get_filtered_subjects());
+      for (auto const &subject : moderation_data->get_filtered_subjects()) {
+        auto subject_pending(pending.find(subject));
+        if (subject_pending != pending.cend()) {
+          REL_INFO("Target {} has active reports", subject);
+          bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
+          comment.context = context;
+          comment.did = pds_client.service_did();
+          pds_client.acknowledge_subject(subject, comment);
+
+        } else {
+          REL_INFO("Target {} has no active reports", subject);
+        }
+      }
     }
 
     return EXIT_SUCCESS;
