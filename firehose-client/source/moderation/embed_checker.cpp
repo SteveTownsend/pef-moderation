@@ -156,7 +156,7 @@ void embed_checker::image_seen(std::string const &repo, std::string const &path,
   if (!inserted.second) {
     if (alert_needed(++(inserted.first->second), ImageFactor)) {
       REL_INFO("Image repetition count {:6} {} at {}/{}",
-               inserted.first->second, print_cid(cid), repo, path);
+               inserted.first->second, cid, repo, path);
       metrics_factory::instance()
           .get_counter("embedded_content")
           .Get({{"images", "repetition"}})
@@ -419,7 +419,7 @@ void embed_checker::video_seen(std::string const &repo, std::string const &path,
   if (!inserted.second) {
     if (alert_needed(++(inserted.first->second), VideoFactor)) {
       REL_INFO("Video repetition count {:6} {} at {}/{}",
-               inserted.first->second, print_cid(cid), repo, path);
+               inserted.first->second, cid, repo, path);
       metrics_factory::instance()
           .get_counter("embedded_content")
           .Get({{"videos", "repetition"}})

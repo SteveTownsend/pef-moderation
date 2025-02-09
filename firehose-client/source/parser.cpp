@@ -58,8 +58,8 @@ parser::get_candidates_from_record(nlohmann::json const &record) {
   if (record_fields != json::TargetFieldNames.cend()) {
     for (auto &field_name : record_fields->second) {
       if (record.contains(field_name)) {
-        results.emplace_back(record_type, field_name,
-                             record[field_name].template get<std::string>());
+        results.emplace_back(record_type, field_name.to_string(),
+                             nlohmann::to_string(record[field_name]));
       }
     }
   }
@@ -100,16 +100,16 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
   return {};
 }
 
-inline bool parser::cbor_callback(int depth,
+inline bool parser::cbor_callback(int /* depth */,
                                   nlohmann::json::parse_event_t event,
                                   nlohmann::json &parsed) {
   if (event == nlohmann::json::parse_event_t::result) {
     // Check for "roots" and decode embedded CIDs is found
     if (parsed.contains("roots")) {
       DBG_TRACE("JSON roots  {}", parsed.dump());
-    } else if (parsed.contains("digest")) {
+    } else if (parsed.contains("__readable_cid__")) {
       // DBG_TRACE("JSON block cid {}", parsed.dump());
-      _block_cid = parsed["digest"].template get<std::string>();
+      _block_cid = parsed["__readable_cid__"].template get<std::string>();
     } else {
       DBG_TRACE("JSON Result  {}", parsed.dump());
       if (parsed.contains("$type")) {
@@ -156,17 +156,6 @@ inline bool parser::cbor_callback(int depth,
     DBG_TRACE("JSON Array End");
   }
 
-  return true;
-}
-
-bool parser::cid_callback(int depth, nlohmann::json::parse_event_t event,
-                          nlohmann::json &parsed) {
-  if (event == nlohmann::json::parse_event_t::result) {
-    if (parsed.contains("digest")) {
-      // DBG_TRACE("JSON cid-link {}", parsed.dump());
-      _block_cid = parsed["digest"].template get<std::string>();
-    }
-  }
   return true;
 }
 

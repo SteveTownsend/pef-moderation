@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
+#include <multiformats/cid.hpp>
 
 jetstream_payload::jetstream_payload() {}
 jetstream_payload::jetstream_payload(std::string json_msg,
@@ -139,20 +140,28 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
                activity::deleted(path)});
         } else if (oper.contains("cid") && !oper["cid"].is_null()) {
           auto cid(oper["cid"].template get<nlohmann::json::binary_t>());
-          parser cid_parser;
-          if (cid_parser.json_from_cid(cid.cbegin(), cid.cend()) &&
-              !_path_by_cid.insert({cid_parser.block_cid(), path}).second) {
-            // We see this for Block operations very rarely. Log to try to track
-            // it down
-            REL_ERROR(
-                "Duplicate cid {} at op.path {}, already used for path {}",
-                cid_parser.block_cid(), path,
-                _path_by_cid.find(cid_parser.block_cid())->second);
-            REL_ERROR("Firehose header:  {}", dump_json(header));
-            REL_ERROR("         message: {}", dump_json(message));
-            REL_ERROR("Content CBORs:  {}", block_parser.dump_parse_content());
-            REL_ERROR("Matched CBORs:  {}", block_parser.dump_parse_matched());
-            REL_ERROR("Other CBORs:    {}", block_parser.dump_parse_other());
+          try {
+            // nlhomann parser gives us a leading zero
+            atproto::cid_decoder decoder(cid.cbegin() + 1, cid.cend());
+            std::string friendly_cid(decoder.as_string());
+            auto insertion(_path_by_cid.insert({friendly_cid, path}));
+            if (!insertion.second) {
+              // We see this for Block operations very rarely. Log to try to
+              // track it down
+              REL_ERROR(
+                  "Duplicate cid {} at op.path {}, already used for path {}",
+                  friendly_cid, path, insertion.first->second);
+              REL_ERROR("Firehose header:  {}", dump_json(header));
+              REL_ERROR("         message: {}", dump_json(message));
+              REL_ERROR("Content CBORs:  {}",
+                        block_parser.dump_parse_content());
+              REL_ERROR("Matched CBORs:  {}",
+                        block_parser.dump_parse_matched());
+              REL_ERROR("Other CBORs:    {}", block_parser.dump_parse_other());
+            }
+          } catch (std::exception const &exc) {
+            REL_ERROR("CID parse error {} in message {}", exc.what(),
+                      dump_json(message));
           }
         }
       }
@@ -273,7 +282,7 @@ bsky::embed_type
 firehose_payload::context::process_embed(nlohmann::json const &embed) {
   // TODO pass along the embeds for checking
   std::string uri;
-  nlohmann::json cid;
+  std::string cid;
   nlohmann::json::binary_t encoded_cid;
   bsky::embed_type embed_type = bsky::embed_type_from_string(_embed_type_str);
   switch (embed_type) {
@@ -303,10 +312,11 @@ firehose_payload::context::process_embed(nlohmann::json const &embed) {
     if (embed["external"].contains("thumb")) {
       encoded_cid = embed["external"]["thumb"]["ref"]
                         .template get<nlohmann::json::binary_t>();
+      // nlohmann parser leaves a leading zero byte
       cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
-                encoded_cid.cbegin(), encoded_cid.cend())
-                .decode();
-      add_embed(embed::image(cid["digest"]));
+                encoded_cid.cbegin() + 1, encoded_cid.cend())
+                .as_string();
+      add_embed(embed::image(cid));
     }
     break;
   case bsky::embed_type::images:
@@ -314,19 +324,21 @@ firehose_payload::context::process_embed(nlohmann::json const &embed) {
     for (auto const &image : embed["images"]) {
       encoded_cid =
           image["image"]["ref"].template get<nlohmann::json::binary_t>();
+      // nlohmann parser leaves a leading zero byte
       cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
-                encoded_cid.cbegin(), encoded_cid.cend())
-                .decode();
-      add_embed(embed::image(cid["digest"]));
+                encoded_cid.cbegin() + 1, encoded_cid.cend())
+                .as_string();
+      add_embed(embed::image(cid));
     }
     break;
   case bsky::embed_type::video:
     encoded_cid =
         embed["video"]["ref"].template get<nlohmann::json::binary_t>();
+    // nlohmann parser leaves a leading zero byte
     cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
-              encoded_cid.cbegin(), encoded_cid.cend())
-              .decode();
-    add_embed(embed::video(cid["digest"]));
+              encoded_cid.cbegin() + 1, encoded_cid.cend())
+              .as_string();
+    add_embed(embed::video(cid));
     break;
   default:
     break;

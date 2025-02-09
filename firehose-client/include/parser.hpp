@@ -27,6 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include "nlohmann/json.hpp"
 #include <algorithm>
 #include <boost/beast/core.hpp>
+#include <multiformats/cid.hpp>
 #include <string_view>
 #include <tuple>
 #include <unordered_set>
@@ -106,42 +107,6 @@ public:
       return sax_parse_car(&sax, strict);
     }
 
-    template <typename IteratorType>
-    bool parse_cid_sequence(
-        IteratorType first, IteratorType last,
-        nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
-        const bool allow_exceptions = true, const bool strict = true,
-        const nlohmann::detail::cbor_tag_handler_t tag_handler =
-            nlohmann::detail::cbor_tag_handler_t::error) {
-      nlohmann::basic_json result;
-      _tag_handler = tag_handler;
-      _callback = cb;
-      auto ia =
-          nlohmann::detail::input_adapter(std::move(first), std::move(last));
-      nlohmann::detail::json_sax_dom_callback_parser<BasicJsonType,
-                                                     decltype(ia)>
-          sax(result, cb, allow_exceptions);
-      return sax_parse_cid_sequence(&sax, strict);
-    }
-
-    template <typename IteratorType>
-    bool
-    parse_cid(IteratorType first, IteratorType last,
-              nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
-              const bool allow_exceptions = true, const bool strict = true,
-              const nlohmann::detail::cbor_tag_handler_t tag_handler =
-                  nlohmann::detail::cbor_tag_handler_t::error) {
-      nlohmann::basic_json result;
-      _tag_handler = tag_handler;
-      _callback = cb;
-      auto ia =
-          nlohmann::detail::input_adapter(std::move(first), std::move(last));
-      nlohmann::detail::json_sax_dom_callback_parser<BasicJsonType,
-                                                     decltype(ia)>
-          sax(result, cb, allow_exceptions);
-      return parse_car_cid(true);
-    }
-
   protected:
     uint64_t read_u64_leb128(const bool get_char = true) {
       unsigned char uchar(0);
@@ -149,7 +114,8 @@ public:
       uint64_t result(0);
       bool first(true);
       while (true) {
-        uchar = (first && !get_char) ? this->current : this->get();
+        uchar = static_cast<unsigned char>((first && !get_char) ? this->current
+                                                                : this->get());
         first = false;
         if (!(uchar & 0x80)) {
           result |= (uchar << shift);
@@ -162,8 +128,7 @@ public:
 
     // Decode CAR header
     bool parse_car_header() {
-      // header length
-      uint64_t header_length(read_u64_leb128());
+      read_u64_leb128(); // skip header length
       // decode DAG-CBOR
       nlohmann::basic_json result;
       SAX this_pass_sax(result, _callback, _allow_exceptions);
@@ -175,35 +140,9 @@ public:
       return false;
     }
 
-    /*!
-    @param[in] sax_    a SAX event processor
-    @param[in] strict  whether to expect the input to be consumed completed
-    @param[in] tag_handler  how to treat CBOR tags
-    @return whether parsing was successful
-
-    Logic per https://ipld.io/specs/transport/car/carv1/
-    */
-    bool sax_parse_cid_sequence(SAX *sax_, const bool strict = true) {
-      bool result(true);
-      while (result) {
-        // decode the rest of the blocks.  Only supporting DG-CBOR data at this
-        // time
-        // check for empty stream, or end of well-formed object at EOF
-        char_int_type next_char(this->get());
-        if (next_char == nlohmann::detail::char_traits<
-                             typename InputAdapterType::char_type>::eof())
-          return true;
-        result = parse_car_cid(false);
-      }
-      return result;
-    }
-
     // decode CID
     bool parse_car_cid(const bool get_char = true) {
       uint64_t version(read_u64_leb128(get_char));
-      // TODO account for two unexplained bytes
-      version = read_u64_leb128(true);
-      version = read_u64_leb128(true);
       uint64_t codec(read_u64_leb128());
       uint64_t digest_length(0);
       if (version == 0x12 && codec == 0x20) {
@@ -211,23 +150,24 @@ public:
         digest_length = 32;
         version = 0;
       } else {
-        // read Multihash
-        digest_length = read_u64_leb128();
+        // arcane knowledge - DAG-PB wrapper on the 32-byte digest
+        digest_length = 34;
       }
-      std::vector<unsigned char> digest(digest_length);
+      std::vector<uint8_t> digest(digest_length);
       for (auto next = digest.begin(); next != digest.end(); ++next) {
-        *next = this->get();
+        *next = static_cast<uint8_t>(this->get());
       }
       // Caller needs to process according to context
+      Multiformats::Cid cid({version}, {codec},
+                            {digest.cbegin(), digest.cend()});
       nlohmann::json result(
-          {{"digest", std::string(digest.cbegin(), digest.cend())},
-           {"version", version},
-           {"codec", codec}});
+          {{"__readable_cid__",
+            cid.to_string(Multiformats::Multibase::Protocol::Base32)}});
       return _callback(0, nlohmann::detail::parse_event_t::result, result);
     }
 
     bool parse_car_block(const bool get_char) {
-      uint64_t block_length(read_u64_leb128(get_char));
+      read_u64_leb128(get_char); // skip block length
       if (!parse_car_cid())
         return false;
       // decode DAG-CBOR block
@@ -326,72 +266,6 @@ public:
     return parsed;
   }
 
-  template <typename IteratorType>
-  bool json_from_cids(IteratorType first, IteratorType last) {
-    bool parsed(false);
-    try {
-      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
-                         nlohmann::json & /*parsed*/)>
-          callback =
-              std::bind(&parser::cbor_callback, this, std::placeholders::_1,
-                        std::placeholders::_2, std::placeholders::_3);
-      auto ia =
-          ::nlohmann::detail::input_adapter(std::move(first), std::move(last));
-      return car_reader<typename ::nlohmann::json, decltype(ia),
-                        ::nlohmann::detail::json_sax_dom_callback_parser<
-                            typename ::nlohmann::json, decltype(ia)>>(
-                 std::move(ia), nlohmann::detail::input_format_t::cbor)
-          .parse_cid_sequence(first, last, callback, true, true,
-                              nlohmann::detail::cbor_tag_handler_t::ignore);
-    } catch (std::exception const &exc) {
-      REL_ERROR("CIDs parse threw: {}", exc.what());
-    }
-    if (!parsed) {
-      std::ostringstream oss;
-      oss << std::hex;
-      auto os_iter = std::ostream_iterator<int>(oss);
-      std::ranges::copy(first, last, os_iter);
-
-      REL_ERROR("CIDs parse failed: {}", oss.str());
-    } else {
-      DBG_INFO("CIDs parse success");
-    }
-    return parsed;
-  }
-
-  template <typename IteratorType>
-  bool json_from_cid(IteratorType first, IteratorType last) {
-    bool parsed(false);
-    try {
-      std::function<bool(int /*depth*/, nlohmann::json::parse_event_t /*event*/,
-                         nlohmann::json & /*parsed*/)>
-          callback =
-              std::bind(&parser::cid_callback, this, std::placeholders::_1,
-                        std::placeholders::_2, std::placeholders::_3);
-      auto ia =
-          ::nlohmann::detail::input_adapter(std::move(first), std::move(last));
-      return car_reader<typename ::nlohmann::json, decltype(ia),
-                        ::nlohmann::detail::json_sax_dom_callback_parser<
-                            typename ::nlohmann::json, decltype(ia)>>(
-                 std::move(ia), nlohmann::detail::input_format_t::cbor)
-          .parse_cid(first, last, callback, true, true,
-                     nlohmann::detail::cbor_tag_handler_t::ignore);
-    } catch (std::exception const &exc) {
-      REL_ERROR("CID parse threw: {}", exc.what());
-    }
-    if (!parsed) {
-      std::ostringstream oss;
-      oss << std::hex;
-      auto os_iter = std::ostream_iterator<int>(oss);
-      std::ranges::copy(first, last, os_iter);
-
-      REL_ERROR("CID parse failed: {}", oss.str());
-    } else {
-      DBG_INFO("CID parse success");
-    }
-    return parsed;
-  }
-
   static void set_config(std::shared_ptr<config> &settings);
 
   // CAR file in "blocks" contains atproto content indexed by CIDs
@@ -408,8 +282,6 @@ public:
 private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
                      nlohmann::json &parsed);
-  bool cid_callback(int depth, nlohmann::json::parse_event_t event,
-                    nlohmann::json &parsed);
 
   // CAR file in "blocks" contains atproto content indexed by CIDs
   std::string _block_cid;
