@@ -9,13 +9,9 @@ add_compile_definitions(
 add_executable(firehose_client
   ./source/main.cpp
   ./source/content_handler.cpp
-  ./source/helpers.cpp
   ./source/matcher.cpp
   ./source/parser.cpp
   ./source/payload.cpp
-  ./source/activity/account_events.cpp
-  ./source/activity/event_cache.cpp
-  ./source/activity/event_recorder.cpp
   ./source/moderation/action_router.cpp
   ./source/moderation/auxiliary_data.cpp
   ./source/moderation/embed_checker.cpp

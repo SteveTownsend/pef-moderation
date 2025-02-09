@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/account_events.hpp"
+#include "common/activity/account_events.hpp"
 #include <cache.hpp>
 #include <lfu_cache_policy.hpp>
 namespace activity {
@@ -42,10 +42,9 @@ public:
 
   void record(timed_event const &value);
   caches::WrappedValue<account> get_account(std::string const &did);
-
-private:
   void add_account(std::string const &did);
 
+private:
   // visitor for event-specific logic
   struct augment_event {
     template <typename T> void operator()(T const &) {}

@@ -21,8 +21,8 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/config.hpp"
+#include "common/helpers.hpp"
 #include "common/log_wrapper.hpp"
-#include "helpers.hpp"
 #include "matcher.hpp"
 #include "nlohmann/json.hpp"
 #include <algorithm>
@@ -31,6 +31,7 @@ http://www.fsf.org/licensing/licenses
 #include <string_view>
 #include <tuple>
 #include <unordered_set>
+
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 using namespace std::literals;

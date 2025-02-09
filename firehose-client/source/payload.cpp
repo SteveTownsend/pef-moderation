@@ -19,7 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "payload.hpp"
-#include "activity/account_events.hpp"
+#include "common/activity/account_events.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"

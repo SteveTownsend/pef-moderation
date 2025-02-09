@@ -19,8 +19,8 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "common/helpers.hpp"
 #include "common/rest_utils.hpp"
-#include "helpers.hpp"
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
 #include <mutex>
@@ -28,6 +28,7 @@ http://www.fsf.org/licensing/licenses
 #include <tuple>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
+
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 

@@ -19,8 +19,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "parser.hpp"
+#include "common/helpers.hpp"
 #include "common/rest_utils.hpp"
-#include "helpers.hpp"
+#include "datasource.hpp"
 #include <boost/asio/buffers_iterator.hpp>
 #include <sstream>
 

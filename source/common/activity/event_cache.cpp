@@ -18,7 +18,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
+#include "common/activity/event_recorder.hpp"
 #include "common/metrics_factory.hpp"
 #include <functional>
 

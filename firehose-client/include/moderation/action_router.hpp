@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
-#include "helpers.hpp"
+#include "common/helpers.hpp"
 #include "matcher.hpp"
 #include "yaml-cpp/yaml.h"
 #include <thread>

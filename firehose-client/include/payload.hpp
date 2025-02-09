@@ -20,8 +20,8 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
-#include "helpers.hpp"
+#include "common/activity/event_recorder.hpp"
+#include "common/helpers.hpp"
 #include "matcher.hpp"
 #include "parser.hpp"
 #include "post_processor.hpp"
