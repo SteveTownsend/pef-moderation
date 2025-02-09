@@ -73,7 +73,7 @@ void ozone_adapter::check_refresh_tracked_accounts() {
              "select distinct(did) from moderation_subject_status mss "
              "where mss.\"reviewState\" in "
              "('tools.ozone.moderation.defs#reviewOpen', "
-             "'tools.ozone.moderation.defs#reviewEscalated'))")) {
+             "'tools.ozone.moderation.defs#reviewEscalated')")) {
       new_tracked.insert(did);
     }
     // Closed reports at account level
