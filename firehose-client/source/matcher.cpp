@@ -19,17 +19,16 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "matcher.hpp"
+#include "common/helpers.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/moderation/report_agent.hpp"
-#include "helpers.hpp"
 #include "moderation/list_manager.hpp"
 #include "parser.hpp"
 #include <exception>
 #include <fstream>
 #include <ranges>
 #include <string_view>
-
 
 matcher::matcher() { _whole_word_trie.only_whole_words(); }
 
@@ -169,7 +168,7 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
     for (auto rule_key = next_match->_matches.begin();
          rule_key != next_match->_matches.end();) {
       matcher::rule this_rule = find_rule_unchecked(rule_key->get_keyword());
-      if (!this_rule.matches_any_contingent(next_match->_candidate._value)) {
+      if (!this_rule.passes_contingent_checks(next_match->_candidate._value)) {
         rule_key = next_match->_matches.erase(rule_key);
       } else {
         ++rule_key;
@@ -288,7 +287,14 @@ matcher::rule::rule(std::string const &rule_string) {
       _contingent = field;
       // make a trie of 'contingent strings' to confirm rule_string context
       for (const auto subtoken : std::views::split(_contingent, ',')) {
-        _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+        std::string next(subtoken.cbegin(), subtoken.cend());
+        if (starts_with(next, "!")) {
+          next = next.substr(1);
+          _absent_substring_trie.insert(
+              to_canonical(std::string_view(subtoken)));
+        } else {
+          _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+        }
       }
       break;
     default:
@@ -320,7 +326,13 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
   _contingent = contingent;
   // make a trie of 'contingent strings' to confirm rule_string context
   for (const auto subtoken : std::views::split(_contingent, ',')) {
-    _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    std::string next(subtoken.cbegin(), subtoken.cend());
+    if (starts_with(next, "!")) {
+      next = next.substr(1);
+      _absent_substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    } else {
+      _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    }
   }
 }
 
@@ -381,16 +393,27 @@ matcher::rule::rule(matcher::rule const &rhs)
       _contingent(rhs._contingent) {
   // make a trie that is used to confirm the rule match
   for (const auto subtoken : std::views::split(_contingent, ',')) {
-    _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    std::string next(subtoken.cbegin(), subtoken.cend());
+    if (starts_with(next, "!")) {
+      next = next.substr(1);
+      _absent_substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    } else {
+      _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+    }
   }
 }
 
-bool matcher::rule::matches_any_contingent(std::string const &candidate) const {
+bool matcher::rule::passes_contingent_checks(
+    std::string const &candidate) const {
   if (_contingent.empty())
     return true;
   // use ICU canonical form for multilanguage support
-  auto result = _substring_trie.parse_text(to_canonical(candidate));
-  return !result.empty();
+  auto normalized(to_canonical(candidate));
+  auto required = _substring_trie.parse_text(normalized); // at least one match
+  auto disallowed =
+      _absent_substring_trie.parse_text(normalized); // zero matches
+
+  return !required.empty() && disallowed.empty();
 }
 
 matcher::rule matcher::find_rule(std::wstring const &key) const {

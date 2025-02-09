@@ -45,6 +45,13 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
+inline bool is_full(config const &settings) {
+  constexpr std::string_view jetstream = "jetstream";
+  return !settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
+              .as<std::string>()
+              .contains(jetstream);
+}
+
 template <typename PAYLOAD> class datasource {
 public:
   static datasource &instance() {

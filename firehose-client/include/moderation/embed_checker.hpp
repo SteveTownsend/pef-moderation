@@ -20,7 +20,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
-#include "helpers.hpp"
+#include "common/helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
 #include "project_defs.hpp"
@@ -33,15 +33,6 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 #include <unordered_set>
 
-
-inline std::string print_cid(std::string const &cid) {
-  std::ostringstream oss;
-  for (auto c : cid) {
-    oss << std::setw(2) << std::setfill('0') << std::hex
-        << static_cast<int>(static_cast<unsigned char>(c));
-  }
-  return oss.str();
-}
 namespace embed {
 
 struct external {

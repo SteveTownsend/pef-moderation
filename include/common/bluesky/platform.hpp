@@ -21,9 +21,11 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include <boost/functional/hash.hpp>
 #include <chrono>
+#include <multiformats/cid.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
+
 
 namespace bsky {
 constexpr size_t GetProfilesMax = 25;
@@ -225,12 +227,9 @@ public:
   cid_decoder(IteratorType begin, IteratorType end)
       : _begin(begin), _end(end), _current(begin) {}
 
-  // decode CID
-  nlohmann::json decode() {
+  // decode CID into the platform's display form
+  std::string as_string() {
     uint64_t version(read_u64_leb128());
-    // TODO account for two unexplained bytes
-    version = read_u64_leb128();
-    version = read_u64_leb128();
     uint64_t codec(read_u64_leb128());
     uint64_t digest_length(0);
     if (version == 0x12 && codec == 0x20) {
@@ -238,18 +237,16 @@ public:
       digest_length = 32;
       version = 0;
     } else {
-      // read Multihash
-      digest_length = read_u64_leb128();
+      // arcane knowledge - DAG-PB wrapper on the 32-byte digest
+      digest_length = 34;
     }
-    std::vector<unsigned char> digest(digest_length);
+    std::vector<uint8_t> digest(digest_length);
     for (auto next = digest.begin(); next != digest.end(); ++next) {
-      *next = get();
+      *next = this->get();
     }
     // Caller needs to process according to context
-    return nlohmann::json(
-        {{"digest", std::string(digest.cbegin(), digest.cend())},
-         {"version", version},
-         {"codec", codec}});
+    Multiformats::Cid cid({version}, {codec}, {digest.cbegin(), digest.cend()});
+    return cid.to_string(Multiformats::Multibase::Protocol::Base32);
   }
 
 private:

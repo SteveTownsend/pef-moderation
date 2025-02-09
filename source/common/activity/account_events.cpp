@@ -18,8 +18,8 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/account_events.hpp"
-#include "activity/event_cache.hpp"
+#include "common/activity/account_events.hpp"
+#include "common/activity/event_cache.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/moderation/report_agent.hpp"
 #include <algorithm>

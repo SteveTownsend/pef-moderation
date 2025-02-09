@@ -2,10 +2,14 @@ project(pef-tools VERSION 1.0.0)
 
 add_library(common STATIC
   ./config.cpp
+  ./helpers.cpp
   ./log_wrapper.cpp
   ./bluesky/client.cpp
   ./metrics_factory.cpp
   ./rest_utils.cpp
+  ./activity/account_events.cpp
+  ./activity/event_cache.cpp
+  ./activity/event_recorder.cpp
   ./moderation/ozone_adapter.cpp
   ./moderation/report_agent.cpp
   ./moderation/session_manager.cpp)

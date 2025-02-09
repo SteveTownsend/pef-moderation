@@ -61,8 +61,14 @@ public:
     return _filtered_subjects;
   }
 
+  typedef std::unordered_set<std::string> account_list;
+  bool is_tracked(std::string const &did) const {
+    std::lock_guard guard(_lock);
+    return _tracked_accounts.contains(did);
+  }
+
 private:
-  void check_refresh_processed();
+  void check_refresh_tracked_accounts();
   std::string safe_connection_string() const;
 
   static constexpr std::chrono::milliseconds ThreadDelay =
@@ -73,9 +79,9 @@ private:
   std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
   std::thread _thread;
-  std::unordered_set<std::string> _labeled_accounts;
+  account_list _tracked_accounts;
   std::chrono::steady_clock::time_point _last_refresh;
-  std::unordered_set<std::string> _processed_accounts;
+  std::unordered_set<std::string> _closed_reports;
   pending_report_tags _pending_report_tags;
   content_reporters _content_reporters;
   filtered_subjects _filtered_subjects;

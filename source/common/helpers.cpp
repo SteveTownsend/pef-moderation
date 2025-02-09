@@ -18,20 +18,12 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "helpers.hpp"
+#include "common/helpers.hpp"
 #include "common/config.hpp"
 #include "common/log_wrapper.hpp"
-#include "project_defs.hpp"
 #include <unicode/errorcode.h>
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>
-
-bool is_full(config const &settings) {
-  constexpr std::string_view jetstream = "jetstream";
-  return !settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
-              .as<std::string>()
-              .contains(jetstream);
-}
 
 namespace bsky {
 down_reason down_reason_from_string(std::string_view down_reason_str) {

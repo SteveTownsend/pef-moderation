@@ -21,10 +21,10 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include "blockingconcurrentqueue.h"
 #include "common/bluesky/client.hpp"
+#include "common/helpers.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/session_manager.hpp"
-#include "helpers.hpp"
 #include "jwt-cpp/jwt.h"
 #include "matcher.hpp"
 #include "project_defs.hpp"
@@ -33,6 +33,7 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
 
 namespace bsky {
 // app.bsky.richtext.facet

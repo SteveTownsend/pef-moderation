@@ -35,9 +35,6 @@ http://www.fsf.org/licensing/licenses
 #include <string>
 #include <vector>
 
-class config;
-bool is_full(config const &settings);
-
 inline bool bool_from_string(std::string_view str) {
   if (str == "false")
     return false;

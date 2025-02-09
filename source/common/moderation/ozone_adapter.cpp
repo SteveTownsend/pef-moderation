@@ -18,6 +18,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "common/moderation/ozone_adapter.hpp"
+#include "common/activity/event_recorder.hpp"
 #include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
@@ -40,8 +41,9 @@ void ozone_adapter::start() {
         if (!_cx) {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
         }
-        // load the list of labeled accounts
-        check_refresh_processed();
+        // Load the list of labeled and pending-review accounts
+        // we may track some false positines but that's no big deal
+        check_refresh_tracked_accounts();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on next loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
@@ -58,29 +60,42 @@ void ozone_adapter::start() {
 }
 
 // Don't refresh until interval has elapsed
-void ozone_adapter::check_refresh_processed() {
+void ozone_adapter::check_refresh_tracked_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(now - _last_refresh) >
       ProcessedAccountRefreshInterval) {
-    decltype(_labeled_accounts) new_labeled;
+    decltype(_tracked_accounts) new_tracked;
     pqxx::work tx(*_cx);
     for (auto [did] : tx.query<std::string>(
-             "SELECT DISTINCT(\"subjectDid\") FROM moderation_event WHERE "
-             "(action = 'tools.ozone.moderation.defs#modEventLabel')")) {
-      new_labeled.insert(did);
+             "select distinct(ms.\"subjectDid\") from moderation_event ms "
+             "where ms.\"action\" = "
+             "'tools.ozone.moderation.defs#modEventLabel' union "
+             "select distinct(did) from moderation_subject_status mss "
+             "where mss.\"reviewState\" in "
+             "('tools.ozone.moderation.defs#reviewOpen', "
+             "'tools.ozone.moderation.defs#reviewEscalated')")) {
+      new_tracked.insert(did);
     }
-    decltype(_processed_accounts) new_done;
+    // Closed reports at account level
+    decltype(_closed_reports) new_closed;
     for (auto [did] : tx.query<std::string>(
-             "SELECT DISTINCT(\"subjectDid\") FROM moderation_event WHERE "
-             "(action = 'tools.ozone.moderation.defs#modEventAcknowledge')")) {
-      if (!new_labeled.contains(did)) {
-        new_done.insert(did);
+             "SELECT mss.did FROM moderation_subject_status mss WHERE "
+             "(mss.\"recordPath\" <> '') IS NOT true AND "
+             "(mss.\"reviewState\" = "
+             "'tools.ozone.moderation.defs#reviewClosed')")) {
+      if (!new_tracked.contains(did)) {
+        new_closed.insert(did);
       }
     }
 
     std::lock_guard guard(_lock);
-    _labeled_accounts.swap(new_labeled);
-    _processed_accounts.swap(new_done);
+    _tracked_accounts.swap(new_tracked);
+    _closed_reports.swap(new_closed);
+    // make tracked accounts sticky in the tracked account event cache by
+    // touching them each time
+    for (auto const &account : _tracked_accounts) {
+      activity::event_recorder::instance().touch_account(account);
+    }
     _last_refresh = std::chrono::steady_clock::now();
   }
 }
@@ -242,7 +257,7 @@ void ozone_adapter::filter_subjects(std::string const &filter) {
 
 bool ozone_adapter::already_processed(std::string const &did) const {
   std::lock_guard guard(_lock);
-  return _labeled_accounts.contains(did) || _processed_accounts.contains(did);
+  return _tracked_accounts.contains(did) || _closed_reports.contains(did);
 }
 
 // mask the password

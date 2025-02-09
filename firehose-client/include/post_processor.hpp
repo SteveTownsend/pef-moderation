@@ -20,11 +20,11 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_recorder.hpp"
+#include "common/activity/event_recorder.hpp"
 #include "common/controller.hpp"
+#include "common/helpers.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
-#include "helpers.hpp"
 #include "matcher.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
@@ -35,6 +35,7 @@ http://www.fsf.org/licensing/licenses
 #include <prometheus/histogram.h>
 #include <thread>
 #include <unordered_map>
+
 
 namespace firehose {
 
@@ -135,14 +136,13 @@ public:
         .Increment();
   }
   inline void request_recording(activity::timed_event &&event) {
-    _recorder.wait_enqueue(std::move(event));
+    activity::event_recorder::instance().wait_enqueue(std::move(event));
   }
 
 private:
   // Declare queue between websocket and match post-processing
   moodycamel::BlockingReaderWriterQueue<T> _queue;
   std::thread _thread;
-  activity::event_recorder _recorder;
 };
 
 #endif

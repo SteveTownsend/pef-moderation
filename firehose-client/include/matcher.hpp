@@ -19,8 +19,8 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "common/helpers.hpp"
 #include "common/rest_utils.hpp"
-#include "helpers.hpp"
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
 #include <mutex>
@@ -146,11 +146,12 @@ public:
     std::string _contingent;
 
     static constexpr size_t field_count = 4;
-    bool matches_any_contingent(std::string const &candidate) const;
+    bool passes_contingent_checks(std::string const &candidate) const;
 
   private:
     void store_actions(std::string_view actions);
     mutable aho_corasick::wtrie _substring_trie;
+    mutable aho_corasick::wtrie _absent_substring_trie;
   };
 
   rule find_rule(std::wstring const &key) const;

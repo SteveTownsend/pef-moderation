@@ -143,6 +143,14 @@ include_directories(${OPENSSL_INCLUDE_DIR})
   LINK_DIRECTORIES(${OPENSSL_LIBRARIES})
 ENDIF()
 
+FetchContent_Declare(
+  multiformats
+  GIT_TAG master
+  GIT_REPOSITORY https://github.com/SteveTownsend/multiformats
+)
+FetchContent_MakeAvailable(multiformats)
+include_directories(${multiformats_SOURCE_DIR}/include)
+
 # JSON
 FetchContent_Declare(
   json

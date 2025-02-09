@@ -20,16 +20,23 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "activity/event_cache.hpp"
+#include "common/activity/event_cache.hpp"
 #include "readerwriterqueue.h"
 
 namespace activity {
 class event_recorder {
 public:
-  event_recorder();
+  static inline event_recorder &instance() {
+    static event_recorder recorder;
+    return recorder;
+  }
   void wait_enqueue(timed_event &&value);
+  inline void touch_account(std::string const &did) {
+    _events.add_account(did);
+  }
 
 private:
+  event_recorder();
   // Declare queue between post-processing and recording
   moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
   std::thread _thread;
