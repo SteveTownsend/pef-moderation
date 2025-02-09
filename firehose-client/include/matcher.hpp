@@ -29,7 +29,6 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
 
-
 namespace beast = boost::beast; // from <boost/beast.hpp>
 
 // filter match candidate
@@ -147,11 +146,12 @@ public:
     std::string _contingent;
 
     static constexpr size_t field_count = 4;
-    bool matches_any_contingent(std::string const &candidate) const;
+    bool passes_contingent_checks(std::string const &candidate) const;
 
   private:
     void store_actions(std::string_view actions);
     mutable aho_corasick::wtrie _substring_trie;
+    mutable aho_corasick::wtrie _absent_substring_trie;
   };
 
   rule find_rule(std::wstring const &key) const;
