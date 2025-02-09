@@ -77,20 +77,20 @@ void ozone_adapter::check_refresh_tracked_accounts() {
       new_tracked.insert(did);
     }
     // Closed reports at account level
-    decltype(_closed_reports) new_done;
+    decltype(_closed_reports) new_closed;
     for (auto [did] : tx.query<std::string>(
              "SELECT mss.did FROM moderation_subject_status mss WHERE "
              "(mss.\"recordPath\" <> '') IS NOT true AND "
              "(mss.\"reviewState\" = "
              "'tools.ozone.moderation.defs#reviewClosed')")) {
       if (!new_tracked.contains(did)) {
-        new_done.insert(did);
+        new_closed.insert(did);
       }
     }
 
     std::lock_guard guard(_lock);
     _tracked_accounts.swap(new_tracked);
-    _closed_reports.swap(new_done);
+    _closed_reports.swap(new_closed);
     // make tracked accounts sticky in the tracked account event cache by
     // touching them each time
     for (auto const &account : _tracked_accounts) {
