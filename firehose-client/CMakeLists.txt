@@ -19,9 +19,10 @@ add_executable(firehose_client
 
 target_include_directories(firehose_client PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client pef-tools::common ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
-nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp multiformats)
-if (UNIX)
-	target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY})
+  nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp multiformats)
+
+if(UNIX)
+  target_link_libraries(firehose_client stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY} neo4j-client)
 else()
   target_link_libraries(firehose_client ${ZLIB_LIBRARY} ${REST_CPP_LIBRARY})
 endif()

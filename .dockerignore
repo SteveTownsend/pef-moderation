@@ -1,0 +1,6 @@
+debug-gcc
+logging-gcc
+release-gcc
+debug-msvc
+logging-msvc
+release-msvc

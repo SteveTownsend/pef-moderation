@@ -37,6 +37,9 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
+#if defined(__GNUC__)
+#include "common/activity/neo4j_adapter.hpp"
+#endif
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "datasource.hpp"
@@ -123,6 +126,21 @@ int main(int argc, char **argv) {
     moderation_data->start();
     auxiliary_data->start(); // seeds matcher with rules
 
+    // optional graph DB for Linux only
+    try {
+      auto graph_data_config(
+          settings->get_config()[PROJECT_NAME]["graph_data"]);
+#if defined(__GNUC__)
+      bsky::activity::neo4j_adapter graph_db(graph_data_config);
+#else
+      throw std::invalid_argument(
+          "graph_data config is not supported on this platform");
+#endif
+    } catch (std::exception const &exc) {
+      // graph DB config is optional on amy platform
+      REL_INFO("No graph DB configured, returned error {}", exc.what());
+    }
+
     // wait for matcher and embed checker to be ready
     do {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -175,6 +193,7 @@ int main(int argc, char **argv) {
   } catch (std::exception const &exc) {
     if (log_ready) {
       REL_CRITICAL("Unhandled exception : {}", exc.what());
+      stop_logging();
     } else {
       std::cerr << "Unhandled exception : " << exc.what() << '\n';
     }

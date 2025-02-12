@@ -1,3 +1,4 @@
+firehose-client/build/
 firehose-client/logs/
 firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
@@ -10,3 +11,6 @@ db-crawler/config/db_crawler_dev.yml
 db-crawler/logs/
 labeler-update/config/labeler_update_dev.yml
 labeler-update/logs/
+debug-gcc/
+logging-gcc/
+release-gcc/
