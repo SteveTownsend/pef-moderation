@@ -5,8 +5,6 @@ services:
     container_name: firehose-client
     image: ghcr.io/stevetownsend/firehose-client:latest
     network_mode: host
-    ports:
-      - "59090:59090"
     volumes:
       - type: bind
         source: /firehose-client/logs/
@@ -27,8 +25,6 @@ services:
         target: /var/logs/
       - /firehose-client/promtail/positions/:/etc/promtail/positions/
       - /firehose-client/config/promtail.yaml/:/etc/promtail/promtail.yaml
-    ports:
-      - "9080:9080"
     command: -config.file=/etc/promtail/promtail.yaml
     restart: unless-stopped
     labels:
@@ -50,7 +46,25 @@ services:
         target: /var/lib/postgresql/data
     env_file:
       - /firehose-client/postgres.env
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
 
+  neo4j:
+    image: neo4j:latest
+    network_mode: host
+    volumes:
+        - /neo4j/logs:/logs
+        - /neo4j/config:/config
+        - /neo4j/data:/data
+        - /neo4j/plugins:/plugins
+    environment:
+        - NEO4J_AUTH_FILE=/run/secrets/neo4j_auth_file
+    secrets:
+      - neo4j_auth_file
+    restart: unless-stopped
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
+      
   watchtower:
     container_name: watchtower
     image: containrrr/watchtower:latest
@@ -65,3 +79,6 @@ services:
       WATCHTOWER_SCHEDULE: '@midnight'
       WATCHTOWER_LABEL_ENABLE: 'true'
 
+secrets:
+  neo4j_auth_file:
+    file: /neo4j/secrets/neo4j_auth.txt
