@@ -14,3 +14,4 @@ labeler-update/logs/
 debug-gcc/
 logging-gcc/
 release-gcc/
+firehose-client/config/graph_db_config_dev.yml
