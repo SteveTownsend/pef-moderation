@@ -104,10 +104,6 @@ public:
       std::chrono::milliseconds(10000);
 
   static report_agent &instance();
-  void
-  set_moderation_data(std::shared_ptr<bsky::moderation::ozone_adapter> &ozone) {
-    _moderation_data = ozone;
-  }
 
   void start(YAML::Node const &settings, std::string const &project_name);
   void wait_enqueue(account_report &&value);
@@ -141,7 +137,6 @@ private:
   std::string _did;
   std::string _service_did;
   bool _dry_run = true;
-  std::shared_ptr<ozone_adapter> _moderation_data;
   std::unordered_set<std::string> _reported_dids;
 };
 

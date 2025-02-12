@@ -57,6 +57,32 @@
             "console": "externalTerminal"
         },
         {
+            "name": "Firehose Client (GCC-Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-gcc/firehose-client/firehose_client",
+            "args": [
+                "./config/graph_db_config_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Firehose Client (GCC-Release)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/release-gcc/firehose-client/firehose_client",
+            "args": [
+                "./config/graph_db_config_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/firehose-client",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
             "name": "Jetstream Client (Release)",
             "type": "cppvsdbg",
             "request": "launch",

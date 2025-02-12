@@ -26,9 +26,10 @@ http://www.fsf.org/licensing/licenses
 #include <string>
 #include <string_view>
 
-
 namespace bsky {
 constexpr size_t GetProfilesMax = 25;
+
+constexpr std::string_view HandleInvalid = "@handle.invalid";
 
 constexpr std::string_view AppBskyFeedLike = "app.bsky.feed.like";
 constexpr std::string_view AppBskyFeedPost = "app.bsky.feed.post";

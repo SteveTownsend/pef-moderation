@@ -20,6 +20,7 @@ http://www.fsf.org/licensing/licenses
 
 #include "payload.hpp"
 #include "common/activity/account_events.hpp"
+#include "common/moderation/ozone_adapter.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
@@ -242,9 +243,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           for (auto const &next_match : result.second) {
             // this is the substring of the full JSON that matched one or more
             // desired strings
-            REL_INFO("{} matched candidate {}|{}|{}|{}", next_match._matches,
-                     repo, next_match._candidate._type,
-                     next_match._candidate._field,
+            // start tracking this account if not already
+            auto entry(
+                bsky::moderation::ozone_adapter::instance().track_account(
+                    repo));
+            REL_INFO("{}/{} matched candidate {}|{}|{}|{}", next_match._matches,
+                     repo, entry->get_statistics()._handle,
+                     next_match._candidate._type, next_match._candidate._field,
                      next_match._candidate._value);
             count += next_match._matches.size();
             for (auto const &match : next_match._matches) {

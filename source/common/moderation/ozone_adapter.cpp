@@ -29,17 +29,18 @@ http://www.fsf.org/licensing/licenses
 namespace bsky {
 namespace moderation {
 
-ozone_adapter::ozone_adapter(std::string const &connection_string)
-    : _connection_string(connection_string) {
-  REL_INFO("Connected OK to moderation DB: {}", safe_connection_string());
-}
-
-void ozone_adapter::start() {
+void ozone_adapter::start(std::string const &connection_string,
+                          const bool use_thread) {
+  _connection_string = connection_string;
+  if (!use_thread)
+    return;
   _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
+          REL_INFO("Connected OK to moderation DB: {}",
+                   safe_connection_string());
         }
         // Load the list of labeled and pending-review accounts
         // we may track some false positines but that's no big deal
@@ -66,11 +67,12 @@ void ozone_adapter::check_refresh_tracked_accounts() {
       ProcessedAccountRefreshInterval) {
     decltype(_tracked_accounts) new_tracked;
     pqxx::work tx(*_cx);
+    // Track account if it was ever labeled or has an open report
     for (auto [did] : tx.query<std::string>(
-             "select distinct(ms.\"subjectDid\") from moderation_event ms "
+             "select ms.\"subjectDid\" from moderation_event ms "
              "where ms.\"action\" = "
              "'tools.ozone.moderation.defs#modEventLabel' union "
-             "select distinct(did) from moderation_subject_status mss "
+             "select did from moderation_subject_status mss "
              "where mss.\"reviewState\" in "
              "('tools.ozone.moderation.defs#reviewOpen', "
              "'tools.ozone.moderation.defs#reviewEscalated')")) {
@@ -104,6 +106,7 @@ void ozone_adapter::load_pending_report_tags() {
   try {
     if (!_cx) {
       _cx = std::make_unique<pqxx::connection>(_connection_string);
+      REL_INFO("Connected OK to moderation DB: {}", safe_connection_string());
     }
     // load the list of open/escalated reports
     std::unordered_set<std::string> deleted_accounts;
@@ -166,6 +169,7 @@ void ozone_adapter::load_content_reporters(std::string const &auto_reporter) {
   try {
     if (!_cx) {
       _cx = std::make_unique<pqxx::connection>(_connection_string);
+      REL_INFO("Connected OK to moderation DB: {}", safe_connection_string());
     }
     // load the list of open/escalated reports
     pqxx::work tx(*_cx);
@@ -221,6 +225,7 @@ void ozone_adapter::filter_subjects(std::string const &filter) {
   try {
     if (!_cx) {
       _cx = std::make_unique<pqxx::connection>(_connection_string);
+      REL_INFO("Connected OK to moderation DB: {}", safe_connection_string());
     }
     // load the list of matching open/escalated reports
     pqxx::work tx(*_cx);
@@ -277,6 +282,15 @@ std::string ozone_adapter::safe_connection_string() const {
         .replace(start, end - start, password_mask);
   }
   return _connection_string;
+}
+
+caches::WrappedValue<activity::account>
+ozone_adapter::track_account(std::string const &did) {
+  {
+    std::lock_guard guard(_lock);
+    _tracked_accounts.insert(did);
+  }
+  return activity::event_recorder::instance().touch_account(did);
 }
 
 } // namespace moderation

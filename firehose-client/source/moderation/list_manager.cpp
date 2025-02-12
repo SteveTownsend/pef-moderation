@@ -125,7 +125,8 @@ void list_manager::start(YAML::Node const &settings) {
               .Decrement();
 
           // do not process if whitelisted
-          if (_moderation_data->already_processed(to_block._did)) {
+          if (bsky::moderation::ozone_adapter::instance().already_processed(
+                  to_block._did)) {
             REL_INFO("skipping {} for list-group {}, already processed",
                      to_block._did, to_block._list_group_name);
             continue;

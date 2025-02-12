@@ -88,7 +88,8 @@ void report_agent::start(YAML::Node const &settings,
               .Decrement();
 
           // Don't reprocess previously-labeled accounts
-          if (_moderation_data->already_processed(report._did) ||
+          if (bsky::moderation::ozone_adapter::instance().already_processed(
+                  report._did) ||
               is_reported(report._did)) {
             REL_INFO("Report of {} skipped, already known", report._did);
             metrics_factory::instance()

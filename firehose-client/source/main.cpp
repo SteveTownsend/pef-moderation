@@ -33,6 +33,7 @@ http://www.fsf.org/licensing/licenses
 //
 //------------------------------------------------------------------------------
 
+#include "common/bluesky/async_loader.hpp"
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
@@ -112,18 +113,22 @@ int main(int argc, char **argv) {
         std::make_shared<bsky::moderation::auxiliary_data>(
             build_db_connection_string(
                 settings->get_config()[PROJECT_NAME]["auxiliary_data"]));
+    // requires poller thread
+    bsky::moderation::ozone_adapter::instance().start(
+        build_db_connection_string(
+            settings->get_config()[PROJECT_NAME]["moderation_data"]),
+        true);
 
-    std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
-        std::make_shared<bsky::moderation::ozone_adapter>(
-            build_db_connection_string(
-                settings->get_config()[PROJECT_NAME]["moderation_data"]));
     // Matcher is shared by many classes. Loads from file or DB.
     matcher::shared().set_config(
         settings->get_config()[PROJECT_NAME]["filters"]);
 
+    // prepare for Bluesky API calls
+    bsky::async_loader::instance().start(
+        settings->get_config()[PROJECT_NAME]["appview_client"]);
+
     // seed database monitors before we start post-processing firehose
     // messages
-    moderation_data->start();
     auxiliary_data->start(); // seeds matcher with rules
 
     // optional graph DB for Linux only
@@ -131,7 +136,7 @@ int main(int argc, char **argv) {
       auto graph_data_config(
           settings->get_config()[PROJECT_NAME]["graph_data"]);
 #if defined(__GNUC__)
-      bsky::activity::neo4j_adapter graph_db(graph_data_config);
+      activity::neo4j_adapter graph_db(graph_data_config);
 #else
       throw std::invalid_argument(
           "graph_data config is not supported on this platform");
@@ -161,8 +166,6 @@ int main(int argc, char **argv) {
       // prepare action handlers after we start processing firehose messages
       // this is time consuming - allow a backlog for handlers while
       // existing members load
-      bsky::moderation::report_agent::instance().set_moderation_data(
-          moderation_data);
       bsky::moderation::report_agent::instance().start(
           settings->get_config()[PROJECT_NAME]["auto_reporter"], PROJECT_NAME);
 
@@ -175,7 +178,6 @@ int main(int argc, char **argv) {
           settings->get_config()[PROJECT_NAME]["embed_checker"]);
       bsky::moderation::embed_checker::instance().start();
 
-      list_manager::instance().set_moderation_data(moderation_data);
       list_manager::instance().start(
           settings->get_config()[PROJECT_NAME]["list_manager"]);
 

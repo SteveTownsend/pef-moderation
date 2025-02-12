@@ -42,9 +42,9 @@ public:
 
   void record(timed_event const &value);
   caches::WrappedValue<account> get_account(std::string const &did);
-  void add_account(std::string const &did);
 
 private:
+  void add_account(std::string const &did);
   // visitor for event-specific logic
   struct augment_event {
     template <typename T> void operator()(T const &) {}

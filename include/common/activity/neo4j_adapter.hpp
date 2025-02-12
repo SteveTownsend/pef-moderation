@@ -31,47 +31,11 @@ http://www.fsf.org/licensing/licenses
 #include "yaml-cpp/yaml.h"
 #include <neo4j-client.h>
 
-namespace bsky {
 namespace activity {
 
 class neo4j_adapter {
 public:
   neo4j_adapter(YAML::Node const &settings);
-#if 0
-  void start();
-  bool already_processed(std::string const &did) const;
-  typedef std::unordered_map<
-      std::string, std::unordered_map<std::string, std::vector<std::string>>>
-      pending_report_tags;
-  void load_pending_report_tags();
-  inline const pending_report_tags &get_pending_reports() {
-    return _pending_report_tags;
-  }
-
-  // Stores reported content with a count of automated and manual reports
-  struct reports_by_category {
-    size_t manual = 0;
-    size_t automatic = 0;
-  };
-  typedef std::unordered_map<std::string, reports_by_category>
-      content_reporters;
-  void load_content_reporters(std::string const &auto_reporter);
-  inline const content_reporters &get_content_reporters() {
-    return _content_reporters;
-  }
-
-  typedef std::unordered_map<std::string, std::string> filtered_subjects;
-  void filter_subjects(std::string const &filter);
-  inline const filtered_subjects &get_filtered_subjects() {
-    return _filtered_subjects;
-  }
-
-  typedef std::unordered_set<std::string> account_list;
-  bool is_tracked(std::string const &did) const {
-    std::lock_guard guard(_lock);
-    return _tracked_accounts.contains(did);
-  }
-#endif
 
 private:
 #if 0
@@ -101,5 +65,4 @@ private:
 };
 
 } // namespace activity
-} // namespace bsky
 #endif

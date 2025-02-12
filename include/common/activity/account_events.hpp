@@ -229,6 +229,7 @@ public:
     size_t matches() const { return _matches; }
 
     std::string _did;
+    std::string _handle;
     state _state = state::unknown;
     size_t _event_count = 0;
     size_t _alert_count = 0;

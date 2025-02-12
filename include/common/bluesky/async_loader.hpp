@@ -1,8 +1,7 @@
-#ifndef __event_recorder_hpp__
-#define __event_recorder_hpp__
+#pragma once
 /*************************************************************************
 Public Education Forum Moderation Firehose Client
-Copyright (c) Steve Townsend 2024
+Copyright (c) Steve Townsend 2025
 
 >>> SOURCE LICENSE >>>
 This program is free software; you can redistribute it and/or modify
@@ -19,29 +18,35 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-
-#include "common/activity/event_cache.hpp"
+#include "common/bluesky/client.hpp"
+#include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
+#include "common/rest_utils.hpp"
 #include "readerwriterqueue.h"
 
-namespace activity {
-class event_recorder {
+#include <thread>
+
+namespace bsky {
+
+class async_loader {
 public:
-  static inline event_recorder &instance() {
-    static event_recorder recorder;
-    return recorder;
+  // aloow load spike during startup
+  static constexpr size_t MaxBacklog = 250000;
+  async_loader();
+  static inline async_loader &instance() {
+    static async_loader loader;
+    return loader;
   }
-  void wait_enqueue(timed_event &&value);
-  caches::WrappedValue<account> touch_account(std::string const &did);
-  void update_handle(std::string const &did, std::string const &handle);
+
+  void start(YAML::Node const &settings);
+  void wait_enqueue(std::string &&value);
 
 private:
-  event_recorder();
-  // Declare queue between post-processing and recording
-  moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
+  ~async_loader() = default;
+  // Use queue to buffer incoming requests for bsky API data
+  moodycamel::BlockingReaderWriterQueue<std::string> _queue;
   std::thread _thread;
-
-  event_cache _events;
+  std::unique_ptr<client> _appview_client;
 };
-} // namespace activity
 
-#endif
+} // namespace bsky
