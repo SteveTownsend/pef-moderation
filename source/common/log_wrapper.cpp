@@ -25,6 +25,7 @@ http://www.fsf.org/licensing/licenses
 #include <spdlog/sinks/daily_file_sink.h>
 
 std::shared_ptr<spdlog::logger> logger;
+bool logger_started = false;
 
 bool init_logging(std::string const &log_file, std::string const &project_name,
                   spdlog::level::level_enum log_level) {
@@ -39,9 +40,16 @@ bool init_logging(std::string const &log_file, std::string const &project_name,
 #else
     spdlog::flush_every(std::chrono::seconds(3));
 #endif
-    return true;
+    logger_started = true;
   } catch (const spdlog::spdlog_ex &exc) {
     std::cerr << "logging error " << exc.what() << '\n';
-    return false;
+  }
+  return logger_started;
+}
+
+void stop_logging() {
+  if (logger_started) {
+    // make sure all logs are output
+    logger->flush();
   }
 }

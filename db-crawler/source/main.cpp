@@ -335,6 +335,7 @@ int main(int argc, char **argv) {
   } catch (std::exception const &exc) {
     if (log_ready) {
       REL_CRITICAL("Unhandled exception : {}", exc.what());
+      stop_logging();
     } else {
       std::cerr << "Unhandled exception : " << exc.what() << '\n';
     }
