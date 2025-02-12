@@ -1,22 +1,17 @@
 # install dependencies and build
 FROM ubuntu:24.10 AS build
 
-RUN apt-get -y update && apt-get -y install sudo 
-ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16'
-RUN sudo apt-get -y install $BUILD_DEPS
-RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
-  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
+ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16 peg pkg-config libedit-dev'
+RUN apt-get -y update && apt-get -y install $BUILD_DEPS
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
+  update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
 
 WORKDIR /usr/src
 ADD https://api.github.com/repos/SteveTownsend/prometheus-cpp/git/refs/heads/master prom-version.json
 RUN git clone -b master https://github.com/SteveTownsend/prometheus-cpp.git
 WORKDIR /usr/src/prometheus-cpp
-
-# fetch third-party dependencies
 RUN git submodule init && git submodule update
-RUN mkdir _build
 WORKDIR /usr/src/prometheus-cpp/_build
-
 # run cmake, build, install the libraries and headers
 RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF && \
   cmake --build . --parallel 4 && \
@@ -25,43 +20,51 @@ RUN cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF &
 WORKDIR /usr/src
 ADD https://api.github.com/repos/SteveTownsend/restc-cpp/git/refs/heads/master restc-version.json
 RUN git clone -b master https://github.com/SteveTownsend/restc-cpp.git
-WORKDIR /usr/src/restc-cpp
 
 # fetch third-party dependencies
+WORKDIR /usr/src/restc-cpp
 RUN git submodule init && git submodule update
 RUN mkdir _build
 RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
-WORKDIR /usr/src/pef-forum-moderation
+WORKDIR /usr/src
+ADD https://api.github.com/repos/cleishm/libcypher-parser/git/refs/heads/main libcypher-version.json
+RUN git clone https://github.com/cleishm/libcypher-parser.git
+WORKDIR /usr/src/libcypher-parser
+RUN ./autogen.sh && ./configure && make clean check && make install
+
+WORKDIR /usr/src
+ADD https://api.github.com/repos/SteveTownsend/libneo4j-omni/git/refs/heads/main libneo4j-version.json
+RUN git clone https://github.com/SteveTownsend/libneo4j-omni.git
+WORKDIR /usr/src/libneo4j-omni
+RUN ./autogen.sh && ./configure --disable-werror && make clean check && make install
+
+WORKDIR /usr/pef-moderation
 COPY . .
 RUN cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
-  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/lib/apt/lists/* && rm -rf /usr/src && \
   apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
 FROM ubuntu:24.10
 
-RUN apt-get -y update && apt-get -y install sudo
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
-RUN sudo apt-get -y install $RUNTIME_DEPS 
-
-COPY --from=build /usr/src/prometheus-cpp /usr/src/prometheus-cpp
-WORKDIR /usr/src/prometheus-cpp/_build
-RUN cmake --install .
+RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
 
 WORKDIR /firehose-client
 RUN mkdir -p /firehose-client/logs /etc/firehose-client
-COPY --from=build /usr/src/pef-forum-moderation/release-gcc/firehose-client/firehose_client /firehose-client
+COPY --from=build /usr/pef-moderation/release-gcc/firehose-client/firehose_client /firehose-client
+COPY --from=build /usr/local /usr/local
 
-RUN rm -rf /usr/src && \
-  rm -rf /var/lib/apt/lists/* && \
-  sudo apt-get purge -y --auto-remove cmake
+RUN rm -rf /var/lib/apt/lists/* && \
+  apt-get purge -y --auto-remove cmake
 
+ENV LD_LIBRARY_PATH="/usr/local/lib"
 ENTRYPOINT ["/firehose-client/firehose_client", "/etc/firehose-client/full_config_prod.yml"]
 EXPOSE 59090
 ENV EXPOSER_PORT=59090
 
-LABEL org.opencontainers.image.source=https://github.com/SteveTownsend/pef-forum-moderation
+LABEL org.opencontainers.image.source=https://github.com/SteveTownsend/pef-moderation
 LABEL org.opencontainers.image.description="Publc Education Forum Moderation Firehose Client"
 LABEL org.opencontainers.image.licenses=MIT

@@ -103,6 +103,7 @@ extern std::shared_ptr<spdlog::logger> logger;
 
 bool init_logging(std::string const &log_file, std::string const &project_name,
                   spdlog::level::level_enum log_level);
+void stop_logging();
 #endif
 
 #endif

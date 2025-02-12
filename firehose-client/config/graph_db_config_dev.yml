@@ -1,0 +1,60 @@
+firehose_client:
+  logging:
+    filename: "./logs/firehose_client_graph.log"
+    level: "info" # per spdlog values trace, debug, info, warn, error, critical, off
+
+  filters:
+    #filename: "./config/live_filters"
+    use_db: true
+
+  datasource:
+    hosts:
+      # full firehose
+      "bsky.network"
+    port: 443
+    subscription: "/xrpc/com.atproto.sync.subscribeRepos"
+
+  moderation_data:
+    host: "104.248.47.218"
+    port: 5432
+    dbname: "ozone"
+    user: "firehose_client"
+    password: "3o:CswO@2_RW/2[up9`s"
+
+  auxiliary_data:
+    host: "165.227.146.55"
+    port: 5432
+    dbname: "moderation"
+    user: "firehose_client"
+    password: "u2@-`K0K;Y9)$q`JLA3j"
+
+  auto_reporter:
+    handle: "bonkamatic-9000.bsky.social"
+    password: "CW+I$t1Lsc!(\\0h;$?nV"
+    did: "did:plc:hyqqdsrb5o6i6kzniaqapazg"
+    # this has to be the home PDS of the reporting account - using bsky.social sends reports to the platform
+    # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
+    host: "https://polypore.us-west.host.bsky.network/xrpc/"
+    port: 443
+    service_did: "did:plc:uac6er53o2pvr5y2qmvaf7hw"
+    dry_run: true
+
+  embed_checker:
+    follow_links: true
+    number_of_threads: 3
+
+  list_manager:
+    handle: "pef-moderation.org"
+    password: "9_'1JU;:A8:xBwDq7oVM"
+    client_did: "did:plc:uac6er53o2pvr5y2qmvaf7hw"
+    # this has to be the home PDS of the service account for authenticated requests
+    # https://docs.bsky.app/docs/advanced-guides/api-directory#common-request-types
+    host: "https://parasol.us-east.host.bsky.network/xrpc/"
+    port: 443
+    dry_run: true
+
+  graph_data:
+    connection_string: "neo4j://neo4j:password@localhost:7687"
+
+  metrics:
+    port: 59090
