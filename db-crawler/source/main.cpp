@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
                         bsky::profile_view_detailed(candidate));
                   }),
           [&appview_client, &pending, &pds_client](std::string const &match) {
-            // double check account status before garbage collceting the reports
+            // double check account status before garbage collecting the reports
             try {
               bsky::profile_view_detailed profile(
                   appview_client.get_profile(match));

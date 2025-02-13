@@ -109,27 +109,6 @@ int main(int argc, char **argv) {
 #endif
     REL_INFO("firehose_client v{}.{}.{}", PROJECT_NAME_VERSION_MAJOR,
              PROJECT_NAME_VERSION_MINOR, PROJECT_NAME_VERSION_PATCH);
-    std::shared_ptr<bsky::moderation::auxiliary_data> auxiliary_data =
-        std::make_shared<bsky::moderation::auxiliary_data>(
-            build_db_connection_string(
-                settings->get_config()[PROJECT_NAME]["auxiliary_data"]));
-    // requires poller thread
-    bsky::moderation::ozone_adapter::instance().start(
-        build_db_connection_string(
-            settings->get_config()[PROJECT_NAME]["moderation_data"]),
-        true);
-
-    // Matcher is shared by many classes. Loads from file or DB.
-    matcher::shared().set_config(
-        settings->get_config()[PROJECT_NAME]["filters"]);
-
-    // prepare for Bluesky API calls
-    bsky::async_loader::instance().start(
-        settings->get_config()[PROJECT_NAME]["appview_client"]);
-
-    // seed database monitors before we start post-processing firehose
-    // messages
-    auxiliary_data->start(); // seeds matcher with rules
 
     // optional graph DB for Linux only
     try {
@@ -146,12 +125,6 @@ int main(int argc, char **argv) {
       REL_INFO("No graph DB configured, returned error {}", exc.what());
     }
 
-    // wait for matcher and embed checker to be ready
-    do {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    } while (!matcher::shared().is_ready() ||
-             !bsky::moderation::embed_checker::instance().is_ready());
-
     if (is_full(*settings)) {
       metrics_factory::instance().add_counter(
           "automation",
@@ -160,7 +133,38 @@ int main(int argc, char **argv) {
           "realtime_alerts", "Alerts generated for possibly suspect activity");
       metrics_factory::instance().add_gauge(
           "process_operation", "Statistics about process internals");
-      datasource<firehose_payload>::instance().set_config(settings);
+
+      // seed database monitors before we start post-processing firehose
+      // messages
+      // requires poller thread
+      bsky::moderation::ozone_adapter::instance().start(
+          build_db_connection_string(
+              settings->get_config()[PROJECT_NAME]["moderation_data"]),
+          true);
+
+      // prepare for Bluesky API calls
+      bsky::async_loader::instance().start(
+          settings->get_config()[PROJECT_NAME]["appview_client"]);
+
+      // Matcher is shared by many classes. Loads from file or DB.
+      matcher::shared().set_config(
+          settings->get_config()[PROJECT_NAME]["filters"]);
+
+      bsky::moderation::auxiliary_data::instance().start(
+          build_db_connection_string(
+              settings->get_config()[PROJECT_NAME]
+                                    ["auxiliary_data"])); // seeds matcher with
+                                                          // rules
+      int64_t cursor(
+          bsky::moderation::auxiliary_data::instance().get_rewind_point());
+
+      // wait for matcher and embed checker to be ready
+      do {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      } while (!matcher::shared().is_ready() ||
+               !bsky::moderation::embed_checker::instance().is_ready());
+
+      datasource<firehose_payload>::instance().set_config(settings, cursor);
       datasource<firehose_payload>::instance().start();
 
       // prepare action handlers after we start processing firehose messages
@@ -184,7 +188,7 @@ int main(int argc, char **argv) {
       // continue as long as firehose runs OK
       datasource<firehose_payload>::instance().wait_for_end_thread();
     } else {
-      datasource<jetstream_payload>::instance().set_config(settings);
+      datasource<jetstream_payload>::instance().set_config(settings, 0);
       datasource<jetstream_payload>::instance().start();
 
       // continue as long as data feed runs OK
