@@ -61,7 +61,7 @@ public:
   datasource() {}
   ~datasource() = default;
 
-  void set_config(std::shared_ptr<config> &settings) {
+  void set_config(std::shared_ptr<config> &settings, const int64_t cursor) {
     _settings = settings;
     _host = _settings->get_config()[PROJECT_NAME]["datasource"]["hosts"]
                 .as<std::string>();
@@ -70,6 +70,9 @@ public:
     _subscription =
         _settings->get_config()[PROJECT_NAME]["datasource"]["subscription"]
             .as<std::string>();
+    if (cursor != 0) {
+      _subscription.append(std::format("?cursor={}", cursor));
+    }
   }
 
   void start() {

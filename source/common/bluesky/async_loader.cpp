@@ -40,10 +40,18 @@ void async_loader::start(YAML::Node const &settings) {
           .Get({{"bsky_api", "backlog"}})
           .Decrement();
       try {
-        auto profiles(_appview_client->get_profiles(dids));
-        for (auto const &profile : profiles) {
-          activity::event_recorder::instance().update_handle(profile.did,
-                                                             profile.handle);
+        if (dids.size() != 1) {
+          // batch load happens only at startup - use batch API, and do not spam
+          // log
+          auto profiles(_appview_client->get_profiles(dids));
+          for (auto const &profile : profiles) {
+            activity::event_recorder::instance().update_handle(profile.did,
+                                                               profile.handle);
+            REL_TRACE("Batch-load DID {} has handle {}", profile.did,
+                      profile.handle);
+          }
+        } else {
+          auto profile(_appview_client->get_profile(*dids.cbegin()));
           REL_INFO("DID {} has handle {}", profile.did, profile.handle);
         }
       } catch (std::exception const &exc) {

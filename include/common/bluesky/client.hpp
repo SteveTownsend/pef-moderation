@@ -502,7 +502,7 @@ public:
                 // Get the Post instance from the future<>, or any C++
                 // exception thrown within the lambda.
                 .get();
-        REL_INFO("GET OK for {}", relative_path);
+        REL_TRACE("GET OK for {}", relative_path);
         break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
@@ -521,10 +521,6 @@ public:
     }
     return response;
   }
-
-  std::string raw_get(
-      std::string const &relative_path,
-      std::optional<get_callback_t> callback = std::optional<get_callback_t>());
 
   std::string raw_post(std::string const &relative_path,
                        const std::string &&body = std::string());

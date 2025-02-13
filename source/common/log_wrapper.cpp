@@ -39,6 +39,7 @@ bool init_logging(std::string const &log_file, std::string const &project_name,
     logger->flush_on(spdlog::level::level_enum::trace);
 #else
     spdlog::flush_every(std::chrono::seconds(3));
+    logger->flush_on(spdlog::level::level_enum::err);
 #endif
     logger_started = true;
   } catch (const spdlog::spdlog_ex &exc) {

@@ -26,18 +26,27 @@ http://www.fsf.org/licensing/licenses
 namespace bsky {
 namespace moderation {
 
-auxiliary_data::auxiliary_data(std::string const &connection_string)
-    : _connection_string(connection_string) {
-  REL_INFO("Connected OK to auxiliary DB: {}", safe_connection_string());
-}
-
-void auxiliary_data::start() {
+void auxiliary_data::start(std::string const &connection_string) {
+  // synchronously prepare for data source rewind after a planned or unplanned
+  // stoppage
+  _connection_string = connection_string;
+  try {
+    _cx = std::make_unique<pqxx::connection>(_connection_string);
+    REL_INFO("Connected OK to auxiliary DB: {}", safe_connection_string());
+    set_rewind_point();
+  } catch (std::exception const &exc) {
+    REL_ERROR("Get rewind point error: {}", exc.what());
+  }
+  _cx.reset();
   _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
+          prepare_statements();
         }
+        // update firehose checkpoint regularly
+        check_rewind_point();
         // load/refresh string match filters
         update_match_filters();
         // load/refresh string popular hosts used in embed:external and other
@@ -52,10 +61,69 @@ void auxiliary_data::start() {
         REL_ERROR("database exception {}", exc.what());
         _cx.reset();
       }
-      std::this_thread::sleep_for(ThreadDelay);
+      std::this_thread::sleep_for(RewindFlushInterval);
     }
     REL_INFO("auxiliary_data stopping");
   });
+}
+
+void auxiliary_data::prepare_statements() {
+  _cx->prepare("add_checkpoint", "INSERT INTO firehose_checkpoint (emitted_at, "
+                                 "seq) VALUES ($1, $2)");
+  _cx->prepare("update_cursor",
+               "UPDATE firehose_state SET last_processed = $1 WHERE true");
+}
+
+void auxiliary_data::update_rewind_point(const int64_t seq,
+                                         const std::string &emitted_at) {
+  // TODO should be safe but not guaranteed always accurate for lock-free read
+  // seq/emitted_at may mismatch
+  // emitted_at may contain part of old and new values
+  _cursor.exchange(seq);
+  _emitted_at[emitted_at.length()] = 0;
+  std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
+}
+
+// prepare for data backfill - for malformed data, continue but do not backfill
+void auxiliary_data::set_rewind_point() {
+  pqxx::work tx(*_cx);
+  bool first(true);
+  auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
+  auto [last_processed] = result.as<int64_t>();
+  REL_INFO("Backfill to {}", last_processed);
+  _cursor = last_processed;
+}
+
+void auxiliary_data::check_rewind_point() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  // Don't save a checkpoint until interval has elapsed, provided checkpoint
+  // candidate has been recorded
+  int64_t cursor(get_rewind_point());
+  if (cursor == 0) {
+    REL_INFO("cursor 0, pending init");
+  }
+  std::string timestamp(_emitted_at.data());
+  if (std::chrono::duration_cast<std::chrono::hours>(
+          now - _last_rewind_checkpoint) > RewindCheckpointInterval &&
+      _emitted_at[0]) {
+    pqxx::work tx(*_cx);
+    static pqxx::prepped inserter(
+        "INSERT INTO firehose_checkpoint (emitted_at, "
+        "seq) VALUES ($1, $2)");
+    pqxx::params fields(timestamp, cursor);
+    tx.exec(pqxx::prepped("add_checkpoint"), fields);
+    tx.commit();
+    REL_INFO("firehose_checkpoint {} {}", timestamp, cursor);
+    _last_rewind_checkpoint = std::chrono::steady_clock::now();
+  }
+  {
+    // Update rewind position on every pass
+    pqxx::work tx(*_cx);
+    pqxx::params fields(cursor);
+    tx.exec(pqxx::prepped("update_cursor"), fields);
+    tx.commit();
+    REL_TRACE("cursor advanced to {}", cursor);
+  }
 }
 
 // Don't refresh until interval has elapsed

@@ -45,6 +45,7 @@ public:
 
   inline static void on_terminate() {
     REL_CRITICAL("Controller terminating");
+    stop_logging();
     std::abort();
   }
 

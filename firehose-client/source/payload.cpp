@@ -22,6 +22,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/activity/account_events.hpp"
 #include "common/moderation/ozone_adapter.hpp"
 #include "moderation/action_router.hpp"
+#include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
@@ -280,6 +281,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         // forward account and its matched records for possible auto-moderation
         action_router::instance().wait_enqueue({repo, std::move(matches)});
       }
+    }
+    // update last-seen sequence number
+    if (op_type != firehose::OpTypeInfo) {
+      int64_t seq(message["seq"].template get<int64_t>());
+      std::string emitted_at(message["time"].template get<std::string>());
+      bsky::moderation::auxiliary_data::instance().update_rewind_point(
+          seq, emitted_at);
     }
   }
 }

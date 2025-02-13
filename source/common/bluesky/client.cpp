@@ -110,61 +110,6 @@ void client::set_config(YAML::Node const &settings) {
   }
 }
 
-inline std::string client::raw_get(std::string const &relative_path,
-                                   std::optional<get_callback_t> callback) {
-  std::string response;
-  size_t retries(0);
-  while (retries < 5) {
-    try {
-      restc_cpp::SerializeProperties properties;
-      properties.name_mapping = &json::TypeFieldMapping;
-      response =
-          _rest_client
-              ->ProcessWithPromiseT<std::string>([&](restc_cpp::Context &ctx) {
-                // This is a co-routine, running in a worker-thread
-                // Construct a request to the server
-                // Send the request
-                restc_cpp::RequestBuilder builder(ctx);
-                builder.Get(_host + relative_path);
-                if (_use_token) {
-                  builder.Header(
-                      "Authorization",
-                      std::string("Bearer " + _session->access_token()));
-                }
-                // Collect overrides if present
-                if (callback.has_value()) {
-                  callback.value()(builder);
-                }
-                auto reply = builder.Execute();
-
-                // Return the list record instance through C++
-                // future<>
-                return reply->GetBodyAsString();
-              })
-
-              // Get the Post instance from the future<>, or any C++
-              // exception thrown within the lambda.
-              .get();
-      REL_INFO("GET for {} returned '{}'", relative_path, response);
-      break;
-    } catch (boost::system::system_error const &exc) {
-      if (exc.code().value() == boost::asio::error::eof &&
-          exc.code().category() == boost::asio::error::get_misc_category()) {
-        REL_WARNING("IoReaderImpl::ReadSome(GET): asio eof, retry");
-        ++retries;
-      } else {
-        // unrecoverable error
-        REL_ERROR("GET for {} Boost exception {}", relative_path, exc.what())
-        throw;
-      }
-    } catch (std::exception const &exc) {
-      REL_ERROR("GET for {} exception {}", relative_path, exc.what())
-      throw;
-    }
-  }
-  return response;
-}
-
 std::string client::raw_post(std::string const &relative_path,
                              const std::string &&body) {
   std::string response;
@@ -365,8 +310,8 @@ client::get_profiles(std::unordered_set<std::string> const &dids) {
       bsky::get_profiles_response response =
           do_get<bsky::get_profiles_response>("app.bsky.actor.getProfiles",
                                               callback);
-      REL_INFO("getProfiles request for {} returned {}", batch.size(),
-               response.profiles.size());
+      REL_TRACE("getProfiles request for {} returned {}", batch.size(),
+                response.profiles.size());
       batch.clear();
 #ifdef __GNUC__
       profiles.insert(response.profiles.cbegin(), response.profiles.cend());
