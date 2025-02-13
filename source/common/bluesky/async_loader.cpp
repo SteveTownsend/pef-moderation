@@ -33,34 +33,28 @@ void async_loader::start(YAML::Node const &settings) {
   _thread = std::thread([&, this] {
     static size_t matches(0);
     while (controller::instance().is_active()) {
-      std::string did;
-      _queue.wait_dequeue(did);
+      std::unordered_set<std::string> dids;
+      _queue.wait_dequeue(dids);
       metrics_factory::instance()
           .get_gauge("process_operation")
           .Get({{"bsky_api", "backlog"}})
           .Decrement();
-      std::string handle;
-      bool valid(true);
       try {
-        bsky::profile_view_detailed profile(_appview_client->get_profile(did));
-        handle = profile.handle;
+        auto profiles(_appview_client->get_profiles(dids));
+        for (auto const &profile : profiles) {
+          activity::event_recorder::instance().update_handle(profile.did,
+                                                             profile.handle);
+          REL_INFO("DID {} has handle {}", profile.did, profile.handle);
+        }
       } catch (std::exception const &exc) {
-        handle = bsky::HandleInvalid;
-        valid = std::string(exc.what()).find("AccountTakedown") ==
-                std::string::npos;
-      }
-      if (valid) {
-        activity::event_recorder::instance().update_handle(did, handle);
-        REL_INFO("DID {} has handle {}", did, handle);
-      } else {
-        REL_INFO("DID {} suspended", did);
+        REL_ERROR("load failed for {} DIDs", dids.size());
       }
     }
     REL_INFO("async_loader stopping");
   });
 }
 
-void async_loader::wait_enqueue(std::string &&value) {
+void async_loader::wait_enqueue(std::unordered_set<std::string> &&value) {
   _queue.enqueue(value);
   metrics_factory::instance()
       .get_gauge("process_operation")

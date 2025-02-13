@@ -345,7 +345,7 @@ void client::tag_report_subject(
 }
 
 std::unordered_set<bsky::profile_view_detailed>
-client::get_profiles(std::vector<std::string> const &dids) {
+client::get_profiles(std::unordered_set<std::string> const &dids) {
   std::unordered_set<bsky::profile_view_detailed> profiles;
   profiles.reserve(dids.size());
   size_t next(0);

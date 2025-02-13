@@ -610,7 +610,7 @@ public:
   }
 
   std::unordered_set<bsky::profile_view_detailed>
-  get_profiles(std::vector<std::string> const &dids);
+  get_profiles(std::unordered_set<std::string> const &dids);
   bsky::profile_view_detailed get_profile(std::string const &did);
 
 private:

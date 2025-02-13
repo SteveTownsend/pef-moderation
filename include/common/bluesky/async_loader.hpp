@@ -31,7 +31,7 @@ namespace bsky {
 class async_loader {
 public:
   // aloow load spike during startup
-  static constexpr size_t MaxBacklog = 250000;
+  static constexpr size_t MaxBacklog = 10000;
   async_loader();
   static inline async_loader &instance() {
     static async_loader loader;
@@ -39,12 +39,12 @@ public:
   }
 
   void start(YAML::Node const &settings);
-  void wait_enqueue(std::string &&value);
+  void wait_enqueue(std::unordered_set<std::string> &&value);
 
 private:
   ~async_loader() = default;
   // Use queue to buffer incoming requests for bsky API data
-  moodycamel::BlockingReaderWriterQueue<std::string> _queue;
+  moodycamel::BlockingReaderWriterQueue<std::unordered_set<std::string>> _queue;
   std::thread _thread;
   std::unique_ptr<client> _appview_client;
 };

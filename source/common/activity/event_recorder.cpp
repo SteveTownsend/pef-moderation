@@ -51,13 +51,18 @@ void event_recorder::wait_enqueue(timed_event &&value) {
 }
 
 caches::WrappedValue<account>
-event_recorder::touch_account(std::string const &did) {
+event_recorder::upsert_account(std::string const &did) {
   auto entry(_events.get_account(did));
   if (entry->get_statistics()._handle.empty()) {
     // try to load the handle
-    bsky::async_loader::instance().wait_enqueue(std::string(did));
+    bsky::async_loader::instance().wait_enqueue({did});
   }
   return entry;
+}
+
+caches::WrappedValue<account>
+event_recorder::add_if_needed(std::string const &did) {
+  return _events.get_account(did);
 }
 
 void event_recorder::update_handle(std::string const &did,

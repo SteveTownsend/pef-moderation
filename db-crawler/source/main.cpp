@@ -106,15 +106,13 @@ int main(int argc, char **argv) {
     // Load pending reports grouped by account
     auto pending(
         bsky::moderation::ozone_adapter::instance().get_pending_reports());
-    std::vector<std::string> candidate_profiles;
+    std::unordered_set<std::string> candidate_profiles;
     candidate_profiles.reserve(pending.size());
 #ifdef __GNUC__
-    candidate_profiles.insert(candidate_profiles.end(),
-                              std::views::keys(pending).cbegin(),
+    candidate_profiles.insert(std::views::keys(pending).cbegin(),
                               std::views::keys(pending).cend());
 #else
-    candidate_profiles.insert_range(candidate_profiles.end(),
-                                    std::views::keys(pending));
+    candidate_profiles.insert_range(std::views::keys(pending));
 #endif
     // get a list of the active profiles only
     auto active_profiles(appview_client.get_profiles(candidate_profiles));

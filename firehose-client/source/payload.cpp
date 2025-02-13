@@ -188,6 +188,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
              activity::handle(handle)});
+        activity::event_recorder::instance().update_handle(repo, handle);
       }
       REL_INFO("{} {}", op_type.c_str(), dump_json(message));
     } else if (op_type == firehose::OpTypeAccount) {

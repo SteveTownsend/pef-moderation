@@ -31,7 +31,8 @@ public:
     return recorder;
   }
   void wait_enqueue(timed_event &&value);
-  caches::WrappedValue<account> touch_account(std::string const &did);
+  caches::WrappedValue<account> upsert_account(std::string const &did);
+  caches::WrappedValue<account> add_if_needed(std::string const &did);
   void update_handle(std::string const &did, std::string const &handle);
 
 private:

@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/activity/event_recorder.hpp"
+#include "common/bluesky/async_loader.hpp"
 #include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
@@ -90,14 +91,23 @@ void ozone_adapter::check_refresh_tracked_accounts() {
       }
     }
 
+    metrics_factory::instance()
+        .get_gauge("process_operation")
+        .Get({{"accounts", "tracked"}})
+        .Set(static_cast<double>(new_tracked.size()));
+
     std::lock_guard guard(_lock);
     _tracked_accounts.swap(new_tracked);
     _closed_reports.swap(new_closed);
     // make tracked accounts sticky in the tracked account event cache by
     // touching them each time
     for (auto const &account : _tracked_accounts) {
-      activity::event_recorder::instance().touch_account(account);
+      auto entry(activity::event_recorder::instance().add_if_needed(account));
+      if (entry->get_statistics()._handle.empty()) {
+        new_tracked.insert(account);
+      }
     }
+    bsky::async_loader::instance().wait_enqueue(std::move(new_tracked));
     _last_refresh = std::chrono::steady_clock::now();
   }
 }
@@ -288,9 +298,14 @@ caches::WrappedValue<activity::account>
 ozone_adapter::track_account(std::string const &did) {
   {
     std::lock_guard guard(_lock);
-    _tracked_accounts.insert(did);
+    if (_tracked_accounts.insert(did).second) {
+      metrics_factory::instance()
+          .get_gauge("process_operation")
+          .Get({{"accounts", "tracked"}})
+          .Increment();
+    }
   }
-  return activity::event_recorder::instance().touch_account(did);
+  return activity::event_recorder::instance().upsert_account(did);
 }
 
 } // namespace moderation
