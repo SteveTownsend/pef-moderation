@@ -19,6 +19,7 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "common/activity/event_cache.hpp"
 #include "common/config.hpp"
 #include <chrono>
 #include <mutex>
@@ -28,12 +29,18 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_set>
 
 namespace bsky {
+
 namespace moderation {
 
 class ozone_adapter {
 public:
-  ozone_adapter(std::string const &connection_string);
-  void start();
+  static inline ozone_adapter &instance() {
+    static ozone_adapter adapter;
+    return adapter;
+  }
+  ozone_adapter() = default;
+  void start(std::string const &connection_string,
+             const bool use_thread = false);
   bool already_processed(std::string const &did) const;
   typedef std::unordered_map<
       std::string, std::unordered_map<std::string, std::vector<std::string>>>
@@ -66,6 +73,7 @@ public:
     std::lock_guard guard(_lock);
     return _tracked_accounts.contains(did);
   }
+  caches::WrappedValue<activity::account> track_account(std::string const &did);
 
 private:
   void check_refresh_tracked_accounts();

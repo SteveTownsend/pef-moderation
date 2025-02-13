@@ -26,9 +26,9 @@ http://www.fsf.org/licensing/licenses
 #include <boost/fusion/adapted.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT(
-    activity::account::statistics, (std::string, _did), (size_t, _event_count),
-    (size_t, _alert_count), (size_t, _tags), (size_t, _links),
-    (size_t, _mentions), (size_t, _facets), (int32_t, _posts),
+    activity::account::statistics, (std::string, _did), (std::string, _handle),
+    (size_t, _event_count), (size_t, _alert_count), (size_t, _tags),
+    (size_t, _links), (size_t, _mentions), (size_t, _facets), (int32_t, _posts),
     (int32_t, _replied_to), (int32_t, _replies), (int32_t, _quoted),
     (int32_t, _quotes), (int32_t, _reposted), (int32_t, _reposts),
     (int32_t, _liked), (int32_t, _likes), (int32_t, _follows),
@@ -54,7 +54,7 @@ account::account(did_type const &did)
 void account::statistics::tags(const size_t count) {
   if (count > activity::account::TagFacetThreshold) {
     if (alert_needed(++_tags, FacetFactor)) {
-      REL_INFO("Account flagged tag-facets {} {}", _did, _tags);
+      REL_INFO("Account flagged tag-facets {}/() {}", _did, _handle, _tags);
       metrics_factory::instance()
           .get_counter("realtime_alerts")
           .Get({{"account", "tag_facets"}})
@@ -66,7 +66,7 @@ void account::statistics::tags(const size_t count) {
 void account::statistics::links(const size_t count) {
   if (count > activity::account::LinkFacetThreshold) {
     if (alert_needed(++_links, FacetFactor)) {
-      REL_INFO("Account flagged link-facets {} {}", _did, _links);
+      REL_INFO("Account flagged link-facets {}/{} {}", _did, _handle, _links);
       metrics_factory::instance()
           .get_counter("realtime_alerts")
           .Get({{"account", "link_facets"}})
@@ -78,7 +78,8 @@ void account::statistics::links(const size_t count) {
 void account::statistics::mentions(const size_t count) {
   if (count > activity::account::MentionFacetThreshold) {
     if (alert_needed(++_mentions, FacetFactor)) {
-      REL_INFO("Account flagged mention-facets {} {}", _did, _mentions);
+      REL_INFO("Account flagged mention-facets {}/{} {}", _did, _handle,
+               _mentions);
       metrics_factory::instance()
           .get_counter("realtime_alerts")
           .Get({{"account", "mention_facets"}})
@@ -90,7 +91,7 @@ void account::statistics::mentions(const size_t count) {
 void account::statistics::facets(const size_t count) {
   if (count > activity::account::TotalFacetThreshold) {
     if (alert_needed(++_facets, FacetFactor)) {
-      REL_INFO("Account flagged total-facets {} {}", _did, _facets);
+      REL_INFO("Account flagged total-facets {}/{} {}", _did, _handle, _facets);
       metrics_factory::instance()
           .get_counter("realtime_alerts")
           .Get({{"account", "all_facets"}})
@@ -133,7 +134,7 @@ void account::statistics::alert() {
 
 void account::statistics::post(atproto::at_uri const &) {
   if (alert_needed(++_posts, PostFactor)) {
-    REL_INFO("Account flagged posts {} {}", _did, _posts);
+    REL_INFO("Account flagged posts {}/{} {}", _did, _handle, _posts);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "posts"}})
@@ -144,7 +145,7 @@ void account::statistics::post(atproto::at_uri const &) {
 
 void account::statistics::replied_to() {
   if (alert_needed(++_replied_to, RepliedToFactor)) {
-    REL_INFO("Account flagged replied-to {} {}", _did, _replied_to);
+    REL_INFO("Account flagged replied-to {}/{} {}", _did, _handle, _replied_to);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "replied_to"}})
@@ -154,7 +155,7 @@ void account::statistics::replied_to() {
 }
 void account::statistics::reply() {
   if (alert_needed(++_replies, ReplyFactor)) {
-    REL_INFO("Account flagged replies {} {}", _did, _replies);
+    REL_INFO("Account flagged replies {}/{} {}", _did, _handle, _replies);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "replies"}})
@@ -164,7 +165,7 @@ void account::statistics::reply() {
 }
 void account::statistics::quoted() {
   if (alert_needed(++_quoted, QuotedFactor)) {
-    REL_INFO("Account flagged quoted {} {}", _did, _quoted);
+    REL_INFO("Account flagged quoted {}/{} {}", _did, _handle, _quoted);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "quoted"}})
@@ -174,7 +175,7 @@ void account::statistics::quoted() {
 }
 void account::statistics::quote() {
   if (alert_needed(++_quotes, QuoteFactor)) {
-    REL_INFO("Account flagged quotes {} {}", _did, _quotes);
+    REL_INFO("Account flagged quotes {}/{} {}", _did, _handle, _quotes);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "quotes"}})
@@ -185,7 +186,7 @@ void account::statistics::quote() {
 void account::statistics::reposted() {
   ++_reposted;
   if (alert_needed(++_reposted, RepostedFactor)) {
-    REL_INFO("Account flagged reposted {} {}", _did, _reposted);
+    REL_INFO("Account flagged reposted {}/{} {}", _did, _handle, _reposted);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "reposted"}})
@@ -195,7 +196,7 @@ void account::statistics::reposted() {
 }
 void account::statistics::repost() {
   if (alert_needed(++_reposts, RepostFactor)) {
-    REL_INFO("Account flagged reposts {} {}", _did, _reposts);
+    REL_INFO("Account flagged reposts {}/{} {}", _did, _handle, _reposts);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "reposts"}})
@@ -205,7 +206,7 @@ void account::statistics::repost() {
 }
 void account::statistics::liked() {
   if (alert_needed(++_liked, LikedFactor)) {
-    REL_INFO("Account flagged liked {} {}", _did, _liked);
+    REL_INFO("Account flagged liked {}/{} {}", _did, _handle, _liked);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "liked"}})
@@ -215,7 +216,7 @@ void account::statistics::liked() {
 }
 void account::statistics::like() {
   if (alert_needed(++_likes, LikeFactor)) {
-    REL_INFO("Account flagged likes {} {}", _did, _likes);
+    REL_INFO("Account flagged likes {}/{} {}", _did, _handle, _likes);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "likes"}})
@@ -278,7 +279,7 @@ void account::statistics::add_matches(const unsigned short matches) {
   _matches += matches;
   if ((old_matches == 0) ||
       (old_matches / MatchFactor != _matches / MatchFactor)) {
-    REL_INFO("Account flagged matches {} {}", _did, _matches);
+    REL_INFO("Account flagged matches {}/{} {}", _did, _handle, _matches);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "match_alert"}})
@@ -292,9 +293,9 @@ void account::statistics::updated() {
   size_t old_updates(_updates);
   ++_updates;
   if (old_updates / UpdateFactor != _updates / UpdateFactor) {
-    REL_INFO("Account flagged updates {} {} profile={}, handle={}, "
+    REL_INFO("Account flagged updates {}/{} {} profile={}, handle={}, "
              "(in)activation={}, active-state={}",
-             _did, _updates, _profiles, _handles, _activations,
+             _did, _handle, _updates, _profiles, _handles, _activations,
              to_string(_state));
     metrics_factory::instance()
         .get_counter("realtime_alerts")
@@ -308,7 +309,8 @@ void account::statistics::activation(const bool active) {
   size_t old_activations(_activations);
   ++_activations;
   if (old_activations / UpdateFactor != _activations / UpdateFactor) {
-    REL_INFO("Account flagged activations {} {}", _did, _activations);
+    REL_INFO("Account flagged activations {}/{} {}", _did, _handle,
+             _activations);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "activations"}})
@@ -321,7 +323,7 @@ void account::statistics::handle() {
   size_t old_handles(_handles);
   ++_handles;
   if (old_handles / UpdateFactor != _handles / UpdateFactor) {
-    REL_INFO("Account flagged handles {} {}", _did, _handles);
+    REL_INFO("Account flagged handles {}/{} {}", _did, _handle, _handles);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "handles"}})
@@ -334,7 +336,7 @@ void account::statistics::profile() {
   size_t old_profiles(_profiles);
   ++_profiles;
   if (old_profiles / UpdateFactor != _profiles / UpdateFactor) {
-    REL_INFO("Account flagged profiles {} {}", _did, _profiles);
+    REL_INFO("Account flagged profiles {}/{} {}", _did, _handle, _profiles);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "profiles"}})
@@ -362,9 +364,10 @@ void account::statistics::deleted(std::string const &path) {
   }
   size_t deletes(_unlikes + _unposts + _unreposts + _unblocks + _unfollows);
   if ((deletes - 1) / DeleteFactor != deletes / DeleteFactor) {
-    REL_INFO("Account flagged deletes {} {} likes {} posts {} reposts {} "
+    REL_INFO("Account flagged deletes {}/{} {} likes {} posts {} reposts {} "
              "blocks {} follows",
-             _did, _unlikes, _unposts, _unreposts, _unblocks, _unfollows);
+             _did, _handle, _unlikes, _unposts, _unreposts, _unblocks,
+             _unfollows);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "deletes"}})
@@ -375,7 +378,7 @@ void account::statistics::deleted(std::string const &path) {
 
 void account::statistics::blocks() {
   if (alert_needed(++_blocks, BlocksFactor)) {
-    REL_INFO("Account flagged blocks {} {}", _did, _blocks);
+    REL_INFO("Account flagged blocks {}/{} {}", _did, _handle, _blocks);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "blocks"}})
@@ -385,7 +388,7 @@ void account::statistics::blocks() {
 }
 void account::statistics::blocked_by() {
   if (alert_needed(++_blocked_by, BlockedByFactor)) {
-    REL_INFO("Account flagged blocked-by {} {}", _did, _blocked_by);
+    REL_INFO("Account flagged blocked-by {}/{} {}", _did, _handle, _blocked_by);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "blocked_by"}})
@@ -395,7 +398,7 @@ void account::statistics::blocked_by() {
 }
 void account::statistics::follows() {
   if (alert_needed(++_follows, FollowsFactor)) {
-    REL_INFO("Account flagged follows {} {}", _did, _follows);
+    REL_INFO("Account flagged follows {}/{} {}", _did, _handle, _follows);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "follows"}})
@@ -405,7 +408,8 @@ void account::statistics::follows() {
 }
 void account::statistics::followed_by() {
   if (alert_needed(++_followed_by, FollowedByFactor)) {
-    REL_INFO("Account flagged followed-by {} {}", _did, _followed_by);
+    REL_INFO("Account flagged followed-by {}/{} {}", _did, _handle,
+             _followed_by);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "followed_by"}})
@@ -437,8 +441,8 @@ void augment_account_event::augment_account_event::operator()(
   auto content(post_account->get_content_item(value._post));
   if (alert_needed(++content->_reposts, account::ContentRepostFactor)) {
     content->alert();
-    REL_INFO("Account flagged content-reposts {} {}", value._post._authority,
-             content->_reposts);
+    REL_INFO("Account flagged content-reposts {}/{} {}", value._post._authority,
+             post_account->get_statistics()._handle, content->_reposts);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "content-reposts"}})
@@ -454,8 +458,8 @@ void augment_account_event::augment_account_event::operator()(
   auto content(post_account->get_content_item(value._post));
   if (alert_needed(++content->_quotes, account::ContentQuoteFactor)) {
     content->alert();
-    REL_INFO("Account flagged content-quotes {} {}", value._post._authority,
-             content->_quotes);
+    REL_INFO("Account flagged content-quotes {}/{} {}", value._post._authority,
+             post_account->get_statistics()._handle, content->_quotes);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "content-quotes"}})
@@ -492,7 +496,8 @@ void augment_account_event::augment_account_event::operator()(
   auto content(liked_account->get_content_item(value._content));
   if (alert_needed(++content->_likes, account::ContentLikeFactor)) {
     content->alert();
-    REL_INFO("Account flagged content-likes {} {}", value._content._authority,
+    REL_INFO("Account flagged content-likes {}/{} {}",
+             value._content._authority, liked_account->get_statistics()._handle,
              content->_likes);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
@@ -550,8 +555,8 @@ void augment_account_event::augment_account_event::reply_to(
   auto content(account->get_content_item(uri));
   if (alert_needed(++content->_replies, account::ContentReplyFactor)) {
     content->alert();
-    REL_INFO("Account flagged content-replies {} {}", uri._authority,
-             content->_replies);
+    REL_INFO("Account flagged content-replies {}/{} {}", uri._authority,
+             account->get_statistics()._handle, content->_replies);
     metrics_factory::instance()
         .get_counter("realtime_alerts")
         .Get({{"account", "content-replies"}})

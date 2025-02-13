@@ -18,57 +18,48 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/activity/event_recorder.hpp"
 #include "common/bluesky/async_loader.hpp"
+#include "common/activity/event_recorder.hpp"
 #include "common/controller.hpp"
 #include "common/metrics_factory.hpp"
 
-namespace activity {
-event_recorder::event_recorder() : _queue(MaxBacklog) {
+namespace bsky {
+async_loader::async_loader() : _queue(MaxBacklog) {}
+
+void async_loader::start(YAML::Node const &settings) {
+  // create client
+  _appview_client = std::make_unique<bsky::client>();
+  _appview_client->set_config(settings);
   _thread = std::thread([&, this] {
     static size_t matches(0);
     while (controller::instance().is_active()) {
-      timed_event my_payload;
-      _queue.wait_dequeue(my_payload);
+      std::unordered_set<std::string> dids;
+      _queue.wait_dequeue(dids);
       metrics_factory::instance()
           .get_gauge("process_operation")
-          .Get({{"events", "backlog"}})
+          .Get({{"bsky_api", "backlog"}})
           .Decrement();
-
-      // record the activity
-      _events.record(my_payload);
+      try {
+        auto profiles(_appview_client->get_profiles(dids));
+        for (auto const &profile : profiles) {
+          activity::event_recorder::instance().update_handle(profile.did,
+                                                             profile.handle);
+          REL_INFO("DID {} has handle {}", profile.did, profile.handle);
+        }
+      } catch (std::exception const &exc) {
+        REL_ERROR("load failed for {} DIDs", dids.size());
+      }
     }
-    REL_INFO("event_recorder stopping");
+    REL_INFO("async_loader stopping");
   });
 }
 
-void event_recorder::wait_enqueue(timed_event &&value) {
+void async_loader::wait_enqueue(std::unordered_set<std::string> &&value) {
   _queue.enqueue(value);
   metrics_factory::instance()
       .get_gauge("process_operation")
-      .Get({{"events", "backlog"}})
+      .Get({{"bsky_api", "backlog"}})
       .Increment();
 }
 
-caches::WrappedValue<account>
-event_recorder::upsert_account(std::string const &did) {
-  auto entry(_events.get_account(did));
-  if (entry->get_statistics()._handle.empty()) {
-    // try to load the handle
-    bsky::async_loader::instance().wait_enqueue({did});
-  }
-  return entry;
-}
-
-caches::WrappedValue<account>
-event_recorder::add_if_needed(std::string const &did) {
-  return _events.get_account(did);
-}
-
-void event_recorder::update_handle(std::string const &did,
-                                   std::string const &handle) {
-  auto entry(_events.get_account(did));
-  entry->get_statistics()._handle = handle;
-}
-
-} // namespace activity
+} // namespace bsky

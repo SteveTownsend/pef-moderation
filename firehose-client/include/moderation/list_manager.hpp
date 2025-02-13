@@ -34,7 +34,6 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_map>
 #include <unordered_set>
 
-
 namespace bsky {
 // app.bsky.richtext.facet
 struct byte_slice {
@@ -165,10 +164,6 @@ public:
   static constexpr size_t MaxItemsInList = 5000;
 
   static list_manager &instance();
-  void
-  set_moderation_data(std::shared_ptr<bsky::moderation::ozone_adapter> &ozone) {
-    _moderation_data = ozone;
-  }
 
   void start(YAML::Node const &settings);
   void wait_enqueue(block_list_addition &&value);
@@ -289,7 +284,6 @@ private:
   add_account_to_list_and_group(std::string const &did,
                                 std::string const &list_group_name);
 
-  std::shared_ptr<bsky::moderation::ozone_adapter> _moderation_data;
   std::thread _thread;
   std::unique_ptr<bsky::client> _client;
   std::unique_ptr<bsky::pds_session> _session;

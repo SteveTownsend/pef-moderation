@@ -44,7 +44,7 @@ embed_checker::embed_checker()
 void embed_checker::set_config(YAML::Node const &settings) {
   _follow_links = settings["follow_links"].as<bool>();
   _number_of_threads = settings["number_of_threads"].as<size_t>();
-  _rest_clients.reserve(_number_of_threads);
+  _pds_clients.reserve(_number_of_threads);
   _threads.reserve(_number_of_threads);
 }
 
@@ -76,7 +76,7 @@ void embed_checker::start() {
   properties.cacheTtlSeconds = 5;
   for (size_t count = 0; count < _number_of_threads; ++count) {
     auto new_client(restc_cpp::RestClient::Create(properties));
-    _rest_clients.push_back(std::move(new_client));
+    _pds_clients.push_back(std::move(new_client));
     _threads.push_back(std::thread([&, this, count] {
       try {
         while (controller::instance().is_active()) {
@@ -93,9 +93,9 @@ void embed_checker::start() {
           // add LFU cache of content-cid/did/rate-limit
           // add metrics
           for (auto const &next_embed : embed_list._embeds) {
-            embed_handler handler(*this, *_rest_clients[count], embed_list._did,
+            embed_handler handler(*this, *_pds_clients[count], embed_list._did,
                                   embed_list._path);
-            _rest_clients[count]->GetConnectionProperties()->redirectFn =
+            _pds_clients[count]->GetConnectionProperties()->redirectFn =
                 std::bind(&embed_handler::on_url_redirect, &handler,
                           std::placeholders::_1, std::placeholders::_2,
                           std::placeholders::_3);

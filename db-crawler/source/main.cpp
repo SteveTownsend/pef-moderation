@@ -98,23 +98,21 @@ int main(int argc, char **argv) {
 
     // for Escalated or Open subjects, check that account and post are still
     // present and if not, auto-acknowledge the subject
-    std::shared_ptr<bsky::moderation::ozone_adapter> moderation_data =
-        std::make_shared<bsky::moderation::ozone_adapter>(
-            build_db_connection_string(
-                settings->get_config()[PROJECT_NAME]["moderation_data"]));
-    moderation_data->load_pending_report_tags();
+    bsky::moderation::ozone_adapter::instance().start(
+        build_db_connection_string(
+            settings->get_config()[PROJECT_NAME]["moderation_data"]));
+    bsky::moderation::ozone_adapter::instance().load_pending_report_tags();
 
     // Load pending reports grouped by account
-    auto pending(moderation_data->get_pending_reports());
-    std::vector<std::string> candidate_profiles;
+    auto pending(
+        bsky::moderation::ozone_adapter::instance().get_pending_reports());
+    std::unordered_set<std::string> candidate_profiles;
     candidate_profiles.reserve(pending.size());
 #ifdef __GNUC__
-    candidate_profiles.insert(candidate_profiles.end(),
-                              std::views::keys(pending).cbegin(),
+    candidate_profiles.insert(std::views::keys(pending).cbegin(),
                               std::views::keys(pending).cend());
 #else
-    candidate_profiles.insert_range(candidate_profiles.end(),
-                                    std::views::keys(pending));
+    candidate_profiles.insert_range(std::views::keys(pending));
 #endif
     // get a list of the active profiles only
     auto active_profiles(appview_client.get_profiles(candidate_profiles));
@@ -170,11 +168,13 @@ int main(int argc, char **argv) {
       // we need moderation events of type report to correlate with the subject
       std::string automatic_reporter(
           tag_source_settings["auto-reporter"].as<std::string>(""));
-      moderation_data->load_content_reporters(automatic_reporter);
+      bsky::moderation::ozone_adapter::instance().load_content_reporters(
+          automatic_reporter);
 
       // For active profiles pending review, tag them as manual/auto-reported if
       // not already done
-      auto const &content_reporters(moderation_data->get_content_reporters());
+      auto const &content_reporters(
+          bsky::moderation::ozone_adapter::instance().get_content_reporters());
       size_t both(0);
       size_t automatic(0);
       size_t manual(0);
@@ -267,9 +267,10 @@ int main(int argc, char **argv) {
     if (ack_settings["execute"].as<bool>(default_execute)) {
       std::string context("acknowledge_all_in_query " +
                           ack_settings["label"].as<std::string>());
-      moderation_data->filter_subjects(
+      bsky::moderation::ozone_adapter::instance().filter_subjects(
           ack_settings["filter"].as<std::string>());
-      auto targets(moderation_data->get_filtered_subjects());
+      auto targets(
+          bsky::moderation::ozone_adapter::instance().get_filtered_subjects());
       for (auto const &subject_entry : targets) {
         std::string subject(subject_entry.first);
         std::string reason(subject_entry.second);
@@ -300,8 +301,9 @@ int main(int argc, char **argv) {
         settings->get_config()[PROJECT_NAME]["jobs"]["label_all_in_query"]);
     if (label_settings["execute"].as<bool>(default_execute)) {
       std::string filter(label_settings["filter"].as<std::string>());
-      moderation_data->filter_subjects(filter);
-      auto targets(moderation_data->get_filtered_subjects());
+      bsky::moderation::ozone_adapter::instance().filter_subjects(filter);
+      auto targets(
+          bsky::moderation::ozone_adapter::instance().get_filtered_subjects());
       for (auto const &subject_entry : targets) {
         std::string subject(subject_entry.first);
         std::string reason(subject_entry.second);
