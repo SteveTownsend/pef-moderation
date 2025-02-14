@@ -57,7 +57,7 @@ RUN mkdir -p /firehose-client/logs /etc/firehose-client
 COPY --from=build /usr/pef-moderation/release-gcc/firehose-client/firehose_client /firehose-client
 COPY --from=build /usr/local /usr/local
 
-RUN rm -rf /var/lib/apt/lists/* && \
+RUN rm -rf /var/lib/apt/lists/* /usr/pef-moderation && \
   apt-get purge -y --auto-remove cmake
 
 ENV LD_LIBRARY_PATH="/usr/local/lib"
