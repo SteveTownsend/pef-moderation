@@ -112,7 +112,7 @@ void auxiliary_data::check_rewind_point() {
     REL_INFO("No firehose data processed, skip check");
   } else {
     auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
-    if (std::chrono::duration_cast<std::chrono::hours>(
+    if (std::chrono::duration_cast<std::chrono::minutes>(
             current_cursor - _last_rewind_checkpoint) >
         RewindCheckpointInterval) {
       pqxx::work tx(*_cx);
