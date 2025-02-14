@@ -42,7 +42,8 @@ RUN ./autogen.sh && ./configure --disable-werror && make clean check && make ins
 
 WORKDIR /usr/pef-moderation
 COPY . .
-RUN rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
+RUN date | tee timestamp.txt
+RUN  && rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
   rm -rf /var/lib/apt/lists/* && rm -rf /usr/src && \
   apt-get purge -y --auto-remove $buildDeps
 
@@ -54,10 +55,10 @@ RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
 
 WORKDIR /firehose-client
 RUN mkdir -p /firehose-client/logs /etc/firehose-client
-COPY --from=build /usr/pef-moderation/release-gcc/firehose-client/firehose_client /firehose-client
+COPY --from=build /usr/pef-moderation/timestamp.txt /usr/pef-moderation/release-gcc/firehose-client/firehose_client /firehose-client/
 COPY --from=build /usr/local /usr/local
 
-RUN rm -rf /var/lib/apt/lists/* /usr/pef-moderation && \
+RUN rm -rf /var/lib/apt/lists/* && \
   apt-get purge -y --auto-remove cmake
 
 ENV LD_LIBRARY_PATH="/usr/local/lib"
