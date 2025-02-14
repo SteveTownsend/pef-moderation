@@ -276,7 +276,7 @@ void ozone_adapter::filter_subjects(std::string const &filter) {
 
 bool ozone_adapter::already_processed(std::string const &did) const {
   std::lock_guard guard(_lock);
-  return _tracked_accounts.contains(did) || _closed_reports.contains(did);
+  return _closed_reports.contains(did);
 }
 
 // mask the password
