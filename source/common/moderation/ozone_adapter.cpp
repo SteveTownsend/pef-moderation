@@ -63,6 +63,10 @@ void ozone_adapter::start(std::string const &connection_string,
 
 // Don't refresh until interval has elapsed
 void ozone_adapter::check_refresh_tracked_accounts() {
+  if (bsky::async_loader::instance().batch_in_progress()) {
+    REL_INFO("Batch load already in progress");
+    return;
+  }
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(now - _last_refresh) >
       ProcessedAccountRefreshInterval) {
@@ -102,8 +106,8 @@ void ozone_adapter::check_refresh_tracked_accounts() {
     // make tracked accounts sticky in the tracked account event cache by
     // touching them each time
     for (auto const &account : _tracked_accounts) {
-      auto entry(activity::event_recorder::instance().add_if_needed(account));
-      if (entry->get_statistics()._handle.empty()) {
+      auto handle(activity::event_recorder::instance().get_handle(account));
+      if (handle.empty()) {
         new_tracked.insert(account);
       }
     }
@@ -294,11 +298,11 @@ std::string ozone_adapter::safe_connection_string() const {
   return _connection_string;
 }
 
-caches::WrappedValue<activity::account>
-ozone_adapter::track_account(std::string const &did) {
+std::string ozone_adapter::track_account(std::string const &did) {
   {
     std::lock_guard guard(_lock);
     if (_tracked_accounts.insert(did).second) {
+      REL_INFO("Track account {}", did);
       metrics_factory::instance()
           .get_gauge("process_operation")
           .Get({{"accounts", "tracked"}})

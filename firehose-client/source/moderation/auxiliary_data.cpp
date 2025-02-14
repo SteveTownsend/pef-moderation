@@ -26,10 +26,12 @@ http://www.fsf.org/licensing/licenses
 namespace bsky {
 namespace moderation {
 
-void auxiliary_data::start(std::string const &connection_string) {
+void auxiliary_data::start(YAML::Node const &settings) {
   // synchronously prepare for data source rewind after a planned or unplanned
   // stoppage
-  _connection_string = connection_string;
+
+  _connection_string = build_db_connection_string(settings["db"]);
+  _enable_rewind = settings["enable_rewind"].as<bool>(false);
   try {
     _cx = std::make_unique<pqxx::connection>(_connection_string);
     REL_INFO("Connected OK to auxiliary DB: {}", safe_connection_string());
@@ -76,6 +78,8 @@ void auxiliary_data::prepare_statements() {
 
 void auxiliary_data::update_rewind_point(const int64_t seq,
                                          const std::string &emitted_at) {
+  if (!_enable_rewind)
+    return;
   // TODO should be safe but not guaranteed always accurate for lock-free read
   // seq/emitted_at may mismatch
   // emitted_at may contain part of old and new values
@@ -86,6 +90,8 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
 
 // prepare for data backfill - for malformed data, continue but do not backfill
 void auxiliary_data::set_rewind_point() {
+  if (!_enable_rewind)
+    return;
   pqxx::work tx(*_cx);
   bool first(true);
   auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
@@ -95,6 +101,8 @@ void auxiliary_data::set_rewind_point() {
 }
 
 void auxiliary_data::check_rewind_point() {
+  if (!_enable_rewind)
+    return;
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded

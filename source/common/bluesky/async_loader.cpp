@@ -41,6 +41,10 @@ void async_loader::start(YAML::Node const &settings) {
           .Decrement();
       try {
         if (dids.size() != 1) {
+          // Avoid a backlog of batch invocations, all but the first should be
+          // small
+          _batch_in_progress = true;
+          REL_INFO("Batch load {} accounts", dids.size());
           // batch load happens only at startup - use batch API, and do not spam
           // log
           auto profiles(_appview_client->get_profiles(dids));
@@ -57,6 +61,7 @@ void async_loader::start(YAML::Node const &settings) {
       } catch (std::exception const &exc) {
         REL_ERROR("load failed for {} DIDs", dids.size());
       }
+      _batch_in_progress = false;
     }
     REL_INFO("async_loader stopping");
   });

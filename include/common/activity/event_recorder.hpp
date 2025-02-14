@@ -31,12 +31,14 @@ public:
     return recorder;
   }
   void wait_enqueue(timed_event &&value);
-  caches::WrappedValue<account> upsert_account(std::string const &did);
-  caches::WrappedValue<account> add_if_needed(std::string const &did);
+  std::string upsert_account(std::string const &did);
   void update_handle(std::string const &did, std::string const &handle);
+  std::string get_handle(std::string const &did);
 
 private:
   event_recorder();
+  caches::WrappedValue<account> add_if_needed(std::string const &did);
+
   // Declare queue between post-processing and recording
   moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
   std::thread _thread;
