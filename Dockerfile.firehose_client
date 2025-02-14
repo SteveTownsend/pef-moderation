@@ -43,7 +43,7 @@ RUN ./autogen.sh && ./configure --disable-werror && make clean check && make ins
 WORKDIR /usr/pef-moderation
 COPY . .
 RUN date | tee timestamp.txt
-RUN  && rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
+RUN rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
   rm -rf /var/lib/apt/lists/* && rm -rf /usr/src && \
   apt-get purge -y --auto-remove $buildDeps
 
