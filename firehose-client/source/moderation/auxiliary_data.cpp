@@ -72,8 +72,8 @@ void auxiliary_data::start(YAML::Node const &settings) {
 void auxiliary_data::prepare_statements() {
   _cx->prepare("add_checkpoint", "INSERT INTO firehose_checkpoint (emitted_at, "
                                  "seq) VALUES ($1, $2)");
-  _cx->prepare("update_cursor",
-               "UPDATE firehose_state SET last_processed = $1 WHERE true");
+  _cx->prepare("update_cursor", "UPDATE firehose_state SET last_processed = "
+                                "$1, emitted_at = $2 WHERE true");
 }
 
 void auxiliary_data::update_rewind_point(const int64_t seq,
@@ -122,17 +122,17 @@ void auxiliary_data::check_rewind_point() {
       pqxx::params fields(last_event_time, cursor);
       tx.exec(pqxx::prepped("add_checkpoint"), fields);
       tx.commit();
-      REL_INFO("firehose_checkpoint {} {}", last_event_time, cursor);
+      REL_TRACE("firehose_checkpoint {} {}", last_event_time, cursor);
       _last_rewind_checkpoint = current_cursor;
     }
   }
   {
     // Update rewind position on every pass
     pqxx::work tx(*_cx);
-    pqxx::params fields(cursor);
+    pqxx::params fields(cursor, last_event_time);
     tx.exec(pqxx::prepped("update_cursor"), fields);
     tx.commit();
-    REL_TRACE("cursor advanced to {}", cursor);
+    REL_TRACE("cursor advanced to {} {}", cursor, last_event_time);
   }
 }
 
