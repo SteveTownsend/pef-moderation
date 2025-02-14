@@ -241,7 +241,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           matcher::shared().all_matches_for_path_candidates(_path_candidates));
       if (!matches.empty()) {
         // track/retrieve account info
-        auto handle(activity::event_recorder::instance().upsert_account(repo));
+        auto handle(activity::event_recorder::instance().ensure_loaded(repo));
         // Publish metrics for matches
         size_t count(0);
         for (auto const &result : matches) {
