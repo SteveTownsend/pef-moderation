@@ -40,6 +40,7 @@ public:
 
   void start(YAML::Node const &settings);
   void wait_enqueue(std::unordered_set<std::string> &&value);
+  inline bool batch_in_progress() const { return _batch_in_progress; }
 
 private:
   ~async_loader() = default;
@@ -47,6 +48,7 @@ private:
   moodycamel::BlockingReaderWriterQueue<std::unordered_set<std::string>> _queue;
   std::thread _thread;
   std::unique_ptr<client> _appview_client;
+  bool _batch_in_progress = false;
 };
 
 } // namespace bsky

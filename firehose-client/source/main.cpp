@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
       // requires poller thread
       bsky::moderation::ozone_adapter::instance().start(
           build_db_connection_string(
-              settings->get_config()[PROJECT_NAME]["moderation_data"]),
+              settings->get_config()[PROJECT_NAME]["moderation_data"]["db"]),
           true);
 
       // prepare for Bluesky API calls
@@ -150,11 +150,9 @@ int main(int argc, char **argv) {
       matcher::shared().set_config(
           settings->get_config()[PROJECT_NAME]["filters"]);
 
+      // seeds matcher with rules
       bsky::moderation::auxiliary_data::instance().start(
-          build_db_connection_string(
-              settings->get_config()[PROJECT_NAME]
-                                    ["auxiliary_data"])); // seeds matcher with
-                                                          // rules
+          settings->get_config()[PROJECT_NAME]["auxiliary_data"]);
       int64_t cursor(
           bsky::moderation::auxiliary_data::instance().get_rewind_point());
 

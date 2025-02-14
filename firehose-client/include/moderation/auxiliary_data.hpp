@@ -39,9 +39,10 @@ public:
     return data;
   }
   auxiliary_data() = default;
-  void start(std::string const &connection_string);
+  void start(YAML::Node const &settings);
   bool already_processed(std::string const &did) const;
   void set_rewind_point();
+  // this returns 0 by design, if handling is disabled
   inline int64_t get_rewind_point() const { return _cursor.load(); };
   void update_rewind_point(const int64_t seq, const std::string &emitted_at);
 
@@ -69,6 +70,7 @@ private:
   std::string _connection_string;
   std::thread _thread;
 
+  bool _enable_rewind = false;
   std::atomic<int64_t> _cursor = 0;
   std::array<char, UtcDateTimeMaxLength> _emitted_at;
   std::chrono::steady_clock::time_point _last_rewind_checkpoint;

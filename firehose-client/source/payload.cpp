@@ -239,6 +239,9 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       auto matches(
           matcher::shared().all_matches_for_path_candidates(_path_candidates));
       if (!matches.empty()) {
+        // track/retrieve account info
+        auto handle(
+            bsky::moderation::ozone_adapter::instance().track_account(repo));
         // Publish metrics for matches
         size_t count(0);
         for (auto const &result : matches) {
@@ -246,12 +249,9 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             // this is the substring of the full JSON that matched one or more
             // desired strings
             // start tracking this account if not already
-            auto entry(
-                bsky::moderation::ozone_adapter::instance().track_account(
-                    repo));
             REL_INFO("{}/{} matched candidate {}|{}|{}|{}", next_match._matches,
-                     repo, entry->get_statistics()._handle,
-                     next_match._candidate._type, next_match._candidate._field,
+                     repo, handle, next_match._candidate._type,
+                     next_match._candidate._field,
                      next_match._candidate._value);
             count += next_match._matches.size();
             for (auto const &match : next_match._matches) {

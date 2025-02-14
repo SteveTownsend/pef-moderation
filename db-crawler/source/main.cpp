@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     // present and if not, auto-acknowledge the subject
     bsky::moderation::ozone_adapter::instance().start(
         build_db_connection_string(
-            settings->get_config()[PROJECT_NAME]["moderation_data"]));
+            settings->get_config()[PROJECT_NAME]["moderation_data"]["db"]));
     bsky::moderation::ozone_adapter::instance().load_pending_report_tags();
 
     // Load pending reports grouped by account
