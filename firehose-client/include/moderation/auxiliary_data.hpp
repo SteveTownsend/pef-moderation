@@ -1,5 +1,4 @@
-#ifndef __auxiliary_data__
-#define __auxiliary_data__
+#pragma once
 /*************************************************************************
 Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2025
@@ -19,6 +18,7 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "common/bluesky/platform.hpp"
 #include "common/config.hpp"
 #include <algorithm>
 #include <array>
@@ -73,7 +73,7 @@ private:
   bool _enable_rewind = false;
   std::atomic<int64_t> _cursor = 0;
   std::array<char, UtcDateTimeMaxLength> _emitted_at;
-  std::chrono::steady_clock::time_point _last_rewind_checkpoint;
+  bsky::time_stamp _last_rewind_checkpoint;
   std::chrono::steady_clock::time_point _last_rewind_flush;
   std::chrono::steady_clock::time_point _last_match_filter_refresh;
   std::chrono::steady_clock::time_point _last_popular_host_refresh;
@@ -83,5 +83,3 @@ private:
 
 } // namespace moderation
 } // namespace bsky
-
-#endif

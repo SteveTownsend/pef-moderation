@@ -109,20 +109,24 @@ void auxiliary_data::check_rewind_point() {
   int64_t cursor(get_rewind_point());
   if (cursor == 0) {
     REL_INFO("cursor 0, pending init");
-  }
-  std::string timestamp(_emitted_at.data());
-  if (std::chrono::duration_cast<std::chrono::hours>(
-          now - _last_rewind_checkpoint) > RewindCheckpointInterval &&
-      _emitted_at[0]) {
-    pqxx::work tx(*_cx);
-    static pqxx::prepped inserter(
-        "INSERT INTO firehose_checkpoint (emitted_at, "
-        "seq) VALUES ($1, $2)");
-    pqxx::params fields(timestamp, cursor);
-    tx.exec(pqxx::prepped("add_checkpoint"), fields);
-    tx.commit();
-    REL_INFO("firehose_checkpoint {} {}", timestamp, cursor);
-    _last_rewind_checkpoint = std::chrono::steady_clock::now();
+  } else if (_emitted_at[0]) {
+    std::string last_event_time(_emitted_at.data());
+    auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
+    if (std::chrono::duration_cast<std::chrono::hours>(
+            current_cursor - _last_rewind_checkpoint) >
+        RewindCheckpointInterval) {
+      pqxx::work tx(*_cx);
+      static pqxx::prepped inserter(
+          "INSERT INTO firehose_checkpoint (emitted_at, "
+          "seq) VALUES ($1, $2)");
+      pqxx::params fields(last_event_time, cursor);
+      tx.exec(pqxx::prepped("add_checkpoint"), fields);
+      tx.commit();
+      REL_INFO("firehose_checkpoint {} {}", last_event_time, cursor);
+      _last_rewind_checkpoint = current_cursor;
+    }
+  } else {
+    REL_INFO("No firehose data processed, skip check");
   }
   {
     // Update rewind position on every pass
