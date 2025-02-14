@@ -98,6 +98,8 @@ void report_agent::start(YAML::Node const &settings,
                 .Increment();
             continue;
           }
+          bsky::moderation::ozone_adapter::instance().track_account(
+              report._did);
 
           std::visit(report_content_visitor(*this, report._did),
                      report._content);
