@@ -298,7 +298,7 @@ std::string ozone_adapter::safe_connection_string() const {
   return _connection_string;
 }
 
-std::string ozone_adapter::track_account(std::string const &did) {
+void ozone_adapter::track_account(std::string const &did) {
   {
     std::lock_guard guard(_lock);
     if (_tracked_accounts.insert(did).second) {
@@ -309,7 +309,6 @@ std::string ozone_adapter::track_account(std::string const &did) {
           .Increment();
     }
   }
-  return activity::event_recorder::instance().upsert_account(did);
 }
 
 } // namespace moderation

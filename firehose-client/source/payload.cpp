@@ -20,6 +20,7 @@ http://www.fsf.org/licensing/licenses
 
 #include "payload.hpp"
 #include "common/activity/account_events.hpp"
+#include "common/activity/event_recorder.hpp"
 #include "common/moderation/ozone_adapter.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
@@ -240,8 +241,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           matcher::shared().all_matches_for_path_candidates(_path_candidates));
       if (!matches.empty()) {
         // track/retrieve account info
-        auto handle(
-            bsky::moderation::ozone_adapter::instance().track_account(repo));
+        auto handle(activity::event_recorder::instance().ensure_loaded(repo));
         // Publish metrics for matches
         size_t count(0);
         for (auto const &result : matches) {

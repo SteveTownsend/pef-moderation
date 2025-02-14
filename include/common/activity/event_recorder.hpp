@@ -31,7 +31,7 @@ public:
     return recorder;
   }
   void wait_enqueue(timed_event &&value);
-  std::string upsert_account(std::string const &did);
+  std::string ensure_loaded(std::string const &did);
   void update_handle(std::string const &did, std::string const &handle);
   std::string get_handle(std::string const &did);
 

@@ -50,7 +50,7 @@ void event_recorder::wait_enqueue(timed_event &&value) {
       .Increment();
 }
 
-std::string event_recorder::upsert_account(std::string const &did) {
+std::string event_recorder::ensure_loaded(std::string const &did) {
   std::string handle(get_handle(did));
   if (handle.empty()) {
     // try to load the handle
