@@ -107,10 +107,10 @@ void auxiliary_data::check_rewind_point() {
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded
   int64_t cursor(get_rewind_point());
-  if (cursor == 0) {
-    REL_INFO("cursor 0, pending init");
-  } else if (_emitted_at[0]) {
-    std::string last_event_time(_emitted_at.data());
+  std::string last_event_time(_emitted_at.data());
+  if (cursor == 0 || _emitted_at[0] == '\0') {
+    REL_INFO("No firehose data processed, skip check");
+  } else {
     auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
     if (std::chrono::duration_cast<std::chrono::hours>(
             current_cursor - _last_rewind_checkpoint) >
@@ -125,8 +125,6 @@ void auxiliary_data::check_rewind_point() {
       REL_INFO("firehose_checkpoint {} {}", last_event_time, cursor);
       _last_rewind_checkpoint = current_cursor;
     }
-  } else {
-    REL_INFO("No firehose data processed, skip check");
   }
   {
     // Update rewind position on every pass
