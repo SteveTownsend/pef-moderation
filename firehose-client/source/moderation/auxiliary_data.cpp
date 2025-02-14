@@ -122,7 +122,7 @@ void auxiliary_data::check_rewind_point() {
       pqxx::params fields(last_event_time, cursor);
       tx.exec(pqxx::prepped("add_checkpoint"), fields);
       tx.commit();
-      REL_TRACE("firehose_checkpoint {} {}", last_event_time, cursor);
+      REL_INFO("firehose_checkpoint {} {}", last_event_time, cursor);
       _last_rewind_checkpoint = current_cursor;
     }
   }
