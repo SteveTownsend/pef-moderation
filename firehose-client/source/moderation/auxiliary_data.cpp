@@ -103,9 +103,9 @@ void auxiliary_data::set_rewind_point() {
 void auxiliary_data::check_rewind_point() {
   if (!_enable_rewind)
     return;
-  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
-  // candidate has been recorded
+  // candidate has been recorded. This relies on emitted_at values, not
+  // current/real time.
   int64_t cursor(get_rewind_point());
   std::string last_event_time(_emitted_at.data());
   if (cursor == 0 || _emitted_at[0] == '\0') {
@@ -141,7 +141,7 @@ void auxiliary_data::update_match_filters() {
   if (!matcher::shared().use_db_for_rules())
     return;
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-  if (std::chrono::duration_cast<std::chrono::seconds>(
+  if (std::chrono::duration_cast<std::chrono::minutes>(
           now - _last_match_filter_refresh) > MatchFiltersRefreshInterval) {
     pqxx::work tx(*_cx);
     bool load_failed(false);

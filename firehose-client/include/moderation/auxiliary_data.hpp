@@ -59,8 +59,8 @@ private:
 
   static constexpr std::chrono::milliseconds RewindFlushInterval =
       std::chrono::milliseconds(15000);
-  static constexpr std::chrono::hours RewindCheckpointInterval =
-      std::chrono::hours(6);
+  static constexpr std::chrono::minutes RewindCheckpointInterval =
+      std::chrono::minutes(6 * 60 * 60);
   static constexpr std::chrono::minutes MatchFiltersRefreshInterval =
       std::chrono::minutes(5);
   static constexpr std::chrono::minutes PopularHostsRefreshInterval =
