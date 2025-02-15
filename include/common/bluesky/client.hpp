@@ -536,6 +536,7 @@ public:
     size_t retries(0);
     while (retries < 5) {
       try {
+        _session->check_refresh();
         response =
             _rest_client
                 ->ProcessWithPromiseT<RESPONSE>([&](restc_cpp::Context &ctx) {

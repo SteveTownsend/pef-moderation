@@ -48,6 +48,9 @@ void pds_session::connect(bsky::login_info const &credentials) {
 }
 
 void pds_session::check_refresh() {
+  // only refresh if the session is token-secured
+  if (_tokens.refreshJwt.empty())
+    return;
   auto now(std::chrono::system_clock::now());
   auto time_to_expiry(std::chrono::duration_cast<std::chrono::milliseconds>(
                           _access_expiry - now)
