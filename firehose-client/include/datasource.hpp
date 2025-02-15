@@ -215,9 +215,14 @@ private:
     // the websocket stream has its own timeout system.
     beast::get_lowest_layer(ws).expires_never();
 
-    // Set suggested timeout settings for the websocket
-    ws.set_option(
-        websocket::stream_base::timeout::suggested(beast::role_type::client));
+    // Set reasonably strict idle timeout for the websocket, social media
+    // firehose is always-on
+    websocket::stream_base::timeout opt{
+        std::chrono::seconds(30), // handshake timeout
+        std::chrono::seconds(30), // idle timeout
+        false                     // no keepalive
+    };
+    ws.set_option(opt);
 
     // Perform the websocket handshake
     ws.async_handshake(_host, _subscription, yield[ec]);
@@ -235,7 +240,7 @@ private:
 
       // update stats
       metrics_factory::instance()
-          .get_counter("websocket_inbound_bytes")
+          .get_counter("websocket_inbound_messages")
           .Get({{"host", _host}})
           .Increment();
       metrics_factory::instance()
