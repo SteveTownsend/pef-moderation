@@ -116,6 +116,7 @@ std::string client::raw_post(std::string const &relative_path,
   size_t retries(0);
   while (retries < 5) {
     try {
+      _session->check_refresh();
       restc_cpp::SerializeProperties properties;
       properties.name_mapping = &json::TypeFieldMapping;
       response =
