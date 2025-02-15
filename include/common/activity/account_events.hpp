@@ -1,5 +1,4 @@
-#ifndef __account_events_hpp__
-#define __account_events_hpp__
+#pragma once
 /*************************************************************************
 Public Education Forum Moderation Firehose Client
 Copyright (c) Steve Townsend 2024
@@ -338,7 +337,6 @@ public:
 private:
   caches::WrappedValue<content_hit_count>
   get_content_hits(atproto::at_uri const &uri);
-  void cache_content_item(atproto::at_uri const &uri);
   // TODO might be better to indirect to event_cache
   std::shared_ptr<lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>
       _content_hits;
@@ -379,5 +377,3 @@ private:
 };
 
 } // namespace activity
-
-#endif

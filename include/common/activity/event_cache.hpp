@@ -23,6 +23,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/activity/account_events.hpp"
 #include <cache.hpp>
 #include <lfu_cache_policy.hpp>
+#include <mutex>
+
 namespace activity {
 constexpr size_t MaxAccounts = 1000000;
 constexpr size_t MaxBacklog = 10000;
@@ -44,13 +46,13 @@ public:
   caches::WrappedValue<account> get_account(std::string const &did);
 
 private:
-  void add_account(std::string const &did);
   // visitor for event-specific logic
   struct augment_event {
     template <typename T> void operator()(T const &) {}
   };
 
   // LFU cache of recently-active accounts
+  std::mutex _cache_lock;
   lfu_cache_t<std::string, account> _account_events;
 };
 } // namespace activity
