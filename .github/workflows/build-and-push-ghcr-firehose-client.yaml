@@ -46,7 +46,7 @@ jobs:
 
       - name: Setup Docker buildx
         if: steps.filter.outputs.firehose-client == 'true'
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: steps.filter.outputs.firehose-client == 'true' || steps.filter.outputs.shared-code == 'true' || steps.filter.outputs.shared-build == 'true'
