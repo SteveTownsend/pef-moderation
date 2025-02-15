@@ -230,7 +230,7 @@ void matcher::report_if_needed(account_filter_matches &matches) {
                    matcher::rule::content_scope::profile) {
           // report only if seen in profile
           if (next_match._candidate._type == bsky::AppBskyActorProfile) {
-            filters.push_back(matched_rule._block_list_name);
+            filters.push_back(matched_rule._target);
           }
         }
       }
