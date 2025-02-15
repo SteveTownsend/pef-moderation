@@ -1,4 +1,4 @@
-# pef-forum-moderation
+# pef-moderation
 Various moderation tools in support of the work of [Public Education Forum](https://nafoforum.org/)
 
 Supports [Bluesky](https://bsky.app/) [Public Education Forum custom labeler](pef-moderation.bsky.social) on domain [pef-moderation.org](https://ozone.pef-moderation.org/xrpc/_health?version=0.1.1)  
