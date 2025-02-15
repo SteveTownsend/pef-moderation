@@ -56,6 +56,8 @@ void async_loader::start(YAML::Node const &settings) {
           }
         } else {
           auto profile(_appview_client->get_profile(*dids.cbegin()));
+          activity::event_recorder::instance().update_handle(profile.did,
+                                                             profile.handle);
           REL_INFO("DID {} has handle {}", profile.did, profile.handle);
         }
       } catch (std::exception const &exc) {

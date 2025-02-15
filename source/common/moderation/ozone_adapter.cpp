@@ -105,6 +105,7 @@ void ozone_adapter::check_refresh_tracked_accounts() {
     _closed_reports.swap(new_closed);
     // make tracked accounts sticky in the tracked account event cache by
     // touching them each time
+    new_tracked.clear();
     for (auto const &account : _tracked_accounts) {
       auto handle(activity::event_recorder::instance().get_handle(account));
       if (handle.empty()) {

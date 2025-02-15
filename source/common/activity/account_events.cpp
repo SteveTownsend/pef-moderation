@@ -225,14 +225,6 @@ void account::statistics::like() {
   }
 }
 
-void account::cache_content_item(atproto::at_uri const &uri) {
-  _content_hits->Put(uri, {});
-  metrics_factory::instance()
-      .get_gauge("process_operation")
-      .Get({{"cached_items", "content"}})
-      .Increment();
-}
-
 // Callback for tracked account removal
 void account::on_erase(atproto::at_uri const &uri,
                        caches::WrappedValue<content_hit_count> const &entry) {
@@ -261,7 +253,11 @@ void account::on_erase(atproto::at_uri const &uri,
 caches::WrappedValue<content_hit_count>
 account::get_content_hits(atproto::at_uri const &uri) {
   if (!_content_hits->Cached(uri)) {
-    cache_content_item(uri);
+    _content_hits->Put(uri, {});
+    metrics_factory::instance()
+        .get_gauge("process_operation")
+        .Get({{"cached_items", "content"}})
+        .Increment();
   }
   return _content_hits->Get(uri);
 }
