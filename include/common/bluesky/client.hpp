@@ -526,7 +526,7 @@ public:
                        const std::string &&body = std::string());
 
   template <typename BODY, typename RESPONSE, bool use_refresh = false,
-            bool no_log = false>
+            bool no_log = false, bool check_session = true>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
                    restc_cpp::serialize_properties_t properties =
                        restc_cpp::serialize_properties_t()) {
@@ -536,7 +536,9 @@ public:
     size_t retries(0);
     while (retries < 5) {
       try {
-        _session->check_refresh();
+        if (check_session) {
+          _session->check_refresh();
+        }
         response =
             _rest_client
                 ->ProcessWithPromiseT<RESPONSE>([&](restc_cpp::Context &ctx) {
