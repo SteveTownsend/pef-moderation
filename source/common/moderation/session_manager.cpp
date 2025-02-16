@@ -36,10 +36,10 @@ pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
 void pds_session::connect(bsky::login_info const &credentials) {
-  constexpr bool use_refresh_token(false);
+  constexpr bool doing_refresh(false);
   constexpr bool no_post_log(true);
   _tokens = _client.do_post<bsky::login_info, bsky::session_tokens>(
-      "com.atproto.server.createSession", credentials, use_refresh_token,
+      "com.atproto.server.createSession", credentials, doing_refresh,
       no_post_log);
 
   auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
@@ -53,6 +53,9 @@ void pds_session::connect(bsky::login_info const &credentials) {
 // this is only called for POSTs, which write and are therefore always
 // token-secured
 void pds_session::check_refresh() {
+  if (_tokens.refreshJwt.empty()) {
+    REL_INFO("Skip refresh: no tokens");
+  }
   auto now(std::chrono::system_clock::now());
   auto time_to_expiry(std::chrono::duration_cast<std::chrono::milliseconds>(
                           _access_expiry - now)
@@ -61,10 +64,10 @@ void pds_session::check_refresh() {
       static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count())) {
     REL_INFO("Refresh access token, expiry in {} ms", time_to_expiry);
     bsky::empty empty_body;
-    constexpr bool use_refresh_token(true);
+    constexpr bool doing_refresh(true);
     constexpr bool no_post_log(true);
     _tokens = _client.do_post<bsky::empty, bsky::session_tokens>(
-        "com.atproto.server.refreshSession", empty_body, use_refresh_token,
+        "com.atproto.server.refreshSession", empty_body, doing_refresh,
         no_post_log);
     // assumes refresh and access JWTs have expiry, we are out of luck
     // otherwise
