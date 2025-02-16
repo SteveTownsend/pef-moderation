@@ -36,10 +36,10 @@ pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
 void pds_session::connect(bsky::login_info const &credentials) {
-  constexpr bool doing_refresh(false);
+  constexpr bool needs_refresh_check(false);
   constexpr bool no_post_log(true);
   _tokens = _client.do_post<bsky::login_info, bsky::session_tokens>(
-      "com.atproto.server.createSession", credentials, doing_refresh,
+      "com.atproto.server.createSession", credentials, needs_refresh_check,
       no_post_log);
 
   auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
@@ -64,10 +64,10 @@ void pds_session::check_refresh() {
       static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count())) {
     REL_INFO("Refresh access token, expiry in {} ms", time_to_expiry);
     bsky::empty empty_body;
-    constexpr bool doing_refresh(true);
+    constexpr bool needs_refresh_check(false);
     constexpr bool no_post_log(true);
     _tokens = _client.do_post<bsky::empty, bsky::session_tokens>(
-        "com.atproto.server.refreshSession", empty_body, doing_refresh,
+        "com.atproto.server.refreshSession", empty_body, needs_refresh_check,
         no_post_log);
     // assumes refresh and access JWTs have expiry, we are out of luck
     // otherwise

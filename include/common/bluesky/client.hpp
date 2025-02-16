@@ -527,7 +527,7 @@ public:
 
   template <typename BODY, typename RESPONSE>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
-                   const bool doing_refresh, bool no_log) {
+                   const bool needs_refresh_check, bool no_log) {
     RESPONSE response;
     // invariant
     restc_cpp::serialize_properties_t properties;
@@ -536,7 +536,7 @@ public:
     while (retries < 5) {
       try {
         // If we have been called to refresh the session, avoid recursion
-        if (!doing_refresh) {
+        if (needs_refresh_check) {
           _session->check_refresh();
         }
         response =
@@ -546,11 +546,12 @@ public:
                   // Construct a request to the server
                   // Send the request
                   restc_cpp::RequestBuilder builder(ctx);
-                  if (_use_token) {
+                  // Auth header required if tokens were already acquired
+                  if (_use_token && !_session->access_token().empty()) {
                     builder.Header(
                         "Authorization",
                         std::string("Bearer " +
-                                    (doing_refresh
+                                    (needs_refresh_check
                                          ? _session->refresh_token()
                                          : _session->access_token())));
                   }
