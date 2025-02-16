@@ -26,7 +26,7 @@ http://www.fsf.org/licensing/licenses
 #include <mutex>
 
 namespace activity {
-constexpr size_t MaxAccounts = 1000000;
+constexpr size_t MaxAccounts = 500000;
 constexpr size_t MaxBacklog = 10000;
 
 template <typename Key, typename Value>
