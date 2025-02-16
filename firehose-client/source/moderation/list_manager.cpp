@@ -217,10 +217,13 @@ list_manager::load_or_create_list(std::string const &list_name) {
     // for rule enforcement - truncate description if too long
     request.record.description =
         block_reasons(list_name).substr(0, bsky::GraphListDescriptionLimit);
+    constexpr bool use_refresh_token(false);
+    constexpr bool no_post_log(false);
     atproto::create_record_response response =
         _client->do_post<atproto::create_record_list_request,
-                         atproto::create_record_response, true, false, true>(
-            "com.atproto.repo.createRecord", request);
+                         atproto::create_record_response>(
+            "com.atproto.repo.createRecord", request, use_refresh_token,
+            no_post_log);
     // List was created, is empty, and is ready for use
     return list_uri;
   }

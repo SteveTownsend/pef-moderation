@@ -525,18 +525,18 @@ public:
   std::string raw_post(std::string const &relative_path,
                        const std::string &&body = std::string());
 
-  template <typename BODY, typename RESPONSE, bool use_refresh = false,
-            bool no_log = false, bool check_session = true>
+  template <typename BODY, typename RESPONSE>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
-                   restc_cpp::serialize_properties_t properties =
-                       restc_cpp::serialize_properties_t()) {
+                   const bool use_refresh_token, bool no_log) {
     RESPONSE response;
-    // invariant, others can  be overridden by caller
+    // invariant
+    restc_cpp::serialize_properties_t properties;
     properties.name_mapping = &json::TypeFieldMapping;
     size_t retries(0);
     while (retries < 5) {
       try {
-        if (check_session) {
+        // If we have been called to refresh the session, avoid recursion
+        if (!use_refresh_token) {
           _session->check_refresh();
         }
         response =
@@ -550,8 +550,9 @@ public:
                     builder.Header(
                         "Authorization",
                         std::string("Bearer " +
-                                    (use_refresh ? _session->refresh_token()
-                                                 : _session->access_token())));
+                                    (use_refresh_token
+                                         ? _session->refresh_token()
+                                         : _session->access_token())));
                   }
                   std::string body_str(as_string<BODY>(body, properties));
                   if (!body_str.empty()) {

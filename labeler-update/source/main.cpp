@@ -216,15 +216,18 @@ int main(int argc, char **argv) {
             PROJECT_NAME, PROJECT_NAME);
         return EXIT_FAILURE;
       }
+      constexpr bool use_refresh_token(false);
+      constexpr bool no_post_log(true);
       bsky::moderation::labeler_update_signed signed_update(
           pds_client.do_post<bsky::moderation::labeler_update,
-                             bsky::moderation::labeler_update_signed, true,
-                             true, false>(
-              "com.atproto.identity.signPlcOperation", update));
+                             bsky::moderation::labeler_update_signed>(
+              "com.atproto.identity.signPlcOperation", update,
+              use_refresh_token, no_post_log));
       bsky::empty ignored(
-          pds_client.do_post<bsky::moderation::labeler_update_signed,
-                             bsky::empty, true, true, false>(
-              "com.atproto.identity.submitPlcOperation", signed_update));
+          pds_client
+              .do_post<bsky::moderation::labeler_update_signed, bsky::empty>(
+                  "com.atproto.identity.submitPlcOperation", signed_update,
+                  use_refresh_token, no_post_log));
     }
 
     return EXIT_SUCCESS;
