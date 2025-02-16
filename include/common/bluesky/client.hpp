@@ -527,7 +527,7 @@ public:
 
   template <typename BODY, typename RESPONSE>
   RESPONSE do_post(std::string const &relative_path, BODY const &body,
-                   const bool use_refresh_token, bool no_log) {
+                   const bool doing_refresh, bool no_log) {
     RESPONSE response;
     // invariant
     restc_cpp::serialize_properties_t properties;
@@ -536,7 +536,7 @@ public:
     while (retries < 5) {
       try {
         // If we have been called to refresh the session, avoid recursion
-        if (!use_refresh_token) {
+        if (!doing_refresh) {
           _session->check_refresh();
         }
         response =
@@ -550,7 +550,7 @@ public:
                     builder.Header(
                         "Authorization",
                         std::string("Bearer " +
-                                    (use_refresh_token
+                                    (doing_refresh
                                          ? _session->refresh_token()
                                          : _session->access_token())));
                   }
