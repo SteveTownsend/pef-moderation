@@ -53,8 +53,11 @@ public:
       std::chrono::milliseconds(60000 * 30);
 
 private:
+  void internal_connect();
+
   bsky::client &_client;
   std::string _host;
+  bsky::login_info _credentials;
   session_tokens _tokens;
   //  Log excerpt:
   //    2025-01-10 17:50:33.778218500     info  36816 bsky session access token

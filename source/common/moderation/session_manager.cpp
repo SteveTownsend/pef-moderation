@@ -36,10 +36,15 @@ pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
 void pds_session::connect(bsky::login_info const &credentials) {
+  _credentials = credentials;
+  internal_connect();
+}
+
+void pds_session::internal_connect() {
   constexpr bool needs_refresh_check(false);
   constexpr bool no_post_log(true);
   _tokens = _client.do_post<bsky::login_info, bsky::session_tokens>(
-      "com.atproto.server.createSession", credentials, needs_refresh_check,
+      "com.atproto.server.createSession", _credentials, needs_refresh_check,
       no_post_log);
 
   auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
@@ -60,24 +65,41 @@ void pds_session::check_refresh() {
   auto time_to_expiry(std::chrono::duration_cast<std::chrono::milliseconds>(
                           _access_expiry - now)
                           .count());
-  if (time_to_expiry <
-      static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count())) {
-    REL_INFO("Refresh access token, expiry in {} ms", time_to_expiry);
-    bsky::empty empty_body;
-    constexpr bool needs_refresh_check(false);
-    constexpr bool no_post_log(true);
-    _tokens = _client.do_post<bsky::empty, bsky::session_tokens>(
-        "com.atproto.server.refreshSession", empty_body, needs_refresh_check,
-        no_post_log);
-    // assumes refresh and access JWTs have expiry, we are out of luck
-    // otherwise
-    auto access_token = jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
-    _access_expiry = access_token.get_expires_at();
-    REL_INFO("bsky session access token now expires at {}", _access_expiry);
-    auto refresh_token =
-        jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
-    _refresh_expiry = refresh_token.get_expires_at();
-    REL_INFO("bsky session refresh token now expires at {}", _refresh_expiry);
+  if ((_access_expiry < now) ||
+      (time_to_expiry <
+       static_cast<decltype(time_to_expiry)>(AccessExpiryBuffer.count()))) {
+    try {
+      REL_INFO("Refresh access token, expiry in {} ms", time_to_expiry);
+      bsky::empty empty_body;
+      constexpr bool needs_refresh_check(false);
+      constexpr bool no_post_log(true);
+      _tokens = _client.do_post<bsky::empty, bsky::session_tokens>(
+          "com.atproto.server.refreshSession", empty_body, needs_refresh_check,
+          no_post_log);
+      // assumes refresh and access JWTs have expiry, we are out of luck
+      // otherwise
+      auto access_token =
+          jwt::decode<jwt::traits::boost_json>(_tokens.accessJwt);
+      _access_expiry = access_token.get_expires_at();
+      REL_INFO("bsky session access token now expires at {}", _access_expiry);
+      auto refresh_token =
+          jwt::decode<jwt::traits::boost_json>(_tokens.refreshJwt);
+      _refresh_expiry = refresh_token.get_expires_at();
+      REL_INFO("bsky session refresh token now expires at {}", _refresh_expiry);
+    } catch (std::exception const &exc) {
+      // Invalid token -> reconnect from scratch. Example result:
+      // 2025-02-22 21:22:08.323097733    error     17
+      //    POST for com.atproto.server.refreshSession exception
+      //    Request failed with HTTP error:
+      //    400 Bad Request {"error":"InvalidToken","message":"Token could not
+      //    be verified"}
+      if (std::string_view(exc.what()).contains("\"error\":\"InvalidToken\"")) {
+        REL_WARNING("bsky session token refresh failed, reconnect");
+        internal_connect();
+      } else {
+        throw;
+      }
+    }
   }
 }
 
