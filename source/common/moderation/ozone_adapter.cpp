@@ -299,18 +299,11 @@ std::string ozone_adapter::safe_connection_string() const {
   return _connection_string;
 }
 
-void ozone_adapter::track_account(std::string const &did) {
-  {
-    std::lock_guard guard(_lock);
-    if (_tracked_accounts.insert(did).second) {
-      REL_INFO("Track account {}", did);
-      metrics_factory::instance()
-          .get_gauge("process_operation")
-          .Get({{"accounts", "tracked"}})
-          .Increment();
-    }
-  }
+// returns true iff account was marked for tracking for the first time on this
+// run
+bool ozone_adapter::track_account(std::string const &did) {
+  std::lock_guard guard(_lock);
+  return _tracked_accounts.insert(did).second;
 }
-
 } // namespace moderation
 } // namespace bsky

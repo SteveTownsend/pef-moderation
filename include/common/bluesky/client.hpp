@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "common/bluesky/platform.hpp"
+#include "common/helpers.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/moderation/session_manager.hpp"
@@ -31,6 +32,7 @@ http://www.fsf.org/licensing/licenses
 #include "restc-cpp/RequestBuilder.h"
 #include "restc-cpp/SerializeJson.h"
 #include "yaml-cpp/yaml.h"
+#include <format>
 #include <thread>
 #include <unordered_set>
 
@@ -47,17 +49,48 @@ struct get_profiles_response {
 };
 
 namespace moderation {
+// clumsy way to mimic union from
+// https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/createReport.json
 struct report_subject {
-  std::string _type = std::string(atproto::AdminDefsRepoRef);
-  // TODO should be optional, add std::optional<strong_ref> for content, if
-  // needed
+public:
+  inline report_subject(std::string const &repo, std::string const &path = {},
+                        std::string const &hash = {}) {
+    if (path.empty()) {
+      _type = std::string(atproto::AdminDefsRepoRef);
+      did = repo;
+    } else {
+      if (hash.empty()) {
+        std::ostringstream oss;
+        oss << "report_subject " << repo << '/' << path
+            << " must also have cid";
+        throw std::invalid_argument(oss.str());
+      }
+      _type = std::string(atproto::RepoStrongRef);
+      // collection and rkey are already concatenated in path
+      uri = atproto::make_at_uri(repo, path);
+      cid = hash;
+    }
+  }
+  std::string _type;
   std::string did;
+  std::string uri;
+  std::string cid;
+
+private:
+  report_subject() = delete;
 };
-// always report the account. Report content indicates context.
+
+// Report content indicates context.
 struct report_request {
+public:
+  inline report_request(bsky::moderation::report_subject const &subject)
+      : subject(subject) {}
   std::string reasonType = std::string(bsky::moderation::ReasonOther);
   std::string reason;
   report_subject subject;
+
+private:
+  report_request() = delete;
 };
 struct report_response {
   // ignore other fields
@@ -68,14 +101,21 @@ struct report_response {
 
 struct label_event {
   std::string _type = std::string(bsky::moderation::EventLabel);
+  std::string comment;
   std::vector<std::string> createLabelVals;
   std::vector<std::string> negateLabelVals;
 };
 // Label auto-reported account. Associated eport indicates context
 struct emit_event_label_request {
+public:
+  inline emit_event_label_request(report_subject const &subject)
+      : subject(subject) {}
   label_event event;
   report_subject subject;
   std::string createdBy;
+
+private:
+  emit_event_label_request() = delete;
 };
 struct acknowledge_event_comment {
   acknowledge_event_comment() = delete;
@@ -92,9 +132,15 @@ struct acknowledge_event {
   bool acknowledgeAccountSubjects = false;
 };
 struct emit_event_acknowledge_request {
+public:
+  inline emit_event_acknowledge_request(report_subject const &subject)
+      : subject(subject) {}
   acknowledge_event event;
   report_subject subject;
   std::string createdBy;
+
+private:
+  emit_event_acknowledge_request() = delete;
 };
 struct tag_event_comment {
   tag_event_comment() = delete;
@@ -110,9 +156,15 @@ struct tag_event {
   std::vector<std::string> remove;
 };
 struct emit_event_tag_request {
+public:
+  inline emit_event_tag_request(report_subject const &subject)
+      : subject(subject) {}
   tag_event event;
   report_subject subject;
   std::string createdBy;
+
+private:
+  emit_event_tag_request() = delete;
 };
 struct comment_event_comment {
   comment_event_comment() = delete;
@@ -128,9 +180,15 @@ struct comment_event {
 };
 
 struct emit_event_comment_request {
+public:
+  inline emit_event_comment_request(report_subject const &subject)
+      : subject(subject) {}
   comment_event event;
   report_subject subject;
   std::string createdBy;
+
+private:
+  emit_event_comment_request() = delete;
 };
 struct emit_event_response {
   // ignore other fields
@@ -157,17 +215,18 @@ public:
   std::string service_did() const { return _service_did; }
   inline bool is_ready() const { return _is_ready; }
 
-  void label_account(std::string const &did,
-                     std::vector<std::string> const &labels);
+  void
+  label_subject(bsky::moderation::report_subject const &subject,
+                std::unordered_set<std::string> const &add_labels,
+                std::unordered_set<std::string> const &remove_labels,
+                bsky::moderation::acknowledge_event_comment const &comment);
   void add_comment_for_subject(
-      std::string const &did,
-      bsky::moderation::comment_event_comment const &comment,
-      std::string const &path);
+      bsky::moderation::report_subject const &subject,
+      bsky::moderation::comment_event_comment const &comment);
   void acknowledge_subject(
-      std::string const &did,
-      bsky::moderation::acknowledge_event_comment const &comment,
-      std::string const &path = {});
-  void tag_report_subject(std::string const &did, std::string const &path,
+      bsky::moderation::report_subject const &subject,
+      bsky::moderation::acknowledge_event_comment const &comment);
+  void tag_report_subject(bsky::moderation::report_subject const &subject,
                           bsky::moderation::tag_event_comment const &comment,
                           std::vector<std::string> const &add_tags,
                           std::vector<std::string> const &remove_tags);
@@ -357,13 +416,13 @@ public:
   }
 
   template <typename REASON>
-  void send_report(std::string const &did, REASON const &reason) {
+  void send_report_for_subject(bsky::moderation::report_subject const &subject,
+                               REASON const &reason) {
     // serialize the report-reason and request-body only once
     restc_cpp::serialize_properties_t properties;
     properties.name_mapping = &json::TypeFieldMapping;
 
-    bsky::moderation::report_request request;
-    request.subject.did = did;
+    bsky::moderation::report_request request(subject);
 
     std::ostringstream oss;
     restc_cpp::SerializeToJson(reason, oss, properties);
@@ -426,8 +485,8 @@ public:
                 .get();
         REL_INFO("Report of {} {} recorded at {}, reporter "
                  "{} id={}",
-                 did, request.reason, response.createdAt, response.reportedBy,
-                 response.id);
+                 subject, request.reason, response.createdAt,
+                 response.reportedBy, response.id);
         metrics_factory::instance()
             .get_counter("automation")
             .Get({{"report", reason.get_name()}})
@@ -441,13 +500,13 @@ public:
           ++retries;
         } else {
           // unrecoverable error
-          REL_ERROR("Create report of {} {} Boost exception {}", did,
+          REL_ERROR("Create report of {} {} Boost exception {}", subject,
                     request.reason, exc.what());
           break;
         }
       } catch (std::exception const &exc) {
-        REL_ERROR("Create report of {} {} exception {}", did, request.reason,
-                  exc.what());
+        REL_ERROR("Create report of {} {} exception {}", subject,
+                  request.reason, exc.what());
         break;
       }
     }
@@ -618,10 +677,20 @@ private:
   template <typename EVENT_REQUEST>
   bsky::moderation::emit_event_response
   emit_event(EVENT_REQUEST const &request) {
-    restc_cpp::serialize_properties_t properties;
+    // negateLabelsVals is mandatory but unused for Label
+    // remove (tags) is mandatory but unused for Tag
+    constexpr bool ignore_empty(false);
+    restc_cpp::serialize_properties_t properties(ignore_empty);
     properties.name_mapping = &json::TypeFieldMapping;
-    properties.ignore_empty_fileds =
-        0; // negateLabelsVals is mandatory but unused
+
+    // Skip subject fields depending on context
+    if (request.subject.uri.empty()) {
+      static const std::set<std::string> omit_fields = {"uri", "cid"};
+      properties.excluded_names = &omit_fields;
+    } else {
+      static const std::set<std::string> omit_fields = {"did"};
+      properties.excluded_names = &omit_fields;
+    }
     size_t retries(0);
     bsky::moderation::emit_event_response response;
     // Serialize the body only once
@@ -721,4 +790,18 @@ template <> struct hash<bsky::profile_view_detailed> {
     return std::hash<std::string>()(profile.did);
   }
 };
+
+template <>
+struct formatter<bsky::moderation::report_subject> : formatter<string> {
+  auto format(bsky::moderation::report_subject const &subject,
+              format_context &ctx) const {
+    if (subject.uri.empty()) {
+      return formatter<string>::format(std::format("{}", subject.did), ctx);
+    } else {
+      return formatter<string>::format(
+          std::format("{}/{}", subject.uri, subject.cid), ctx);
+    }
+  }
+};
+
 } // namespace std

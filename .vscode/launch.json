@@ -224,6 +224,32 @@
             "cwd": "${workspaceFolder}/db-crawler",
             "environment": [],
             "console": "externalTerminal"
+        },
+        {
+            "name": "DB Crawler (Logging-GCC)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-gcc/db-crawler/db_crawler",
+            "args": [
+                "./config/db_crawler_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/db-crawler",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "DB Crawler (Debug-GCC)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-gcc/db-crawler/db_crawler",
+            "args": [
+                "./config/db_crawler_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/db-crawler",
+            "environment": [],
+            "console": "externalTerminal"
         }
     ]
 }

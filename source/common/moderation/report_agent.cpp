@@ -30,7 +30,8 @@ http://www.fsf.org/licensing/licenses
 #include <functional>
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
-                          (std::string, _type), (std::string, did))
+                          (std::string, _type), (std::string, did),
+                          (std::string, uri), (std::string, cid))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_request,
                           (std::string, reasonType), (std::string, reason),
                           (bsky::moderation::report_subject, subject))
@@ -38,20 +39,12 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
                           (std::string, createdAt), (int64_t, id),
                           (std::string, reportedBy))
 
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_matches,
-                          (std::vector<std::string>, _filters),
-                          (std::vector<std::string>, _paths),
-                          (std::vector<std::string>, _labels))
-
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
-                          (std::string,
-                           descriptor)(std::vector<std::string>,
-                                       filters)(std::vector<std::string>,
-                                                paths))
+                          (std::string, descriptor)(std::vector<std::string>,
+                                                    filters))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
-                          (std::string,
-                           descriptor)(std::string,
-                                       path)(std::vector<std::string>, uris))
+                          (std::string, descriptor)(std::vector<std::string>,
+                                                    uris))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::blocks_moderation_info,
                           (std::string, descriptor))
 
@@ -87,23 +80,23 @@ void report_agent::start(YAML::Node const &settings,
               .Get({{"report_agent", "backlog"}})
               .Decrement();
 
-          // Don't reprocess previously-labeled accounts
-          if (bsky::moderation::ozone_adapter::instance().already_processed(
-                  report._did) ||
-              is_reported(report._did)) {
-            REL_INFO("Report of {} skipped, already known", report._did);
+          // Track all reported accounts
+          if (bsky::moderation::ozone_adapter::instance().track_account(
+                  report._did)) {
+            REL_INFO("Track account {}", report._did);
             metrics_factory::instance()
                 .get_counter("realtime_alerts")
-                .Get({{"auto_reports", "skipped"}})
+                .Get({{"auto_reports", "first_time"}})
                 .Increment();
-            continue;
+          } else {
+            metrics_factory::instance()
+                .get_counter("realtime_alerts")
+                .Get({{"auto_reports", "already_known"}})
+                .Increment();
           }
-          bsky::moderation::ozone_adapter::instance().track_account(
-              report._did);
 
           std::visit(report_content_visitor(*this, report._did),
                      report._content);
-          reported(report._did);
         }
       }
     } catch (std::exception const &exc) {
@@ -123,65 +116,82 @@ void report_agent::wait_enqueue(account_report &&value) {
 }
 
 // TODO add metrics
-void report_agent::string_match_report(std::string const &did,
-                                       std::vector<std::string> const &filters,
-                                       std::vector<std::string> const &paths) {
+void report_agent::string_match_report(
+    std::string const &did, std::string const &path, std::string const &cid,
+    std::unordered_set<std::string> const &filters) {
   bsky::moderation::filter_match_info reason(_project_name);
-  reason.filters = filters;
-  reason.paths = paths;
-  _pds_client->send_report<bsky::moderation::filter_match_info>(did, reason);
+  reason.filters = std::vector<std::string>(filters.cbegin(), filters.cend());
+  bsky::moderation::report_subject target(did, path, cid);
+  _pds_client->send_report_for_subject<bsky::moderation::filter_match_info>(
+      target, reason);
 }
 
 // TODO add metrics
 void report_agent::link_redirection_report(
-    std::string const &did, std::string const &path,
+    std::string const &did, std::string const &path, std::string const &cid,
     std::vector<std::string> const &uri_chain) {
   bsky::moderation::link_redirection_info reason(_project_name);
-  reason.path = path;
   reason.uris = uri_chain;
-  _pds_client->send_report<bsky::moderation::link_redirection_info>(did,
-                                                                    reason);
+  bsky::moderation::report_subject target(did, path, cid);
+  _pds_client->send_report_for_subject<bsky::moderation::link_redirection_info>(
+      target, reason);
 }
 
 // TODO add metrics
 void report_agent::blocks_moderation_report(std::string const &did) {
   bsky::moderation::blocks_moderation_info reason(_project_name);
-  _pds_client->send_report<bsky::moderation::blocks_moderation_info>(did,
-                                                                     reason);
+  bsky::moderation::report_subject target(did);
+  _pds_client
+      ->send_report_for_subject<bsky::moderation::blocks_moderation_info>(
+          target, reason);
 }
 
 // TODO add metrics
-void report_agent::label_account(std::string const &subject_did,
-                                 std::vector<std::string> const &labels) {
-  _pds_client->label_account(subject_did, labels);
+void report_agent::label_subject(
+    bsky::moderation::report_subject const &subject,
+    std::unordered_set<std::string> const &add_labels,
+    std::unordered_set<std::string> const &remove_labels,
+    bsky::moderation::acknowledge_event_comment const &comment) {
+  _pds_client->label_subject(subject, add_labels, remove_labels, comment);
 }
 
 void report_content_visitor::operator()(filter_matches const &value) {
-  _agent.string_match_report(_did, value._filters, value._paths);
-  if (!value._labels.empty()) {
-    // auto-label request augments the report
-    _agent.label_account(_did, value._labels);
-    // Acknowledge the report to close out workflow
-    bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
-    std::ostringstream oss;
-    restc_cpp::serialize_properties_t properties;
-    properties.ignore_empty_fileds = true;
-    restc_cpp::SerializeToJson(value, oss);
-    comment.context = "filter_matches: " + oss.str();
-    comment.did = _agent.service_did();
+  for (auto &next_scope : value._scoped_matches) {
+    _agent.string_match_report(value._did, next_scope.first,
+                               next_scope.second._cid,
+                               next_scope.second._filters);
+    if (!next_scope.second._labels.empty()) {
+      // auto-label request augments the report
+      bsky::moderation::acknowledge_event_comment comment(
+          _agent.project_name());
+      bsky::moderation::filter_match_info filter_info(_agent.project_name());
+      filter_info.filters =
+          std::vector<std::string>(next_scope.second._filters.cbegin(),
+                                   next_scope.second._filters.cend());
+      std::ostringstream oss;
+      restc_cpp::serialize_properties_t properties;
+      restc_cpp::SerializeToJson(filter_info, oss);
+      comment.context = "filter_matches: " + oss.str();
+      comment.did = _agent.service_did();
+      bsky::moderation::report_subject subject(value._did, next_scope.first,
+                                               next_scope.second._cid);
+      _agent.label_subject(subject, next_scope.second._labels, {}, comment);
+    }
   }
 }
 void report_content_visitor::operator()(link_redirection const &value) {
-  _agent.link_redirection_report(_did, value._path, value._uri_chain);
+  bsky::moderation::report_subject subject(_did);
+  _agent.link_redirection_report(_did, value._path, value._cid,
+                                 value._uri_chain);
 }
 void report_content_visitor::operator()(blocks_moderation const &value) {
   _agent.blocks_moderation_report(_did);
   // auto-label request augments the report
-  _agent.label_account(_did, {"blocks"});
-  // Acknowledge the report to close out workflow
   bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
   comment.context = "blocks_moderation_service";
   comment.did = _agent.service_did();
+  bsky::moderation::report_subject subject(_did);
+  _agent.label_subject(subject, {"blocks"}, {}, comment);
 }
 } // namespace moderation
 } // namespace bsky

@@ -94,7 +94,7 @@ void embed_checker::start() {
           // add metrics
           for (auto const &next_embed : embed_list._embeds) {
             embed_handler handler(*this, *_pds_clients[count], embed_list._did,
-                                  embed_list._path);
+                                  embed_list._path, embed_list._cid);
             _pds_clients[count]->GetConnectionProperties()->redirectFn =
                 std::bind(&embed_handler::on_url_redirect, &handler,
                           std::placeholders::_1, std::placeholders::_2,
@@ -345,7 +345,7 @@ void embed_handler::operator()(embed::external const &value) {
         done = true;
         // TODO report this
         report_agent::instance().wait_enqueue(
-            account_report(_repo, link_redirection(_path, _uri_chain)));
+            account_report(_repo, link_redirection(_path, _cid, _uri_chain)));
         break;
       } catch (std::exception const &exc) {
         REL_ERROR("Redirect check for {} error {}", _root_url, exc.what());
@@ -402,7 +402,7 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
         .Increment();
 
     REL_INFO("Redirect matched rules for {}", url);
-    action_router::instance().wait_enqueue({_repo, {{_path, results}}});
+    action_router::instance().wait_enqueue({_repo, {{_path, _cid, results}}});
   }
   return true;
 }

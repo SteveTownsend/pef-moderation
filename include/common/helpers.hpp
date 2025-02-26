@@ -106,21 +106,13 @@ std::string wstring_to_utf8(std::wstring const &str);
 std::string wstring_to_utf8(std::wstring_view str);
 
 std::string print_emits(const aho_corasick::wtrie::emit_collection &c);
-// template <>
-// struct std::formatter<aho_corasick::wtrie::emit_collection>
-//     : public std::formatter<std::string> {
-//   auto format(aho_corasick::wtrie::emit_collection const &emits,
-//               std::format_context &ctx) const {
-//     return std::format("{}", print_emits(emits));
-//   }
-// };
 template <>
 struct std::formatter<aho_corasick::wtrie::emit_collection>
     : std::formatter<std::string> {
-  auto format(aho_corasick::wtrie::emit_collection emits,
+  auto format(aho_corasick::wtrie::emit_collection const &emits,
               format_context &ctx) const {
-    return std::formatter<string>::format(std::format("{}", print_emits(emits)),
-                                          ctx);
+    return std::formatter<std::string>::format(
+        std::format("{}", print_emits(emits)), ctx);
   }
 };
 #endif
