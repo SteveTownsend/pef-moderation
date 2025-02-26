@@ -73,7 +73,7 @@ public:
     std::lock_guard guard(_lock);
     return _tracked_accounts.contains(did);
   }
-  void track_account(std::string const &did);
+  bool track_account(std::string const &did);
 
 private:
   void check_refresh_tracked_accounts();

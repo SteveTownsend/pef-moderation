@@ -25,6 +25,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/bluesky/platform.hpp"
 #include "yaml-cpp/yaml.h"
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace bsky {
 namespace moderation {
@@ -35,7 +37,6 @@ struct filter_match_info {
       : descriptor(project_name) {}
   std::string descriptor;
   std::vector<std::string> filters;
-  std::vector<std::string> paths;
   constexpr std::string get_name() const { return "filter_match"; }
 };
 struct link_redirection_info {
@@ -43,7 +44,6 @@ struct link_redirection_info {
   inline link_redirection_info(std::string const &project_name)
       : descriptor(project_name) {}
   std::string descriptor;
-  std::string path;
   std::vector<std::string> uris;
   constexpr std::string get_name() const { return "link_redirection"; }
 };
@@ -58,13 +58,18 @@ struct blocks_moderation_info {
 
 struct no_content {};
 
+struct path_matches {
+  std::string _cid;
+  std::unordered_set<std::string> _filters;
+  std::unordered_set<std::string> _labels;
+};
 struct filter_matches {
-  std::vector<std::string> _filters;
-  std::vector<std::string> _paths;
-  std::vector<std::string> _labels;
+  std::string _did;
+  std::unordered_map<std::string, path_matches> _scoped_matches;
 };
 struct link_redirection {
   std::string _path;
+  std::string _cid;
   std::vector<std::string> _uri_chain;
 };
 struct blocks_moderation {};
@@ -108,25 +113,24 @@ public:
   void start(YAML::Node const &settings, std::string const &project_name);
   void wait_enqueue(account_report &&value);
 
-  void string_match_report(std::string const &did,
-                           std::vector<std::string> const &filters,
-                           std::vector<std::string> const &paths);
+  void string_match_report(std::string const &did, std::string const &path,
+                           std::string const &cid,
+                           std::unordered_set<std::string> const &filters);
   void link_redirection_report(std::string const &did, std::string const &path,
+                               std::string const &cid,
                                std::vector<std::string> const &uri_chain);
   void blocks_moderation_report(std::string const &did);
-  void label_account(std::string const &subject_did,
-                     std::vector<std::string> const &labels);
+  void
+  label_subject(bsky::moderation::report_subject const &subject,
+                std::unordered_set<std::string> const &add_labels,
+                std::unordered_set<std::string> const &remove_labels,
+                bsky::moderation::acknowledge_event_comment const &comment);
   std::string service_did() const { return _service_did; }
   std::string project_name() const { return _project_name; }
 
 private:
   report_agent();
   ~report_agent() = default;
-
-  inline bool is_reported(std::string const &did) const {
-    return _reported_dids.contains(did);
-  }
-  inline void reported(std::string const &did) { _reported_dids.insert(did); }
 
   std::thread _thread;
   std::unique_ptr<bsky::client> _pds_client;
@@ -137,7 +141,6 @@ private:
   std::string _did;
   std::string _service_did;
   bool _dry_run = true;
-  std::unordered_set<std::string> _reported_dids;
 };
 
 } // namespace moderation

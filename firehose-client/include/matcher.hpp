@@ -25,6 +25,7 @@ http://www.fsf.org/licensing/licenses
 #include <boost/beast/core.hpp>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
@@ -38,9 +39,14 @@ struct candidate {
   std::string _value;
   bool operator==(candidate const &rhs) const;
 };
-// Path->candidate association
+// Path/cid->candidate association
 typedef std::vector<candidate> candidate_list;
-typedef std::vector<std::pair<std::string, candidate_list>> path_candidate_list;
+struct path_candidates {
+  std::string _path;
+  std::string _cid;
+  candidate_list _candidates;
+};
+typedef std::vector<path_candidates> path_candidate_list;
 
 // Stores context that matched one or more filters, and the matches
 struct match_result {
@@ -48,7 +54,13 @@ struct match_result {
   aho_corasick::wtrie::emit_collection _matches;
 };
 typedef std::vector<match_result> match_results;
-typedef std::vector<std::pair<std::string, match_results>> path_match_results;
+// Path/cid->match-result association
+struct content_match {
+  std::string _path;
+  std::string _cid;
+  match_results _matches;
+};
+typedef std::vector<content_match> path_match_results;
 
 struct account_filter_matches {
   std::string _did;
@@ -61,6 +73,7 @@ inline bool candidate::operator==(candidate const &rhs) const {
 
 class matcher {
 public:
+  static constexpr std::string_view HandleSentinel = "handle";
   inline static matcher &shared() {
     static matcher instance;
     return instance;
@@ -93,6 +106,7 @@ public:
   public:
     enum class match_type { substring, whole_word };
     enum class content_scope { profile, any };
+    enum class report_scope { none, content, account };
 
     inline content_scope content_scope_from_string(std::string_view str) {
       if (str == "profile")
@@ -101,6 +115,23 @@ public:
         return content_scope::any;
       std::ostringstream err;
       err << "Bad content scope " << str;
+      throw std::invalid_argument(err.str());
+    }
+
+    inline report_scope report_scope_from_string(std::string_view str) {
+      if (str == "content")
+        return report_scope::content;
+      if (str == "account")
+        return report_scope::account;
+      if (str == "none")
+        return report_scope::none;
+      // Legacy boolean values - conservative
+      if (str == "false")
+        return report_scope::none;
+      if (str == "true")
+        return report_scope::content;
+      std::ostringstream err;
+      err << "Bad report scope " << str;
       throw std::invalid_argument(err.str());
     }
 
@@ -138,7 +169,7 @@ public:
     std::vector<std::string> _labels;
     std::string _raw_actions;
     bool _track = false;
-    bool _report = false;
+    report_scope _report = report_scope::none;
     bool _label = false;
     content_scope _content_scope = content_scope::any;
     std::string _block_list_name;

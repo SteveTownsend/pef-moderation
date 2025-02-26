@@ -52,6 +52,7 @@ typedef std::variant<external, image, record, video> embed_info;
 struct embed_info_list {
   std::string _did;
   std::string _path;
+  std::string _cid;
   std::vector<embed_info> _embeds;
 };
 
@@ -66,8 +67,16 @@ struct embed_handler {
 public:
   inline embed_handler(embed_checker &checker,
                        restc_cpp::RestClient &rest_client,
-                       std::string const &repo, std::string const &path)
-      : _checker(checker), _rest_client(rest_client), _repo(repo), _path(path) {
+                       std::string const &repo, std::string const &path,
+                       std::string const &cid)
+      : _checker(checker), _rest_client(rest_client), _repo(repo), _path(path),
+        _cid(cid) {
+    if (_repo.empty() || _path.empty() || _cid.empty()) {
+      std::ostringstream oss;
+      oss << "embed_handler requires repo (" << _repo << "), path (" << _path
+          << "), cid (" << _cid << ')';
+      throw std::invalid_argument(oss.str());
+    }
   }
   template <typename T> void operator()(T const &) {}
 
@@ -84,6 +93,7 @@ private:
   restc_cpp::RestClient &_rest_client;
   std::string _repo;
   std::string _path;
+  std::string _cid;
   std::string _root_url;
   std::vector<std::string> _uri_chain;
   nlohmann::json _results;

@@ -36,6 +36,7 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
                           (std::string, _type), (std::string, did))
 // Label
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
+                          (std::string, comment),
                           (std::vector<std::string>, createLabelVals),
                           (std::vector<std::string>, negateLabelVals))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
@@ -164,35 +165,52 @@ std::string client::raw_post(std::string const &relative_path,
   return response;
 }
 
-void client::label_account(std::string const &did,
-                           std::vector<std::string> const &labels) {
+void client::label_subject(
+    bsky::moderation::report_subject const &subject,
+    std::unordered_set<std::string> const &add_labels,
+    std::unordered_set<std::string> const &remove_labels,
+    bsky::moderation::acknowledge_event_comment const &comment) {
+  std::vector<std::string> add_label_list(add_labels.cbegin(),
+                                          add_labels.cend());
+  std::vector<std::string> remove_label_list(remove_labels.cbegin(),
+                                             remove_labels.cend());
   if (_dry_run) {
-    REL_INFO("Dry-run Label of {} for {}", did, format_vector(labels));
+    REL_INFO("Dry-run Label of {}: add {}, remove {}", subject,
+             format_vector(add_label_list), format_vector(remove_label_list));
     return;
   }
-  bsky::moderation::emit_event_label_request request;
-  request.subject.did = did;
+  std::ostringstream oss;
+  restc_cpp::SerializeToJson(comment, oss);
+
+  bsky::moderation::emit_event_label_request request(subject);
   request.createdBy = _did;
-  request.event.createLabelVals = labels;
+  request.event.createLabelVals = add_label_list;
+  request.event.negateLabelVals = remove_label_list;
+  request.event.comment = oss.str();
+
   try {
     bsky::moderation::emit_event_response response =
         emit_event<bsky::moderation::emit_event_label_request>(request);
-    REL_INFO("Labeled {} as {} at {}", did, format_vector(labels),
+    REL_INFO("Labeled {}: add {}, remove {} at {}", subject,
+             format_vector(add_label_list), format_vector(remove_label_list),
              response.createdAt);
   } catch (std::exception const &exc) {
-    REL_ERROR("Label {} as {} error {}", did, format_vector(labels),
+    REL_ERROR("Label {}: add {}, remove {} error {}", subject,
+              format_vector(add_label_list), format_vector(remove_label_list),
               exc.what());
   }
+
+  // Acknowledge the report to close out workflow
+  acknowledge_subject(subject, comment);
 }
 
 void client::add_comment_for_subject(
-    std::string const &did,
-    bsky::moderation::comment_event_comment const &comment,
-    std::string const &path) {
+    bsky::moderation::report_subject const &subject,
+    bsky::moderation::comment_event_comment const &comment) {
   std::ostringstream oss;
   restc_cpp::SerializeToJson(comment, oss);
   if (_dry_run) {
-    REL_INFO("Dry-run Comment on {} for {}", did, oss.str());
+    REL_INFO("Dry-run Comment on {} for {}", subject, oss.str());
     return;
   }
   if (comment.context.empty()) {
@@ -200,32 +218,25 @@ void client::add_comment_for_subject(
               oss.str());
     return;
   }
-  if (!path.empty()) {
-    REL_WARNING("Comment on moderation subject for content not yet supported");
-    return;
-  }
-  bsky::moderation::emit_event_comment_request request;
-  request.subject.did = did;
+  bsky::moderation::emit_event_comment_request request(subject);
   request.createdBy = _did;
   request.event.comment = oss.str();
   try {
     bsky::moderation::emit_event_response response =
         emit_event<bsky::moderation::emit_event_comment_request>(request);
-    REL_INFO("Comment {} with {}", did, oss.str(), response.createdAt);
+    REL_INFO("Comment {} with {}", subject, oss.str(), response.createdAt);
   } catch (std::exception const &exc) {
-    REL_ERROR("Comment {} with {} error {}", did, oss.str(), exc.what());
+    REL_ERROR("Comment {} with {} error {}", subject, oss.str(), exc.what());
   }
 }
 
 void client::acknowledge_subject(
-    std::string const &did,
-    bsky::moderation::acknowledge_event_comment const &comment,
-    std::string const &path) {
+    bsky::moderation::report_subject const &subject,
+    bsky::moderation::acknowledge_event_comment const &comment) {
   std::ostringstream oss;
   restc_cpp::SerializeToJson(comment, oss);
   if (_dry_run) {
-    REL_INFO("Dry-run acknowledge of subject {}/{} reason {}", did, path,
-             oss.str());
+    REL_INFO("Dry-run acknowledge of subject {} reason {}", subject, oss.str());
     return;
   }
   if (comment.context.empty()) {
@@ -234,56 +245,46 @@ void client::acknowledge_subject(
         oss.str());
     return;
   }
-  if (!path.empty()) {
-    REL_WARNING(
-        "Acknowledge of moderation subject for content not yet supported");
-    return;
-  }
   try {
     // TODO use a variant to branch for account/content
-    bsky::moderation::emit_event_acknowledge_request request;
-    request.subject.did = did;
+    bsky::moderation::emit_event_acknowledge_request request(subject);
     request.createdBy = _did;
     request.event.comment = oss.str();
 
     bsky::moderation::emit_event_response response = emit_event(request);
-    REL_INFO("Acknowledge OK: subject {}/{} reason {} at {}", did, path,
-             oss.str(), response.createdAt);
+    REL_INFO("Acknowledge OK: subject {} reason {} at {}", subject, oss.str(),
+             response.createdAt);
   } catch (std::exception const &exc) {
-    REL_ERROR("Acknowledge error: subject {}/{} reason {} error {}", did, path,
+    REL_ERROR("Acknowledge error: subject {} reason {} error {}", subject,
               oss.str(), exc.what());
   }
 }
 
 void client::tag_report_subject(
-    std::string const &did, std::string const &path,
+    bsky::moderation::report_subject const &subject,
     bsky::moderation::tag_event_comment const &comment,
     std::vector<std::string> const &add_tags,
     std::vector<std::string> const &remove_tags) {
   std::ostringstream oss;
   restc_cpp::SerializeToJson(comment, oss);
   if (_dry_run) {
-    REL_INFO("Dry-run Tag of {} add: {} remove: {} comment: {}", did,
+    REL_INFO("Dry-run Tag of {} add: {} remove: {} comment: {}", subject,
              format_vector(add_tags), format_vector(remove_tags), oss.str());
     return;
   }
-  if (!path.empty()) {
-    REL_WARNING("Tag of moderation subject for content not yet supported");
-    return;
-  }
-  bsky::moderation::emit_event_tag_request request;
-  request.subject.did = did;
+  bsky::moderation::emit_event_tag_request request(subject);
   request.createdBy = _did;
   request.event.add = add_tags;
   request.event.remove = remove_tags;
+  request.event.comment = oss.str();
   try {
     bsky::moderation::emit_event_response response =
         emit_event<bsky::moderation::emit_event_tag_request>(request);
-    REL_INFO("Tagged {} add: {} remove: {} comment: {} at {}", did,
+    REL_INFO("Tagged {} add: {} remove: {} comment: {} at {}", subject,
              format_vector(add_tags), format_vector(remove_tags), oss.str(),
              response.createdAt);
   } catch (std::exception const &exc) {
-    REL_ERROR("Tagged {} add: {} remove: {} comment: {} error {}", did,
+    REL_ERROR("Tagged {} add: {} remove: {} comment: {} error {}", subject,
               format_vector(add_tags), format_vector(remove_tags), oss.str(),
               exc.what());
   }

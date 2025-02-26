@@ -186,10 +186,10 @@ matcher::all_matches_for_candidates(candidate_list const &candidates) const {
 path_match_results matcher::all_matches_for_path_candidates(
     path_candidate_list const &path_candidates) const {
   path_match_results results;
-  for (auto &next : path_candidates) {
-    match_results this_result_set(all_matches_for_candidates(next.second));
+  for (auto &[path, cid, candidates] : path_candidates) {
+    match_results this_result_set(all_matches_for_candidates(candidates));
     if (!this_result_set.empty()) {
-      results.emplace_back(next.first, this_result_set);
+      results.emplace_back(path, cid, this_result_set);
     }
   }
   return results;
@@ -199,25 +199,39 @@ void matcher::report_if_needed(account_filter_matches &matches) {
 
   // iterate the match results for any rules that are marked
   // auto-reportable
-  std::vector<std::string> paths;
-  std::vector<std::string> all_filters;
-  std::vector<std::string> labels;
+  // reports may be at account or content-item scope
+  bsky::moderation::filter_matches mapped_matches;
+  mapped_matches._did = matches._did;
   for (auto const &result : matches._matches) {
     // this is the substring of the full JSON that matched one or more
     // desired strings
-    std::string path(result.first);
+    // Path is either an at-uri collection/rkey or a "handle" sentinel string
+    std::string path(result._path);
+    std::string cid(result._cid);
     std::vector<std::string> filters;
-    for (auto const &next_match : result.second) {
+    for (auto const &next_match : result._matches) {
       for (auto const &match : next_match._matches) {
         matcher::rule matched_rule(find_rule(match.get_keyword()));
-        if (!matched_rule._report && !matched_rule._label) {
+        rule::report_scope scope(matched_rule._report);
+        if ((scope == rule::report_scope::none) && !matched_rule._label) {
           // auto-moderation not requested for this rule
           continue;
         }
+        // Handle matches must be reported at acocunt level
+        if (path.compare(HandleSentinel) == 0) {
+          scope = rule::report_scope::account;
+        }
+        if (scope == rule::report_scope::account) {
+          // empty sentinel strings for account-level reports
+          path.clear();
+          cid.clear();
+        }
+        auto &current_matches(mapped_matches._scoped_matches[path]);
+        current_matches._cid = cid;
         if (matched_rule._label) {
           if (!matched_rule._labels.empty()) {
-            labels.insert(labels.end(), matched_rule._labels.cbegin(),
-                          matched_rule._labels.cend());
+            current_matches._labels.insert(matched_rule._labels.cbegin(),
+                                           matched_rule._labels.cend());
           }
         }
         if (!matched_rule._block_list_name.empty()) {
@@ -225,33 +239,24 @@ void matcher::report_if_needed(account_filter_matches &matches) {
               {matches._did, matched_rule._block_list_name});
         }
         if (matched_rule._content_scope == matcher::rule::content_scope::any) {
-          filters.push_back(matched_rule._target);
+          current_matches._filters.insert(matched_rule._target);
         } else if (matched_rule._content_scope ==
                    matcher::rule::content_scope::profile) {
           // report only if seen in profile
           if (next_match._candidate._type == bsky::AppBskyActorProfile) {
-            filters.push_back(matched_rule._target);
+            current_matches._filters.insert(matched_rule._target);
           }
         }
-      }
-      if (!filters.empty()) {
-        paths.push_back(path);
-        all_filters.insert(all_filters.cend(), filters.cbegin(),
-                           filters.cend());
       }
     }
   }
 
-  // record the account as a delta to cache for dup detection
-  if (!all_filters.empty()) {
-    if (!labels.empty()) {
-      std::sort(labels.begin(), labels.end());
-      labels.erase(std::unique(labels.begin(), labels.end()), labels.end());
-    }
+  // report the account and content as needed. All entries are non-empty, by
+  // construction.
+  if (!mapped_matches._scoped_matches.empty()) {
     bsky::moderation::report_agent::instance().wait_enqueue(
-        bsky::moderation::account_report(
-            matches._did,
-            bsky::moderation::filter_matches(all_filters, paths, labels)));
+        bsky::moderation::account_report(matches._did,
+                                         std::move(mapped_matches)));
   }
 }
 
@@ -321,6 +326,12 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
     _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
   }
   store_actions(actions);
+  // label requests must be reported, pick a default conservatively
+  if (_label && _report == report_scope::none) {
+    REL_WARNING("Label actions must be reported, use content scope for {}",
+                _target);
+    _report = report_scope::content;
+  }
   if (contingent.empty())
     return;
   _contingent = contingent;
@@ -356,7 +367,7 @@ void matcher::rule::store_actions(std::string_view actions) {
       continue;
     }
     if (starts_with(field, "report=")) {
-      _report = bool_from_string(value);
+      _report = report_scope_from_string(value);
       continue;
     }
     if (starts_with(field, "label=")) {
@@ -375,7 +386,7 @@ void matcher::rule::store_actions(std::string_view actions) {
       if (!list_manager::is_active_list_for_group(value)) {
         throw std::invalid_argument(
             "Invalid rule action " + field +
-            ", hyphen not permitted in list-troup name");
+            ", hyphen not permitted in list-group name");
       }
       _block_list_name = value;
       continue;

@@ -40,7 +40,6 @@ public:
   }
   auxiliary_data() = default;
   void start(YAML::Node const &settings);
-  bool already_processed(std::string const &did) const;
   void set_rewind_point();
   // this returns 0 by design, if handling is disabled
   inline int64_t get_rewind_point() const { return _cursor.load(); };

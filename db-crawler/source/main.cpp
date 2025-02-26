@@ -152,7 +152,8 @@ int main(int argc, char **argv) {
                   if (subject.first == match) {
                     // TODO reports of content not yet supported - move this
                     // when they are
-                    pds_client.acknowledge_subject(match, comment);
+                    bsky::moderation::report_subject target(match);
+                    pds_client.acknowledge_subject(target, comment);
                   } else {
                     comment.path = subject.first;
                   }
@@ -200,32 +201,33 @@ int main(int argc, char **argv) {
             // we only handle accounts so check for reports on DID
             auto account_reports(subject->second.find(subject_did));
             if (account_reports != subject->second.cend()) {
-              std::vector<std::string> current_tags(account_reports->second);
+              std::set<std::string> current_tags(
+                  account_reports->second.cbegin(),
+                  account_reports->second.cend());
               std::vector<std::string> add_tags;
               std::vector<std::string> remove_tags;
               if (has_auto && has_manual &&
-                  !subject->second.contains("src:both")) {
+                  !current_tags.contains("src:both")) {
                 add_tags.push_back("src:both");
-              } else if (has_auto && !subject->second.contains("src:auto")) {
+              } else if (has_auto && !current_tags.contains("src:auto")) {
                 add_tags.push_back("src:auto");
-              } else if (has_manual &&
-                         !subject->second.contains("src:manual")) {
+              } else if (has_manual && !current_tags.contains("src:manual")) {
                 add_tags.push_back("src:manual");
               }
               if (!(has_auto && has_manual) &&
-                  subject->second.contains("src:both")) {
+                  current_tags.contains("src:both")) {
                 remove_tags.push_back("src:both");
-              } else if (!has_auto && subject->second.contains("src:auto")) {
+              } else if (!has_auto && current_tags.contains("src:auto")) {
                 remove_tags.push_back("src:auto");
-              } else if (!has_manual &&
-                         subject->second.contains("src:manual")) {
+              } else if (!has_manual && current_tags.contains("src:manual")) {
                 remove_tags.push_back("src:manual");
               }
               if (!add_tags.empty() || !remove_tags.empty()) {
                 // Record the tags on the Ozone server
                 bsky::moderation::tag_event_comment comment(PROJECT_NAME);
-                pds_client.tag_report_subject(subject_did, {}, comment,
-                                              add_tags, remove_tags);
+                bsky::moderation::report_subject target(subject_did);
+                pds_client.tag_report_subject(target, comment, add_tags,
+                                              remove_tags);
                 if (has_manual && has_auto) {
                   ++both;
                 } else if (has_manual) {
@@ -284,7 +286,8 @@ int main(int argc, char **argv) {
             bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
             comment.context = context;
             comment.did = pds_client.service_did();
-            pds_client.acknowledge_subject(subject, comment);
+            bsky::moderation::report_subject target(subject);
+            pds_client.acknowledge_subject(target, comment);
 
           } else {
             REL_INFO("Acknowledge: {}/{} has no active reports", subject,
@@ -301,6 +304,10 @@ int main(int argc, char **argv) {
         settings->get_config()[PROJECT_NAME]["jobs"]["label_all_in_query"]);
     if (label_settings["execute"].as<bool>(default_execute)) {
       std::string filter(label_settings["filter"].as<std::string>());
+      constexpr bool default_require_pending_report(true);
+      bool require_pending_report(
+          label_settings["require_pending_report"].as<bool>(
+              default_require_pending_report));
       bsky::moderation::ozone_adapter::instance().filter_subjects(filter);
       auto targets(
           bsky::moderation::ozone_adapter::instance().get_filtered_subjects());
@@ -310,19 +317,24 @@ int main(int argc, char **argv) {
         auto active_profile(
             active_profiles.find(bsky::profile_view_detailed(subject)));
         if (active_profile != active_profiles.cend()) {
-          auto subject_pending(pending.find(subject));
-          if (subject_pending != pending.cend()) {
-            REL_INFO("Label: {}/{} has active reports", subject,
-                     active_profile->handle);
-            pds_client.label_account(
-                subject,
-                label_settings["labels"].as<std::vector<std::string>>());
-
-            // Acknowledge the report to close out workflow
+          if (!require_pending_report ||
+              (pending.find(subject) != pending.cend())) {
+            REL_INFO("Label: {}/{} required", subject, active_profile->handle);
+            auto add_labels(
+                label_settings["add_labels"].as<std::vector<std::string>>());
+            auto remove_labels(
+                label_settings["remove_labels"].as<std::vector<std::string>>());
             bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
             comment.context = filter + "\n" + reason;
             comment.did = pds_client.service_did();
-            pds_client.acknowledge_subject(subject, comment);
+            bsky::moderation::report_subject target(subject);
+            pds_client.label_subject(
+                target,
+                std::unordered_set<std::string>(add_labels.cbegin(),
+                                                add_labels.cend()),
+                std::unordered_set<std::string>(remove_labels.cbegin(),
+                                                remove_labels.cend()),
+                comment);
           } else {
             // Acknowledge report to get it out of the queue
             REL_INFO("Label: {}/{} has no active reports", subject,

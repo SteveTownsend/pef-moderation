@@ -182,9 +182,10 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       repo = message["did"].template get<std::string>();
       if (message.contains("handle")) {
         std::string handle(message["handle"].template get<std::string>());
-        _path_candidates.emplace_back(
-            std::make_pair<std::string, candidate_list>(
-                "handle", {{op_type, "handle", handle}}));
+        _path_candidates.emplace_back(path_candidates{
+            std::string(matcher::HandleSentinel), // path
+            std::string(matcher::HandleSentinel), // cid
+            {{op_type, std::string(matcher::HandleSentinel), handle}}});
         processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
@@ -245,7 +246,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         // Publish metrics for matches
         size_t count(0);
         for (auto const &result : matches) {
-          for (auto const &next_match : result.second) {
+          for (auto const &next_match : result._matches) {
             // this is the substring of the full JSON that matched one or more
             // desired strings
             // start tracking this account if not already
@@ -427,11 +428,11 @@ void firehose_payload::handle_content(
               ++tags;
               // }
             } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
-              _path_candidates.emplace_back(
-                  std::make_pair<std::string, candidate_list>(
-                      std::string(this_context._this_path),
-                      {{collection, std::string(bsky::AppBskyRichtextFacetLink),
-                        feature["uri"].template get<std::string>()}}));
+              _path_candidates.emplace_back(path_candidates{
+                  this_context._this_path,
+                  cid,
+                  {{collection, std::string(bsky::AppBskyRichtextFacetLink),
+                    feature["uri"].template get<std::string>()}}});
               this_context.add_embed(
                   embed::external(feature["uri"].template get<std::string>()));
               ++links;
@@ -533,7 +534,7 @@ void firehose_payload::handle_content(
   // pass along embeds for analysis
   if (!this_context.get_embeds().empty()) {
     bsky::moderation::embed_checker::instance().wait_enqueue(
-        {repo, this_context._this_path, this_context.get_embeds()});
+        {repo, this_context._this_path, cid, this_context.get_embeds()});
   }
 }
 
@@ -552,8 +553,8 @@ void firehose_payload::handle_matchable_content(
   }
   auto candidates(parser::get_candidates_from_record(content));
   if (!candidates.empty()) {
-    _path_candidates.insert(_path_candidates.end(),
-                            std::make_pair<std::string, candidate_list>(
-                                std::string(this_path), std::move(candidates)));
+    _path_candidates.insert(
+        _path_candidates.end(),
+        {std::string(this_path), cid, std::move(candidates)});
   }
 }
