@@ -226,26 +226,31 @@ void matcher::report_if_needed(account_filter_matches &matches) {
           path.clear();
           cid.clear();
         }
-        auto &current_matches(mapped_matches._scoped_matches[path]);
-        current_matches._cid = cid;
-        if (matched_rule._label) {
-          if (!matched_rule._labels.empty()) {
-            current_matches._labels.insert(matched_rule._labels.cbegin(),
-                                           matched_rule._labels.cend());
-          }
-        }
         if (!matched_rule._block_list_name.empty()) {
           list_manager::instance().wait_enqueue(
               {matches._did, matched_rule._block_list_name});
         }
+        // make sure the scope is correct for this match
+        bool match_confirmed(false);
         if (matched_rule._content_scope == matcher::rule::content_scope::any) {
-          current_matches._filters.insert(matched_rule._target);
+          match_confirmed = true;
         } else if (matched_rule._content_scope ==
                    matcher::rule::content_scope::profile) {
           // report only if seen in profile
           if (next_match._candidate._type == bsky::AppBskyActorProfile) {
-            current_matches._filters.insert(matched_rule._target);
+            match_confirmed = true;
           }
+        }
+        if (match_confirmed) {
+          auto &current_matches(mapped_matches._scoped_matches[path]);
+          current_matches._cid = cid;
+          if (matched_rule._label) {
+            if (!matched_rule._labels.empty()) {
+              current_matches._labels.insert(matched_rule._labels.cbegin(),
+                                             matched_rule._labels.cend());
+            }
+          }
+          current_matches._filters.insert(matched_rule._target);
         }
       }
     }

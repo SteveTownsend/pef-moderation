@@ -83,7 +83,13 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
   // TODO should be safe but not guaranteed always accurate for lock-free read
   // seq/emitted_at may mismatch
   // emitted_at may contain part of old and new values
-  _cursor.exchange(seq);
+  const int64_t prior = _cursor.exchange(seq);
+  // During backfill, observed the firehose apparently sometimes incorrectly
+  // winds back. Treat this as a fatal error.
+  if (seq < prior) {
+    REL_ERROR("seq in hand {} precedes current cursor {}", seq, prior);
+    controller::instance().force_stop();
+  }
   _emitted_at[emitted_at.length()] = 0;
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
 }
