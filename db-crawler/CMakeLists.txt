@@ -1,4 +1,4 @@
-project(db_crawler VERSION 1.3.0 LANGUAGES C CXX)
+project(db_crawler VERSION 1.4.0 LANGUAGES C CXX)
 
 configure_file(./cmake/db_crawler_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 

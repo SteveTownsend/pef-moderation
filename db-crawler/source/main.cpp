@@ -206,22 +206,30 @@ int main(int argc, char **argv) {
                   account_reports->second.cend());
               std::vector<std::string> add_tags;
               std::vector<std::string> remove_tags;
-              if (has_auto && has_manual &&
-                  !current_tags.contains("src:both")) {
+              if (has_auto && has_manual) {
                 add_tags.push_back("src:both");
-              } else if (has_auto && !current_tags.contains("src:auto")) {
-                add_tags.push_back("src:auto");
-              } else if (has_manual && !current_tags.contains("src:manual")) {
-                add_tags.push_back("src:manual");
-              }
-              if (!(has_auto && has_manual) &&
-                  current_tags.contains("src:both")) {
-                remove_tags.push_back("src:both");
-              } else if (!has_auto && current_tags.contains("src:auto")) {
                 remove_tags.push_back("src:auto");
-              } else if (!has_manual && current_tags.contains("src:manual")) {
+                remove_tags.push_back("src:manual");
+              } else if (has_auto) {
+                add_tags.push_back("src:auto");
+                remove_tags.push_back("src:both");
+                remove_tags.push_back("src:manual");
+              } else if (has_manual) {
+                add_tags.push_back("src:manual");
+                remove_tags.push_back("src:both");
+                remove_tags.push_back("src:auto");
+              } else {
+                remove_tags.push_back("src:both");
+                remove_tags.push_back("src:auto");
                 remove_tags.push_back("src:manual");
               }
+              std::erase_if(add_tags, [&](std::string const &add) -> bool {
+                return current_tags.contains(add);
+              });
+              std::erase_if(remove_tags,
+                            [&](std::string const &remove) -> bool {
+                              return !current_tags.contains(remove);
+                            });
               if (!add_tags.empty() || !remove_tags.empty()) {
                 // Record the tags on the Ozone server
                 bsky::moderation::tag_event_comment comment(PROJECT_NAME);
