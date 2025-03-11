@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "firehose Client Tests (GCC-Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-gcc/firehose-client/test/firehose_client_tests",
+            "args": [
+                "--gtest_filter=*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/debug-gcc/firehose-client/test",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
             "name": "firehose Client Tests (Debug)",
             "type": "cppvsdbg",
             "request": "launch",

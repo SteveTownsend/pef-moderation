@@ -33,7 +33,8 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::get_profiles_response,
 // tools.ozone.moderation.emitEvent
 // Shared
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
-                          (std::string, _type), (std::string, did))
+                          (std::string, _type), (std::string, did),
+                          (std::string, uri), (std::string, cid))
 // Label
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::label_event, (std::string, _type),
                           (std::string, comment),
