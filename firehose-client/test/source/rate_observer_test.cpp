@@ -6,7 +6,7 @@
 #include <ios>
 #include <thread>
 
-#include "activity/rate_observer.hpp"
+#include "common/activity/rate_observer.hpp"
 
 TEST(RateObserverTest, SimpleLimit) {
   activity::rate_observer<std::chrono::seconds, int> observer(

@@ -2,8 +2,10 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 add_executable(
   firehose_client_tests
   ./source/cid_test.cpp
+  ./source/json_test.cpp
   ./source/rate_observer_test.cpp
 )
+
 # No logging in tests
 target_compile_definitions(firehose_client_tests PUBLIC DISABLE_LOGGING)
 target_include_directories(firehose_client_tests PUBLIC ${MAIN_BINARY_DIR} ${PROJECT_SOURCE_DIR}/include ./include)
