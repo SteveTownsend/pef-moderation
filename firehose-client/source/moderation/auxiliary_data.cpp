@@ -116,6 +116,7 @@ void auxiliary_data::check_rewind_point() {
   std::string last_event_time(_emitted_at.data());
   if (cursor == 0 || _emitted_at[0] == '\0') {
     REL_INFO("No firehose data processed, skip check");
+    return;
   } else {
     auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
     if (std::chrono::duration_cast<std::chrono::minutes>(
