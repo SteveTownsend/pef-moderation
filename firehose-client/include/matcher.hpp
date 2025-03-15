@@ -90,7 +90,8 @@ public:
   bool matches_any(beast::flat_buffer const &beast_data) const;
   bool add_rule(std::string const &match_rule);
   bool add_rule(std::string const &filter, std::string const &labels,
-                std::string const &actions, std::string const &contingent);
+                std::string const &actions, std::string const &contingent,
+                std::string const &categories);
   bool check_candidates(candidate_list const &candidates) const;
 
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
@@ -157,7 +158,8 @@ public:
     rule(std::string const &rule_string);
     // for load from DB
     rule(std::string const &filter, std::string const &labels,
-         std::string const &actions, std::string const &contingent);
+         std::string const &actions, std::string const &contingent,
+         std::string const &categories);
     rule(rule const &);
     inline std::string to_string() const {
       std::ostringstream oss;
@@ -175,6 +177,7 @@ public:
     std::string _block_list_name;
     match_type _match_type = match_type::substring;
     std::string _contingent;
+    std::vector<std::string> _categories;
 
     static constexpr size_t field_count = 4;
     bool passes_contingent_checks(std::string const &candidate) const;

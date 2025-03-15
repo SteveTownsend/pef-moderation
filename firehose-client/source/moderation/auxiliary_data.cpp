@@ -153,14 +153,18 @@ void auxiliary_data::update_match_filters() {
     pqxx::work tx(*_cx);
     bool load_failed(false);
     matcher replacement;
-    for (auto [filter, labels, actions, contingent] :
+    for (auto [filter, labels, actions, contingent, categories] :
          tx.query<std::string, std::string, std::string,
-                  std::optional<std::string>>("SELECT * FROM match_filters;")) {
+                  std::optional<std::string>, std::optional<std::string>>(
+             "SELECT filter, labels, actions, contingent, categories FROM "
+             "match_filters;")) {
       try {
-        replacement.add_rule(filter, labels, actions, contingent.value_or(""));
+        replacement.add_rule(filter, labels, actions, contingent.value_or(""),
+                             categories.value_or(""));
       } catch (std::exception const &exc) {
         REL_ERROR("check_refresh_match_filters '{}|{}|{}|{}' error {}", filter,
-                  labels, actions, contingent.value_or(""), exc.what());
+                  labels, actions, contingent.value_or(""),
+                  categories.value_or(""), exc.what());
         load_failed = true;
       }
     }
@@ -181,7 +185,7 @@ void auxiliary_data::update_popular_hosts() {
     bool load_failed(false);
     std::unordered_set<std::string> new_hosts;
     for (auto [hostname] :
-         tx.query<std::string>("SELECT * FROM popular_hosts;")) {
+         tx.query<std::string>("SELECT hostname FROM popular_hosts;")) {
       new_hosts.insert(hostname);
     }
 
