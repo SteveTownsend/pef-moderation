@@ -83,8 +83,9 @@ bool matcher::add_rule(std::string const &match_rule) {
 
 bool matcher::add_rule(std::string const &filter, std::string const &labels,
                        std::string const &actions,
-                       std::string const &contingent) {
-  return insert_rule(rule(filter, labels, actions, contingent));
+                       std::string const &contingent,
+                       std::string const &categories) {
+  return insert_rule(rule(filter, labels, actions, contingent, categories));
 }
 
 // thread-safe by design
@@ -321,7 +322,8 @@ matcher::rule::rule(std::string const &rule_string) {
 }
 
 matcher::rule::rule(std::string const &filter, std::string const &labels,
-                    std::string const &actions, std::string const &contingent) {
+                    std::string const &actions, std::string const &contingent,
+                    std::string const &categories) {
   if (filter.empty())
     throw std::invalid_argument("Blank filter");
   _target = filter;
@@ -337,18 +339,23 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
                 _target);
     _report = report_scope::content;
   }
-  if (contingent.empty())
-    return;
-  _contingent = contingent;
-  // make a trie of 'contingent strings' to confirm rule_string context
-  for (const auto subtoken : std::views::split(_contingent, ',')) {
-    std::string next(subtoken.cbegin(), subtoken.cend());
-    if (starts_with(next, "!")) {
-      next = next.substr(1);
-      _absent_substring_trie.insert(to_canonical(std::string_view(subtoken)));
-    } else {
-      _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+  if (!contingent.empty()) {
+    _contingent = contingent;
+    // make a trie of 'contingent strings' to confirm rule_string context
+    for (const auto subtoken : std::views::split(_contingent, ',')) {
+      std::string next(subtoken.cbegin(), subtoken.cend());
+      if (starts_with(next, "!")) {
+        next = next.substr(1);
+        _absent_substring_trie.insert(to_canonical(std::string_view(subtoken)));
+      } else {
+        _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+      }
     }
+  }
+  if (categories.empty())
+    throw std::invalid_argument("Blank categories");
+  for (const auto subtoken : std::views::split(std::string(categories), ',')) {
+    _categories.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
   }
 }
 
