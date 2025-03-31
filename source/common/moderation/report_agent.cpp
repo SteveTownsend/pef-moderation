@@ -47,6 +47,9 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
                                                     uris))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::blocks_moderation_info,
                           (std::string, descriptor))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::high_facet_count_info,
+                          (std::string, descriptor)(std::string,
+                                                    _context)(size_t, _count))
 
 namespace bsky {
 namespace moderation {
@@ -146,6 +149,17 @@ void report_agent::blocks_moderation_report(std::string const &did) {
           target, reason);
 }
 
+void report_agent::facet_spam_report(std::string const &did,
+                                     std::string const &path,
+                                     std::string const &cid,
+                                     std::string const &context,
+                                     size_t const count) {
+  bsky::moderation::high_facet_count_info reason(_project_name, context, count);
+  bsky::moderation::report_subject target(did, path, cid);
+  _pds_client->send_report_for_subject<bsky::moderation::high_facet_count_info>(
+      target, reason);
+}
+
 // TODO add metrics
 void report_agent::label_subject(
     bsky::moderation::report_subject const &subject,
@@ -192,6 +206,17 @@ void report_content_visitor::operator()(blocks_moderation const &value) {
   comment.did = _agent.service_did();
   bsky::moderation::report_subject subject(_did);
   _agent.label_subject(subject, {"blocks"}, {}, comment);
+}
+void report_content_visitor::operator()(high_facet_count const &value) {
+  _agent.facet_spam_report(_did, value._path, value._cid, value.get_name(),
+                           value._count);
+  // auto-label request augments the report
+  bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
+  comment.context =
+      "facet spam " + value.get_name() + ' ' + std::to_string(value._count);
+  comment.did = _agent.service_did();
+  bsky::moderation::report_subject subject(_did, value._path, value._cid);
+  _agent.label_subject(subject, {value.get_name()}, {}, comment);
 }
 } // namespace moderation
 } // namespace bsky

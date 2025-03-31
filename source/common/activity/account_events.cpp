@@ -51,8 +51,13 @@ account::account(did_type const &did)
   _statistics._did = did;
 }
 
-void account::statistics::tags(const size_t count) {
+void account::statistics::tags(const std::string &path, const std::string &cid,
+                               const size_t count) {
   if (count > activity::account::TagFacetThreshold) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            _did, bsky::moderation::high_facet_count(
+                      bsky::moderation::facet_type::tag, path, cid, count)));
     if (alert_needed(++_tags, FacetFactor)) {
       REL_INFO("Account flagged tag-facets {}/() {}", _did, _handle, _tags);
       metrics_factory::instance()
@@ -63,8 +68,13 @@ void account::statistics::tags(const size_t count) {
     }
   }
 }
-void account::statistics::links(const size_t count) {
+void account::statistics::links(const std::string &path, const std::string &cid,
+                                const size_t count) {
   if (count > activity::account::LinkFacetThreshold) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            _did, bsky::moderation::high_facet_count(
+                      bsky::moderation::facet_type::link, path, cid, count)));
     if (alert_needed(++_links, FacetFactor)) {
       REL_INFO("Account flagged link-facets {}/{} {}", _did, _handle, _links);
       metrics_factory::instance()
@@ -75,8 +85,14 @@ void account::statistics::links(const size_t count) {
     }
   }
 }
-void account::statistics::mentions(const size_t count) {
+void account::statistics::mentions(const std::string &path,
+                                   const std::string &cid, const size_t count) {
   if (count > activity::account::MentionFacetThreshold) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            _did,
+            bsky::moderation::high_facet_count(
+                bsky::moderation::facet_type::mention, path, cid, count)));
     if (alert_needed(++_mentions, FacetFactor)) {
       REL_INFO("Account flagged mention-facets {}/{} {}", _did, _handle,
                _mentions);
@@ -88,8 +104,13 @@ void account::statistics::mentions(const size_t count) {
     }
   }
 }
-void account::statistics::facets(const size_t count) {
+void account::statistics::facets(const std::string &path,
+                                 const std::string &cid, const size_t count) {
   if (count > activity::account::TotalFacetThreshold) {
+    bsky::moderation::report_agent::instance().wait_enqueue(
+        bsky::moderation::account_report(
+            _did, bsky::moderation::high_facet_count(
+                      bsky::moderation::facet_type::total, path, cid, count)));
     if (alert_needed(++_facets, FacetFactor)) {
       REL_INFO("Account flagged total-facets {}/{} {}", _did, _handle, _facets);
       metrics_factory::instance()
@@ -533,15 +554,16 @@ void augment_account_event::augment_account_event::operator()(
 
 void augment_account_event::operator()(activity::facets const &value) {
   if (value._tags > 0) {
-    _stats.tags(value._tags);
+    _stats.tags(value._path, value._cid, value._tags);
   }
   if (value._links > 0) {
-    _stats.links(value._links);
+    _stats.links(value._path, value._cid, value._links);
   }
   if (value._mentions > 0) {
-    _stats.links(value._mentions);
+    _stats.mentions(value._path, value._cid, value._mentions);
   }
-  _stats.facets(value._tags + value._mentions + value._links);
+  _stats.facets(value._path, value._cid,
+                value._tags + value._mentions + value._links);
 }
 
 void augment_account_event::augment_account_event::reply_to(

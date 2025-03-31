@@ -469,7 +469,8 @@ void firehose_payload::handle_content(
               {repo,
                bsky::time_stamp_from_iso_8601(
                    content["createdAt"].template get<std::string>()),
-               activity::facets(static_cast<unsigned short>(tags),
+               activity::facets(this_context._this_path, cid,
+                                static_cast<unsigned short>(tags),
                                 static_cast<unsigned short>(mentions),
                                 static_cast<unsigned short>(links))});
         }
