@@ -78,6 +78,8 @@ struct matches {
   unsigned short _count;
 };
 struct facets {
+  std::string _path;
+  std::string _cid;
   unsigned short _tags;
   unsigned short _mentions;
   unsigned short _links;
@@ -194,10 +196,14 @@ public:
   struct statistics {
     void record(event_cache &parent_cache, timed_event const &event);
 
-    void tags(const size_t count);
-    void links(const size_t count);
-    void mentions(const size_t count);
-    void facets(const size_t count);
+    void tags(const std::string &path, const std::string &cid,
+              const size_t count);
+    void links(const std::string &path, const std::string &cid,
+               const size_t count);
+    void mentions(const std::string &path, const std::string &cid,
+                  const size_t count);
+    void facets(const std::string &path, const std::string &cid,
+                const size_t count);
 
     void alert();
 
@@ -276,12 +282,14 @@ public:
   };
 
   // per-post facet abuse thresholds - hashtag, links, mentions, total
-  // See https://github.com/SteveTownsend/pef-forum-moderation/issues/75
-  // 99.9% threshold based on observed metrics
-  static constexpr size_t TagFacetThreshold = 32;
-  static constexpr size_t LinkFacetThreshold = 10;
-  static constexpr size_t MentionFacetThreshold = 11;
-  static constexpr size_t TotalFacetThreshold = 29;
+  // See https://github.com/SteveTownsend/pef-forum-moderation/issues/75 for
+  // initial thresholds updated per auto-report and label support, covered under
+  // https://github.com/SteveTownsend/pef-moderation/issues/219 99.5% threshold
+  // based on observed metrics
+  static constexpr size_t TagFacetThreshold = 23;
+  static constexpr size_t LinkFacetThreshold = 7;
+  static constexpr size_t MentionFacetThreshold = 10;
+  static constexpr size_t TotalFacetThreshold = 20;
   // allow occasional verbosity in facets
   static constexpr size_t FacetFactor = 10;
 

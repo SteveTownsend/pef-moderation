@@ -195,14 +195,14 @@ void client::label_subject(
     REL_INFO("Labeled {}: add {}, remove {} at {}", subject,
              format_vector(add_label_list), format_vector(remove_label_list),
              response.createdAt);
+
+    // Acknowledge the report to close out workflow
+    acknowledge_subject(subject, comment);
   } catch (std::exception const &exc) {
     REL_ERROR("Label {}: add {}, remove {} error {}", subject,
               format_vector(add_label_list), format_vector(remove_label_list),
               exc.what());
   }
-
-  // Acknowledge the report to close out workflow
-  acknowledge_subject(subject, comment);
 }
 
 void client::add_comment_for_subject(

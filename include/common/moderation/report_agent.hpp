@@ -56,6 +56,17 @@ struct blocks_moderation_info {
   constexpr std::string get_name() const { return "blocks_moderation"; }
 };
 
+struct high_facet_count_info {
+  high_facet_count_info() = delete;
+  inline high_facet_count_info(std::string const &project_name,
+                               std::string const &context, size_t const count)
+      : descriptor(project_name), _context(context), _count(count) {}
+  std::string descriptor;
+  std::string _context;
+  size_t _count;
+  constexpr std::string get_name() const { return _context; }
+};
+
 struct no_content {};
 
 struct path_matches {
@@ -73,14 +84,48 @@ struct link_redirection {
   std::vector<std::string> _uri_chain;
 };
 struct blocks_moderation {};
-
+enum class facet_type { total = 1, link, mention, tag };
+inline std::string facet_type_label(const facet_type facet) {
+  switch (facet) {
+  case facet_type::total:
+    return "high-total-facet-count";
+  case facet_type::link:
+    return "high-offsite-link-count";
+  case facet_type::mention:
+    return "high-user-mention-count";
+  case facet_type::tag:
+    return "high-hashtag-count";
+  default:
+    return "facet-type-unrecognized";
+  }
+}
+struct high_facet_count {
+  inline high_facet_count(const facet_type facet, const std::string &path,
+                          const std::string &cid, const size_t count)
+      : _facet(facet), _path(path), _cid(cid), _count(count) {}
+  inline high_facet_count(const high_facet_count &rhs)
+      : _facet(rhs._facet), _path(rhs._path), _cid(rhs._cid),
+        _count(rhs._count) {}
+  inline high_facet_count &operator=(const high_facet_count &rhs) {
+    _facet = rhs._facet;
+    _path = rhs._path;
+    _cid = rhs._cid;
+    _count = rhs._count;
+    return *this;
+  }
+  inline std::string get_name() const { return facet_type_label(_facet); }
+  facet_type _facet;
+  std::string _path;
+  std::string _cid;
+  size_t _count;
+};
 typedef std::variant<no_content, filter_matches, link_redirection,
-                     blocks_moderation>
+                     blocks_moderation, high_facet_count>
     report_content;
 struct account_report {
   inline account_report() : _content(no_content()) {}
-  inline account_report(std::string const &did, report_content content)
-      : _did(did), _content(content) {}
+  inline account_report(std::string const &did, report_content &&content)
+      : _did(did), _content(std::move(content)) {}
   std::string _did;
   report_content _content;
 };
@@ -96,6 +141,7 @@ public:
   void operator()(filter_matches const &value);
   void operator()(link_redirection const &value);
   void operator()(blocks_moderation const &value);
+  void operator()(high_facet_count const &value);
 
 private:
   report_agent &_agent;
@@ -120,6 +166,9 @@ public:
                                std::string const &cid,
                                std::vector<std::string> const &uri_chain);
   void blocks_moderation_report(std::string const &did);
+  void facet_spam_report(std::string const &did, std::string const &path,
+                         std::string const &cid, std::string const &context,
+                         size_t const count);
   void
   label_subject(bsky::moderation::report_subject const &subject,
                 std::unordered_set<std::string> const &add_labels,

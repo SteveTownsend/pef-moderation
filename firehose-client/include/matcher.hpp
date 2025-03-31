@@ -164,7 +164,7 @@ public:
     inline std::string to_string() const {
       std::ostringstream oss;
       oss << _target << '|' << format_vector(_labels) << '|' << _raw_actions
-          << '|' << _contingent;
+          << '|' << _contingent << '|' << format_vector(_categories);
       return oss.str();
     }
     std::string _target;
