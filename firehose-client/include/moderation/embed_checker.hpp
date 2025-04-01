@@ -141,7 +141,7 @@ private:
   ~embed_checker() = default;
 
   bool _is_ready = false;
-  std::vector<std::unique_ptr<restc_cpp::RestClient>> _pds_clients;
+  std::vector<std::unique_ptr<restc_cpp::RestClient>> _rest_clients;
   std::vector<std::thread> _threads;
   std::mutex _lock;
   // Declare queue between match post-processing and HTTP Client
