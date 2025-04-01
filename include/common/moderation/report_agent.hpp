@@ -48,25 +48,6 @@ struct link_redirection_info {
   constexpr std::string get_name() const { return "link_redirection"; }
 };
 
-struct blocks_moderation_info {
-  blocks_moderation_info() = delete;
-  inline blocks_moderation_info(std::string const &project_name)
-      : descriptor(project_name) {}
-  std::string descriptor;
-  constexpr std::string get_name() const { return "blocks_moderation"; }
-};
-
-struct high_facet_count_info {
-  high_facet_count_info() = delete;
-  inline high_facet_count_info(std::string const &project_name,
-                               std::string const &context, size_t const count)
-      : descriptor(project_name), _context(context), _count(count) {}
-  std::string descriptor;
-  std::string _context;
-  size_t _count;
-  constexpr std::string get_name() const { return _context; }
-};
-
 struct no_content {};
 
 struct path_matches {
@@ -134,8 +115,9 @@ class report_agent;
 // visitor for report-specific logic
 struct report_content_visitor {
 public:
-  inline report_content_visitor(report_agent &agent, std::string const &did)
-      : _agent(agent), _did(did) {}
+  inline report_content_visitor(report_agent &agent, const size_t index,
+                                std::string const &did)
+      : _agent(agent), _client(index), _did(did) {}
   template <typename T> void operator()(T const &) {}
 
   void operator()(filter_matches const &value);
@@ -145,6 +127,7 @@ public:
 
 private:
   report_agent &_agent;
+  size_t _client;
   std::string _did;
 };
 
@@ -153,24 +136,22 @@ public:
   static constexpr size_t QueueLimit = 10000;
   static constexpr std::chrono::milliseconds DequeueTimeout =
       std::chrono::milliseconds(10000);
+  static constexpr size_t DefaultNumberOfReportingThreads = 3;
 
   static report_agent &instance();
 
   void start(YAML::Node const &settings, std::string const &project_name);
   void wait_enqueue(account_report &&value);
 
-  void string_match_report(std::string const &did, std::string const &path,
-                           std::string const &cid,
+  void string_match_report(const size_t client, std::string const &did,
+                           std::string const &path, std::string const &cid,
                            std::unordered_set<std::string> const &filters);
-  void link_redirection_report(std::string const &did, std::string const &path,
-                               std::string const &cid,
+  void link_redirection_report(const size_t client, std::string const &did,
+                               std::string const &path, std::string const &cid,
                                std::vector<std::string> const &uri_chain);
-  void blocks_moderation_report(std::string const &did);
-  void facet_spam_report(std::string const &did, std::string const &path,
-                         std::string const &cid, std::string const &context,
-                         size_t const count);
   void
-  label_subject(bsky::moderation::report_subject const &subject,
+  label_subject(const size_t client,
+                bsky::moderation::report_subject const &subject,
                 std::unordered_set<std::string> const &add_labels,
                 std::unordered_set<std::string> const &remove_labels,
                 bsky::moderation::acknowledge_event_comment const &comment);
@@ -181,8 +162,9 @@ private:
   report_agent();
   ~report_agent() = default;
 
-  std::thread _thread;
-  std::unique_ptr<bsky::client> _pds_client;
+  std::vector<std::unique_ptr<bsky::client>> _pds_clients;
+  std::vector<std::thread> _threads;
+  size_t _number_of_threads = DefaultNumberOfReportingThreads;
   std::string _project_name;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<account_report> _queue;

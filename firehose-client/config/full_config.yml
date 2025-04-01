@@ -39,6 +39,7 @@ firehose_client:
     # Public Education Forum moderation service
     service_did: "service-did"
     dry_run: true
+    number_of_threads: 3
 
   embed_checker:
     follow_links: false
