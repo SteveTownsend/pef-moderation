@@ -48,25 +48,6 @@ struct link_redirection_info {
   constexpr std::string get_name() const { return "link_redirection"; }
 };
 
-struct blocks_moderation_info {
-  blocks_moderation_info() = delete;
-  inline blocks_moderation_info(std::string const &project_name)
-      : descriptor(project_name) {}
-  std::string descriptor;
-  constexpr std::string get_name() const { return "blocks_moderation"; }
-};
-
-struct high_facet_count_info {
-  high_facet_count_info() = delete;
-  inline high_facet_count_info(std::string const &project_name,
-                               std::string const &context, size_t const count)
-      : descriptor(project_name), _context(context), _count(count) {}
-  std::string descriptor;
-  std::string _context;
-  size_t _count;
-  constexpr std::string get_name() const { return _context; }
-};
-
 struct no_content {};
 
 struct path_matches {
@@ -168,10 +149,6 @@ public:
   void link_redirection_report(const size_t client, std::string const &did,
                                std::string const &path, std::string const &cid,
                                std::vector<std::string> const &uri_chain);
-  void blocks_moderation_report(const size_t client, std::string const &did);
-  void facet_spam_report(const size_t client, std::string const &did,
-                         std::string const &path, std::string const &cid,
-                         std::string const &context, size_t const count);
   void
   label_subject(const size_t client,
                 bsky::moderation::report_subject const &subject,

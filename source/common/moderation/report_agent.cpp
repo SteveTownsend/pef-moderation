@@ -45,11 +45,6 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
                           (std::string, descriptor)(std::vector<std::string>,
                                                     uris))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::blocks_moderation_info,
-                          (std::string, descriptor))
-BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::high_facet_count_info,
-                          (std::string, descriptor)(std::string,
-                                                    _context)(size_t, _count))
 
 namespace bsky {
 namespace moderation {
@@ -137,6 +132,7 @@ void report_agent::string_match_report(
 }
 
 // TODO add metrics
+// TODO why is this never seen?
 void report_agent::link_redirection_report(
     const size_t client, std::string const &did, std::string const &path,
     std::string const &cid, std::vector<std::string> const &uri_chain) {
@@ -145,26 +141,6 @@ void report_agent::link_redirection_report(
   bsky::moderation::report_subject target(did, path, cid);
   _pds_clients[client]
       ->send_report_for_subject<bsky::moderation::link_redirection_info>(
-          target, reason);
-}
-
-// TODO add metrics
-void report_agent::blocks_moderation_report(const size_t client,
-                                            std::string const &did) {
-  bsky::moderation::blocks_moderation_info reason(_project_name);
-  bsky::moderation::report_subject target(did);
-  _pds_clients[client]
-      ->send_report_for_subject<bsky::moderation::blocks_moderation_info>(
-          target, reason);
-}
-
-void report_agent::facet_spam_report(
-    const size_t client, std::string const &did, std::string const &path,
-    std::string const &cid, std::string const &context, size_t const count) {
-  bsky::moderation::high_facet_count_info reason(_project_name, context, count);
-  bsky::moderation::report_subject target(did, path, cid);
-  _pds_clients[client]
-      ->send_report_for_subject<bsky::moderation::high_facet_count_info>(
           target, reason);
 }
 
@@ -180,11 +156,13 @@ void report_agent::label_subject(
 
 void report_content_visitor::operator()(filter_matches const &value) {
   for (auto &next_scope : value._scoped_matches) {
-    _agent.string_match_report(_client, value._did, next_scope.first,
-                               next_scope.second._cid,
-                               next_scope.second._filters);
-    if (!next_scope.second._labels.empty()) {
-      // auto-label request augments the report
+    if (next_scope.second._labels.empty()) {
+      // no label, report for review
+      _agent.string_match_report(_client, value._did, next_scope.first,
+                                 next_scope.second._cid,
+                                 next_scope.second._filters);
+    } else {
+      // if we automatically label, report is not needed
       bsky::moderation::acknowledge_event_comment comment(
           _agent.project_name());
       bsky::moderation::filter_match_info filter_info(_agent.project_name());
@@ -209,8 +187,7 @@ void report_content_visitor::operator()(link_redirection const &value) {
                                  value._uri_chain);
 }
 void report_content_visitor::operator()(blocks_moderation const &value) {
-  _agent.blocks_moderation_report(_client, _did);
-  // auto-label request augments the report
+  // auto-labeling, no report needed
   bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
   comment.context = "blocks_moderation_service";
   comment.did = _agent.service_did();
@@ -218,9 +195,7 @@ void report_content_visitor::operator()(blocks_moderation const &value) {
   _agent.label_subject(_client, subject, {"blocks"}, {}, comment);
 }
 void report_content_visitor::operator()(high_facet_count const &value) {
-  _agent.facet_spam_report(_client, _did, value._path, value._cid,
-                           value.get_name(), value._count);
-  // auto-label request augments the report
+  // auto-labeling, no report needed
   bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
   comment.context =
       "facet spam " + value.get_name() + ' ' + std::to_string(value._count);
