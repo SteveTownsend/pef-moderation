@@ -1,0 +1,412 @@
+{
+  "labelValues": [
+    "telegram-link",
+    "tiktok-link",
+    "meta-link",
+    "x-link",
+    "disinfo-link",
+    "hate-symbol",
+    "ableism",
+    "misogyny",
+    "high-hashtag-count",
+    "high-offsite-link-count",
+    "high-user-mention-count",
+    "high-total-facet-count",
+    "altrightlink",
+    "misinformation",
+    "network",
+    "caution",
+    "blocks",
+    "evasion",
+    "violent",
+    "nsfw",
+    "fake",
+    "repetitive",
+    "review",
+    "disinfo",
+    "parody",
+    "disruptive",
+    "abusive",
+    "engagementfarmer"
+  ],
+  "labelValueDefinitions": [
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links to Telegram",
+          "description": "Links to content hosted on russian-owned Telegram. Expect little or no content moderation, and a pro-russian bias. The Wild West of social media, personal data and device at risk."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "telegram-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links to TikTok",
+          "description": "Links to content hosted on Chinese-owned TikTok. Engagement assumes risk of the Chinese government harvesting your device and account data and of being co-opted to promulgate Chinese Communist Party propaganda."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "tiktok-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links to a Meta Platform",
+          "description": "Links to content hosted on one of  Meta's social media platforms. Engagement implicitly supports the spread of hate speech and lies, since Meta has disavowed content moderation to help prevent this."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "meta-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links to x.com",
+          "description": "Links to content hosted on Elon Musk's X disinformation platform. Engagement directly helps fund the spread of fascism."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "x-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Link to Disinfo",
+          "description": "Post or other content contains link(s) to disinformation content, hosted outside the Bluesky platform."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "disinfo-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Hateful Symbol",
+          "description": "Symbology celebrating violence or hate. Examples include swastika, hammer and sickle: both symbolize genocidal ideologies."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "hate-symbol",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Ableism",
+          "description": "Slurs and abuse targeting the differently-abled"
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "ableism",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Misogyny",
+          "description": "Anti-female slurs and abuse"
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "misogyny",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "High hashtag count",
+          "description": "Hashtag count exceeds high percentile threshold measured across all tag-facet usage"
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "high-hashtag-count",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "High link count",
+          "description": "Offsite content link count exceeds high percentile threshold measured across all link-facet usage"
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "high-offsite-link-count",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "High user mention count",
+          "description": "'Users mentioned' count exceeds high percentile threshold measured across all mention-facet usage"
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "high-user-mention-count",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "High total facet count",
+          "description": "Aggregate count of user mentions, offsite links and hashtags exceeds high percentile threshold measured across all facet usage"
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "high-total-facet-count",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Alt-right Platform Link",
+          "description": "Contains a link to content hosted on an alt-right platform."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "altrightlink",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Misinformation",
+          "description": "Unintentional mistakes, including dissemination of benign content from 60/40 disinfo accounts, and innocent but harmful factual errors."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "misinformation",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Exercise Caution",
+          "description": "Known for mixing unreliable posts with factual content. Not an overt 60/40 propagandist. Requires critical thinking to engage safely."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "caution",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Blocks Moderation",
+          "description": "Account blocks NAFO Forum Moderation Service. Exercise caution and critical thinking. Other labels may be present if reliably reported."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "blocks",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Evasion",
+          "description": "Ban evaders, multiple account holders, or using obfuscation to post slurs and other covered content. Includes cross-linking of content from off-platform entities and people."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "evasion",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Violent Content",
+          "description": "Violent speech including media. Threats, incitement, celebration, wishing harm, hateful references to or denial of confirmed mass casualty events."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "violent",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "media",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Graphic Media",
+          "description": "Gratuitously graphic media, violent or sexual content. Typically, also report to platform."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "nsfw",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Fake Account",
+          "description": "Impersonating community member or other well-known account. Beware of fundraising links or unsolicited DMs."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "fake",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Repetitive",
+          "description": "Repetitive behaviour, including spamming the same reply or image "
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "repetitive",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Under Review",
+          "description": "Status unconfirmed."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "review",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Disinformation",
+          "description": "Account is well-known as a spreader of disinformation, or  post contains disinformation. Includes denial of documented events. Includes known 60/40 disinfo mixers."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "disinfo",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Parody",
+          "description": "Non-harmful parody account, labeled only to avoid confusion and distraction"
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "parody",
+      "defaultSetting": "ignore"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Disruptive",
+          "description": "Unconstructive conflict within the fella community, or outside attack, possibly designed to distract from more important things. Includes low-reach 60/40 disinfo mixers. Includes community interfering with Ukrainians' management of their infospace. Includes apparent infiltrators, using inauthentic persona to sow division. Includes nuisance repliers and quote posters."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "disruptive",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Abusive",
+          "description": "Rude or impolite, including crude language and disrespectful comments, without constructive purpose."
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "abusive",
+      "defaultSetting": "hide"
+    },
+    {
+      "blurs": "content",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Engagement Farmer",
+          "description": "Insincere content or bulk actions aimed at gaining followers, including frequent follows, posts, and likes. Beware of off-site links. Includes possible or confirmed frauds."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "engagementfarmer",
+      "defaultSetting": "hide"
+    }
+  ]
+}

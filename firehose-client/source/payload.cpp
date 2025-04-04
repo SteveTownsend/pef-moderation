@@ -369,7 +369,8 @@ void firehose_payload::handle_content(
   if (_path_by_cid.contains(cid)) {
     this_context._this_path = _path_by_cid[cid];
   } else {
-    throw std::runtime_error("cannot get URI for cid at " + dump_json(content));
+    REL_ERROR("cannot get URI for cid at {}", dump_json(content));
+    return;
   }
   auto collection(content["$type"].template get<std::string>());
   this_context._event_type = bsky::event_type_from_collection(collection);
@@ -550,7 +551,8 @@ void firehose_payload::handle_matchable_content(
   if (_path_by_cid.contains(cid)) {
     this_path = _path_by_cid[cid];
   } else {
-    throw std::runtime_error("cannot get URI for cid at " + dump_json(content));
+    REL_ERROR("cannot get URI for cid at {}", dump_json(content));
+    return;
   }
   auto candidates(parser::get_candidates_from_record(content));
   if (!candidates.empty()) {
