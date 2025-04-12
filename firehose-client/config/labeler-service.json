@@ -1,5 +1,9 @@
 {
   "labelValues": [
+    "anti-lgbtq-plus",
+    "conspiracy-link",
+    "anti-science-link",
+    "suspect-citation",
     "telegram-link",
     "tiktok-link",
     "meta-link",
@@ -30,6 +34,62 @@
     "engagementfarmer"
   ],
   "labelValueDefinitions": [
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Anti-LGBTQ+ Hate",
+          "description": "Anti-LGBTQ+ disinformation tropes and slurs"
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "anti-lgbtq-plus",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links conspiracy theory content",
+          "description": "Links to 'disruptive' conspiracy theories offsite. Content is intended to dumb down, fearmonger and sow division in its readership"
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "conspiracy-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Links anti-science content",
+          "description": "Links to anti-science conspiracy theory or misinformation. Examples: anti-vaxxers, MAGA/MAHA RFK Jr and Dr Oz shills, quack remedies for medically-treatable conditions, '5G kills' fearmongers, chemtrail-phobia"
+        }
+      ],
+      "severity": "alert",
+      "adultOnly": false,
+      "identifier": "anti-science-link",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Cites suspect source",
+          "description": "Cites source known for mixing unreliable and factual content. Requires critical thinking to engage with any linked offsite content."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "suspect-citation",
+      "defaultSetting": "warn"
+    },
     {
       "blurs": "none",
       "locales": [
@@ -224,6 +284,20 @@
       "severity": "inform",
       "adultOnly": false,
       "identifier": "misinformation",
+      "defaultSetting": "warn"
+    },
+    {
+      "blurs": "none",
+      "locales": [
+        {
+          "lang": "en",
+          "name": "Network Member",
+          "description": "Account appears to be part of a network of coordinating peers."
+        }
+      ],
+      "severity": "inform",
+      "adultOnly": false,
+      "identifier": "network",
       "defaultSetting": "warn"
     },
     {
