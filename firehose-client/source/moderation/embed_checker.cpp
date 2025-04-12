@@ -77,7 +77,7 @@ void embed_checker::start() {
   for (size_t count = 0; count < _number_of_threads; ++count) {
     auto new_client(restc_cpp::RestClient::Create(properties));
     _rest_clients.push_back(std::move(new_client));
-    _threads.push_back(std::thread([&, this, count] {
+    _threads.push_back(std::thread([this, count] {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;

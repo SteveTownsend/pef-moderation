@@ -68,12 +68,12 @@ void report_agent::start(YAML::Node const &settings,
   _threads.reserve(_number_of_threads);
 
   for (size_t client = 0; client < _number_of_threads; ++client) {
-    _pds_clients.push_back(std::make_unique<bsky::client>());
-    _threads.push_back(std::thread([&, this, client] {
+    // create and configure client
+    auto next_client(std::make_unique<bsky::client>());
+    next_client->set_config(settings);
+    _pds_clients.push_back(std::move(next_client));
+    _threads.push_back(std::thread([this, client] {
       try {
-        // create client
-        _pds_clients[client]->set_config(settings);
-
         while (controller::instance().is_active()) {
           account_report report;
           if (_queue.wait_dequeue_timed(report, DequeueTimeout)) {

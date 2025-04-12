@@ -95,6 +95,7 @@ void client::set_config(YAML::Node const &settings) {
     _port = settings["port"].as<std::string>();
     constexpr bool dry_run(false);
     _dry_run = settings["dry_run"].as<bool>(dry_run);
+    REL_INFO("REST Client dry-run? {}", _dry_run);
 
     // create client
     _rest_client = restc_cpp::RestClient::Create();
