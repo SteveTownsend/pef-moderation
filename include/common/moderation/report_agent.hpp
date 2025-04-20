@@ -36,6 +36,7 @@ struct filter_match_info {
   inline filter_match_info(std::string const &project_name)
       : descriptor(project_name) {}
   std::string descriptor;
+  std::vector<int> rules;
   std::vector<std::string> filters;
   constexpr std::string get_name() const { return "filter_match"; }
 };
@@ -52,6 +53,7 @@ struct no_content {};
 
 struct path_matches {
   std::string _cid;
+  std::unordered_set<int> _rules;
   std::unordered_set<std::string> _filters;
   std::unordered_set<std::string> _labels;
 };
@@ -145,6 +147,7 @@ public:
 
   void string_match_report(const size_t client, std::string const &did,
                            std::string const &path, std::string const &cid,
+                           std::unordered_set<int> const &rules,
                            std::unordered_set<std::string> const &filters);
   void link_redirection_report(const size_t client, std::string const &did,
                                std::string const &path, std::string const &cid,

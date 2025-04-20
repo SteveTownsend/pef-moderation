@@ -91,7 +91,8 @@ public:
   bool add_rule(std::string const &match_rule);
   bool add_rule(std::string const &filter, std::string const &labels,
                 std::string const &actions, std::string const &contingent,
-                std::string const &categories);
+                std::string const &categories, const int rule_id,
+                const bool track, const bool label);
   bool check_candidates(candidate_list const &candidates) const;
 
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
@@ -159,12 +160,15 @@ public:
     // for load from DB
     rule(std::string const &filter, std::string const &labels,
          std::string const &actions, std::string const &contingent,
-         std::string const &categories);
+         std::string const &categories, const int rule_id, const bool track,
+         const bool label);
     rule(rule const &);
     inline std::string to_string() const {
       std::ostringstream oss;
-      oss << _target << '|' << format_vector(_labels) << '|' << _raw_actions
-          << '|' << _contingent << '|' << format_vector(_categories);
+      oss << "id=" << _id << '|' << "track=" << (_track ? 'y' : 'n') << '|'
+          << "label=" << (_label ? 'y' : 'n') << '|' << _target << '|'
+          << format_vector(_labels) << '|' << _raw_actions << '|' << _contingent
+          << '|' << format_vector(_categories);
       return oss.str();
     }
     std::string _target;
@@ -178,8 +182,9 @@ public:
     match_type _match_type = match_type::substring;
     std::string _contingent;
     std::vector<std::string> _categories;
+    int _id = -1;
 
-    static constexpr size_t field_count = 4;
+    static constexpr size_t field_count = 7;
     bool passes_contingent_checks(std::string const &candidate) const;
 
   private:
