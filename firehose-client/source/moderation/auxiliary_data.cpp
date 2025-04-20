@@ -153,18 +153,21 @@ void auxiliary_data::update_match_filters() {
     pqxx::work tx(*_cx);
     bool load_failed(false);
     matcher replacement;
-    for (auto [filter, labels, actions, contingent, categories] :
+    for (auto [filter, labels, actions, contingent, categories, rule_id, track,
+               label] :
          tx.query<std::string, std::string, std::string,
-                  std::optional<std::string>, std::optional<std::string>>(
-             "SELECT filter, labels, actions, contingent, categories FROM "
-             "match_filters;")) {
+                  std::optional<std::string>, std::optional<std::string>, int,
+                  bool, bool>("SELECT filter, labels, actions, contingent, "
+                              "categories, rule_id, track, label FROM "
+                              "match_filters;")) {
       try {
         replacement.add_rule(filter, labels, actions, contingent.value_or(""),
-                             categories.value_or(""));
+                             categories.value_or(""), rule_id, track, label);
       } catch (std::exception const &exc) {
-        REL_ERROR("check_refresh_match_filters '{}|{}|{}|{}' error {}", filter,
-                  labels, actions, contingent.value_or(""),
-                  categories.value_or(""), exc.what());
+        REL_ERROR("check_refresh_match_filters "
+                  "'id={}|track={}|label={}|{}|{}|{}|{}' error {}",
+                  rule_id, track, label, filter, labels, actions,
+                  contingent.value_or(""), categories.value_or(""), exc.what());
         load_failed = true;
       }
     }

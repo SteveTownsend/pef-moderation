@@ -84,8 +84,10 @@ bool matcher::add_rule(std::string const &match_rule) {
 bool matcher::add_rule(std::string const &filter, std::string const &labels,
                        std::string const &actions,
                        std::string const &contingent,
-                       std::string const &categories) {
-  return insert_rule(rule(filter, labels, actions, contingent, categories));
+                       std::string const &categories, const int rule_id,
+                       const bool track, const bool label) {
+  return insert_rule(rule(filter, labels, actions, contingent, categories,
+                          rule_id, track, label));
 }
 
 // thread-safe by design
@@ -252,6 +254,7 @@ void matcher::report_if_needed(account_filter_matches &matches) {
             }
           }
           current_matches._filters.insert(matched_rule._target);
+          current_matches._rules.insert(matched_rule._id);
         }
       }
     }
@@ -323,7 +326,8 @@ matcher::rule::rule(std::string const &rule_string) {
 
 matcher::rule::rule(std::string const &filter, std::string const &labels,
                     std::string const &actions, std::string const &contingent,
-                    std::string const &categories) {
+                    std::string const &categories, const int rule_id,
+                    const bool track, const bool label) {
   if (filter.empty())
     throw std::invalid_argument("Blank filter");
   _target = filter;
@@ -333,6 +337,9 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
     _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
   }
   store_actions(actions);
+  _id = rule_id;
+  _label = label;
+  _track = track;
   // label requests must be reported, pick a default conservatively
   if (_label && _report == report_scope::none) {
     REL_WARNING("Label actions must be reported, use content scope for {}",
@@ -375,7 +382,7 @@ void matcher::rule::store_actions(std::string_view actions) {
                                   ", blank value");
     }
     if (starts_with(field, "track=")) {
-      _track = bool_from_string(value);
+      // legacy data, no-op
       continue;
     }
     if (starts_with(field, "report=")) {
@@ -383,7 +390,7 @@ void matcher::rule::store_actions(std::string_view actions) {
       continue;
     }
     if (starts_with(field, "label=")) {
-      _label = bool_from_string(value);
+      // legacy data, no-op
       continue;
     }
     if (starts_with(field, "scope=")) {
@@ -409,8 +416,8 @@ void matcher::rule::store_actions(std::string_view actions) {
 }
 
 matcher::rule::rule(matcher::rule const &rhs)
-    : _target(rhs._target), _labels(rhs._labels), _track(rhs._track),
-      _report(rhs._report), _label(rhs._label),
+    : _target(rhs._target), _labels(rhs._labels), _id(rhs._id),
+      _track(rhs._track), _report(rhs._report), _label(rhs._label),
       _content_scope(rhs._content_scope),
       _block_list_name(rhs._block_list_name), _match_type(rhs._match_type),
       _contingent(rhs._contingent) {

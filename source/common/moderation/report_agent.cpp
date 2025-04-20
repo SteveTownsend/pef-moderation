@@ -40,8 +40,8 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
                           (std::string, reportedBy))
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
-                          (std::string, descriptor)(std::vector<std::string>,
-                                                    filters))
+                          (std::string, descriptor)(std::vector<int>, rules)(
+                              std::vector<std::string>, filters))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
                           (std::string, descriptor)(std::vector<std::string>,
                                                     uris))
@@ -122,8 +122,10 @@ void report_agent::wait_enqueue(account_report &&value) {
 // TODO add metrics
 void report_agent::string_match_report(
     const size_t client, std::string const &did, std::string const &path,
-    std::string const &cid, std::unordered_set<std::string> const &filters) {
+    std::string const &cid, std::unordered_set<int> const &rules,
+    std::unordered_set<std::string> const &filters) {
   bsky::moderation::filter_match_info reason(_project_name);
+  reason.rules = std::vector<int>(rules.cbegin(), rules.cend());
   reason.filters = std::vector<std::string>(filters.cbegin(), filters.cend());
   bsky::moderation::report_subject target(did, path, cid);
   _pds_clients[client]
@@ -158,14 +160,16 @@ void report_content_visitor::operator()(filter_matches const &value) {
   for (auto &next_scope : value._scoped_matches) {
     if (next_scope.second._labels.empty()) {
       // no label, report for review
-      _agent.string_match_report(_client, value._did, next_scope.first,
-                                 next_scope.second._cid,
-                                 next_scope.second._filters);
+      _agent.string_match_report(
+          _client, value._did, next_scope.first, next_scope.second._cid,
+          next_scope.second._rules, next_scope.second._filters);
     } else {
       // if we automatically label, report is not needed
       bsky::moderation::acknowledge_event_comment comment(
           _agent.project_name());
       bsky::moderation::filter_match_info filter_info(_agent.project_name());
+      filter_info.rules = std::vector<int>(next_scope.second._rules.cbegin(),
+                                           next_scope.second._rules.cend());
       filter_info.filters =
           std::vector<std::string>(next_scope.second._filters.cbegin(),
                                    next_scope.second._filters.cend());
