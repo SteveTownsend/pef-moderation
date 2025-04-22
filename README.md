@@ -1,4 +1,4 @@
-# pef-forum-moderation
+# pef-moderation
 Various moderation tools in support of the work of [Public Education Forum](https://nafoforum.org/)
 
 Supports [Bluesky](https://bsky.app/) [Public Education Forum custom labeler](pef-moderation.bsky.social) on domain [pef-moderation.org](https://ozone.pef-moderation.org/xrpc/_health?version=0.1.1)  
@@ -103,7 +103,11 @@ As team grows it is likely this will become:
 - either resolve quickly in queue, or **Escalate**
 - actioning moderator actions the report or delegates to a better choide (e.g. based on language or topic) by updating the **Tag**  
 
-**Tag** schema tbd
+**Tag Semantics**
+| Name          | Purpose                     |
+| ------------- | --------------------------- |
+| manual        | report from a user          |
+| auto          | report from firehose-client |
 
 # Future plans
 Automation:

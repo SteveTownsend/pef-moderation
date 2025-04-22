@@ -1,0 +1,2979 @@
+{
+"match_filters": [
+	{
+		"filter" : "Stalin",
+		"labels" : "abusive,violent",
+		"actions" : "track=false,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Stalinist",
+		"labels" : "abusive,violent",
+		"actions" : "track=false,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "troon",
+		"labels" : "abusive",
+		"actions" : "track=true,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nigger",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nogger",
+		"labels" : "abusive",
+		"actions" : "track=true,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mudshark",
+		"labels" : "abusive",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Heil Hitler",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Holohoax",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Führer Friday",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Fuehrer Friday",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "o\/",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "1488",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "卐",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "⚡⚡",
+		"labels" : "abusive,evasion,violent",
+		"actions" : "track=true,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mintcat",
+		"labels" : "abusive,engagementfarmer,network,disruptive",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "KiwiFarms",
+		"labels" : "abusive,network",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ꗪꜞ⒲ꜞẝშ┌ෆ𝐬",
+		"labels" : "abusive,network",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "groyp",
+		"labels" : "abusive,network",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/allstaredge.info",
+		"labels" : "abusive,disinfo,engagementfarmer,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/orbitjunction.com",
+		"labels" : "abusive,disinfo,engagementfarmer,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : ".ukcolumn.org",
+		"labels" : "abusive,disinfo,engagementfarmer,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/privatevid.vercel.app",
+		"labels" : "abusive,network,nsfw,engagementfarmer",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "preetyliv.llc",
+		"labels" : "abusive,network,nsfw,engagementfarmer",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "pleniiixa.blogspot.com",
+		"labels" : "abusive,network,nsfw,engagementfarmer",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "vanillasky.click",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "infobrics.org",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/rt.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/lemediaen442.fr",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "☭",
+		"labels" : "violent",
+		"actions" : "track=true,report=account,scope=profile,match=substring,label=true",
+		"contingent" : ""
+	},
+	{
+		"filter" : "actfiles.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "allatra",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "creativesociety.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "allatra.tv",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "jeffsachs.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "breitbart.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "moonofalabama.org",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ukraine.today.co.uk",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "breakthrough news",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mintpress news",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mintpress_news\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "newsmax.com\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Richard Wolff",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "democracyatwork",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thealtworld.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thegatewaypundit.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "revolver.news",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "citizenfreepress.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "theepochtimes.",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tierrapura.org",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthandtradition.news",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gnews.org",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "lewrockwell.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "loomered.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "oann.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "patriotpost.us",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthfeed.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "texasscorecard.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "townhall.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "visiontimes.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "washingtontimes.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "westernjournal.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "zerohedge.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "judgenap.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thefederalist.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "animallovers2024.foundation",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "realityslaststand.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thegrayzone.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/rumble.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thelibertydaily.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "democracynow.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gbnews.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Trama Internacional",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/noticiaspia.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "pressecop24.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dst_podcast\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dailycaller.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hotair.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "americanthinker.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "amgreatness.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "legalinsurrection.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "independentsentinel.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "trump2024.film\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "headlineusa.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "pjmedia.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "childrenshealthdefense.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "alt-market.us\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "amren.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : ".san.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/san.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "modernity.news\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "toddstarnes.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "justthenews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "brownstone.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "harbingersdaily.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "libertynation.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "conservativeinstitute.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gellerreport.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by PowerfulJRE",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "vigilantnews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "americafirstreport.com",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mercola.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dossier.today\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thecradle.co\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "bidenlaptopmedia.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "reformparty.uk\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "steadfastandloyal.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "jihadwatch.org\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "realclearpolitics.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "politibrawl.substack.com",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "notthebee.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "freebeacon.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : ".cf.org",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tenthamendmentcenter.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "babylonbee.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthpress.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "bizpacreview.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dailywire.com",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gatewayhispanic.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "shattertheswarm.com",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthfreedomhealth.com",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "felastory.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "infosannio.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ezone57.net\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "swentr.site\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mahendrarajah.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Chris Hedges",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "chrishedges.substack.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "open.substack.com\/pub\/chrishedges",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "@ChrisLynnHedges",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "chrishedges.podbean.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sinpermiso.info\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "lacasademitia.es\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by FORGOTTEN HISTORY",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "thepostmillennial.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthdig.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "consortiumnews.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "peaceandplanetnews.org\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mintpressnews.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "MOATS",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Gabor Maté",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "braveneweurope.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "popularresistance.org\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "valdaiclub.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "canadiandimension.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "scheerpost.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Revolutionary Blackout",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "caitlinjohnstone.com.au\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "francesoir.fr\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by Sud Radio",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Décoder l'éco",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "Naomi Klein",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "johnmenadue.com\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "jornalggn.com.br\/",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "interc.pt\/",
+		"labels" : "caution,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "truthout.org\/",
+		"labels" : "caution,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "unftr.com\/",
+		"labels" : "disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "jonahintheheartofnineveh.blogspot.com",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Syrian Girl",
+		"labels" : "abusive,disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Ken Klippenstein",
+		"labels" : "disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dropsitenews.com",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Douglas McGregor",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Lawrence Wilkerson",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Matt Kennard",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "declassifieduk.org",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "phalapoem.co.uk\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Aaron Mate",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Max Blumenthal",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Ben Northon",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Anya Parampil",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Kit Klarenberg",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Lee Camp",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Alex Rubinstein",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Wyatt Reed",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Richard Medhurst",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Caitlin Johnstone",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Glenn Greenwald",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Danny Haiphong",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Rula Jebreal",
+		"labels" : "caution",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : null
+	},
+	{
+		"filter" : "Jeff Sharlet",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Krystal Ball",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine"
+	},
+	{
+		"filter" : "Kyle Kulinski",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine"
+	},
+	{
+		"filter" : " by Tocsin",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "David Doel",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine"
+	},
+	{
+		"filter" : " by Vivre sainement",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "middleeasteye.net\/",
+		"labels" : "abusive,disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "watcher.guru\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by Right Side Broadcasting Network",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "Tuomas Malinen",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "planetes360.fr\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "aje.io\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "aljazeera.com\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by Reinfo Quebec",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "thecanary.co\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "palestinechronicle.com\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "doubledown.news\/",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "presstv.ir\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by Visegrad24",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by George Galloway",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "BreezyPolitics",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Katchanovski",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Korybko",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "\/counterfire.org",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Gaza",
+		"labels" : "engagementfarmer,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "gofundme.com\/,chuffed.org\/"
+	},
+	{
+		"filter" : "woodChipper",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "rapist",
+		"labels" : "abusive,violent",
+		"actions" : "track=false,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "rape",
+		"labels" : "abusive,violent",
+		"actions" : "track=false,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "TND",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "TKD",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "BNRAN",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "KYS",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "retard",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : ".xyz\/",
+		"labels" : "engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "from the river to the sea",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "🔻",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=profile,match=substring",
+		"contingent" : "Gaza,genocide,Palestin,🍉,PSLB"
+	},
+	{
+		"filter" : "Isreal",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Israhell",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "THD",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Хохол",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Banderite",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "banderowskie",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ukronazi",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ukranazi",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Kiev",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "regime"
+	},
+	{
+		"filter" : "coup",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "Maidan,Georgia,CIA,Tbilisi"
+	},
+	{
+		"filter" : "Nuland",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "proxy war",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Ukraine,Syria,Georgia"
+	},
+	{
+		"filter" : "Ukraine",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "corrupt,Nazi,launder,billions,tax dollars,expansion"
+	},
+	{
+		"filter" : "Ukrainian",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "corrupt,Nazi,launder,billions,tax dollars,expansion"
+	},
+	{
+		"filter" : "biolabs",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "Ukraine,Ukrainian"
+	},
+	{
+		"filter" : "Zionis",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Nazi,genocide,billions,tax dollars,terrorist state,devil,demon,reich"
+	},
+	{
+		"filter" : "bucha",
+		"labels" : "abusive,violent,disinfo",
+		"actions" : "track=false,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "false flag",
+		"labels" : "abusive,violent,disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Bucha,Izyum,Douma,Irpin,Mariupol"
+	},
+	{
+		"filter" : "9\/11",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "dancing,Israelis,Jews,another"
+	},
+	{
+		"filter" : "uniparty",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "shitlib",
+		"labels" : "abusive,disruptive",
+		"actions" : "track=false,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "woke",
+		"labels" : "abusive,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "mind virus,idiot,twat,left,Dems,Democrats,Grune,Grüne,trans,lgbt"
+	},
+	{
+		"filter" : "only two genders",
+		"labels" : "abusive,disinfo",
+		"actions" : "track=true,report=true,scope=profile,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#pureblood",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=profile,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#MAGA",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=false,scope=profile,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#TrumpWon",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=false,scope=profile,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#Trump2.0",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=false,scope=profile,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#Trump2024",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=false,scope=profile,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "AmericaFirst",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=false,scope=profile,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "carrrd.co\/",
+		"labels" : "disruptive,engagementfarmer,network",
+		"actions" : "track=false,report=false,scope=any,block=nsfw,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "bit.ly\/",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "is.gd\/",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "shorturl.at\/",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tg:\/\/resolve?",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tg:\/\/join?",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#kink",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#porn",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "#nsfw",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "onlyfans.com\/",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "loyalfans.com\/",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "justfor.fans\/",
+		"labels" : "nsfw,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "allmylinks.com\/",
+		"labels" : "disruptive,engagementfarmer,network",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "cammodels.com\/",
+		"labels" : "disruptive,engagementfarmer,network",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "fans.ly\/",
+		"labels" : "disruptive,engagementfarmer,network",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "top4fans.com\/",
+		"labels" : "disruptive,engagementfarmer,network",
+		"actions" : "track=true,report=false,scope=any,block=nsfw,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : "intifada",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "long live the,global,electronic,#FreePalestine,🍉"
+	},
+	{
+		"filter" : "Zelensky",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=word",
+		"contingent" : "coke,puppet,cocaine,crook,launder,replac,obstacle,peace talks,NATO is consider,sputnik"
+	},
+	{
+		"filter" : "color revolution",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "USAID,Ukraine,Syria,Georgia"
+	},
+	{
+		"filter" : "colour revolution",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "USAID,Ukraine,Syria,Georgia"
+	},
+	{
+		"filter" : "visegrad24",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring",
+		"contingent" : "x.com\/visegrad24,@visegrad24,visegrad24.com"
+	},
+	{
+		"filter" : "\/t.me\/",
+		"labels" : "disruptive,engagementfarmer",
+		"actions" : "track=true,report=false,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "lover of",
+		"labels" : "disruptive",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : "always curious about"
+	},
+	{
+		"filter" : "devoted to",
+		"labels" : "disruptive",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : "while learning more"
+	},
+	{
+		"filter" : "passionate about",
+		"labels" : "disruptive",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : "and exploring"
+	},
+	{
+		"filter" : "inspired by ",
+		"labels" : "disruptive",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : "art,reading,sports,writing,design,photography"
+	},
+	{
+		"filter" : "A dedicated ",
+		"labels" : "disruptive",
+		"actions" : "track=false,report=false,scope=profile,match=substring",
+		"contingent" : "always seeking to"
+	},
+	{
+		"filter" : "lifesitenews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ussanews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : ".ussa,\/ussa"
+	},
+	{
+		"filter" : "activistpost.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : ""
+	},
+	{
+		"filter" : "wikileaks",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : "x.com\/wiki"
+	},
+	{
+		"filter" : " by Investigations et Enquêtes",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=content,scope=any,match=substring,label=true",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "Israel",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Nazi,genocide,billions,tax dollars,terrorist state,devil,demon,reich,hasbara,death to,nuke,the red card,#BDS"
+	},
+	{
+		"filter" : "\\o",
+		"labels" : "abusive,violent",
+		"actions" : "track=true,report=false,scope=any,match=word",
+		"contingent" : ""
+	},
+	{
+		"filter" : " bio",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "biowarfare,biolab,bioterror,bioweapon,Ukraine,Africa,russia"
+	},
+	{
+		"filter" : "israelpalestinenews.org\/",
+		"labels" : "disinfo,abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "by The CJ Werleman Show",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by CRUX",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by KernowDamo",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by NOTiFY",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Owen Jones",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by FREENVESTING",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by The Electronic Intifada",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine,Youtube video"
+	},
+	{
+		"filter" : " by The Rational National",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine,Youtube video"
+	},
+	{
+		"filter" : "an-berlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : "!vegan-berlin"
+	},
+	{
+		"filter" : "electronicintifada.net\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "countercurrents.org\/",
+		"labels" : "disruptive,disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "bad empanada",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "badempanada",
+		"labels" : "abusive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "kbsf-tv.com\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "berliner-wochenzeitung.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "zeitgeschenen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "anderemeinung.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "wehrpflicht2025.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "echozeit.com\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "presseneu.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "andererseits-seite.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "fr-press.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "deutsch-w.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nrtv.online\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "oku-nachrichten.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "scheinwerfen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "news-checker.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "konusnews.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "einmaleinsneu.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "deinequellen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "wdr-hall.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "resonieren.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "berlinertagespost.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nnberlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "cito-novit.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "f-aktuell.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "weitwinkelmedien.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "klartext-news.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tageblatt-berlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "b-blatt.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "brlnr-stimme.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "newsletters-berlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "wochenüberblick-berlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "aktuellenews-berlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "berlin-apropos.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : ".wrmea.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ensemble-24.fr\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by Deep Dive Defense",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by TRT World",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Double Down News",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "heute-inberlin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hamburger-anzeiger.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hamburger-sichtweisen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nachrichtendestages.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "alles-klar-hamburg.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "n-a-h.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hamburg-ex.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "das-denkt-hamburg.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hamb-post.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "h-np.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dznachrichten.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "stimmedeutsch.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "infomediafuerdich.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "media-transparent.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "doch-infomedia.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "prinzipienfest.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "in-absicht.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "kernpunkt-infomedia.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "info-stichpunkt.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ausdemueberall.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "einfachandersinfo.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thesis-info.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "newsfuereuch.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nachrichtenunabhaengig.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gegengewicht-media.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "la-cher.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "gegenleitmedien.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "deutschenachrichtenstelle.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "infomediaregierungskritisch.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "info-mediaplattform.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "diewahreseite.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "guckmalgenauhin.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "zeitenwende-news.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "aktuellde.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "internetpoebler-info.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "herrpostillon.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "newswichtig.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "unmittelbar-medien.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mehrstimmen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "aktuell-nachricht.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "allethemen24.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "w-a-munchen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "kernrecht.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "seite-eins-nachrichten.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ungeziert-info.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tagesnews-24.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "polemisch-infomedia.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "newsmacher.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sag-das.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "in-und-ausland.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "nudis-verbis.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "expert-infomedien.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "de-nachrichtenseite.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "alles-wichtig-news.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "novanachrichten.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "vollverstand.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "dasneueste-online.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "munchener-nachrichten.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tagundnacht24.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "laut-medien.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "rundumdieuhr-24.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "onlinedaheim-24.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "onlineunterwegs.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ruf-der-freiheit.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "informant-info.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "top-news-munchen.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "kurzchronik.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "visionar-info.de\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "bigdussgroup.com\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Moss Robeson",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Mark Ames",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "zviadrukhadze.com\/",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,block=doppelganger,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mossrobeson.medium.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "banderalobby",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thelibertybeacon.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ukraina.ru\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "news-pravda.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "executivedigest.sapo.pt\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tass.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sputniknews.africa\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sputnikglobe.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "avapress.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "yenisafak.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "b92.net\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "virgilio.it\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "vk.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "topwar.ru\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "antarkabarmediainformasi.blogspot.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "iz.ru\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ashtarcommandcrew.net\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "thepressunited.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "infowars.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "iuvmpress.co\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sindonews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "wionews.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "spotmedia.ro\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "standwithrussia",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "patricklancasternewstoday",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "Patrick Lancaster",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "strategic-culture.su\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "21stcenturywire.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sonja van den ende",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "jayniti.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "tribune-diplomatique-internationale.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "covertactionmagazine.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "icdt.ir\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "globalresearch.ca\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "21cir.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "mronline.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "marktanliano.net\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "emmaolivetz.wordpress.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "natyliesbaldwin.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "geopol.pt\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "globaltimes.cn\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "katehon.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "orinocotribune.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "de-nieuwe-media.nl\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "frontnieuws.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "ssofidelis.substack.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by 21st Century Wire",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : "fondfbr.ru\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "hetanderenieuws.nl\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "straightlinelogic.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "sinistrainrete.info\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "openbaararchief.nl\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "struggle-la-lucha.org\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "eadaily.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "criticalthinkingdispatch.com\/",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "zirafamedia",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "IsraelTerroristState",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : "MEGA",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "europe great"
+	},
+	{
+		"filter" : " by Secular Talk",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "israel,Gaza,Palestine,Youtube video"
+	},
+	{
+		"filter" : "epochtimes.",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=true,match=substring",
+		"contingent" : ""
+	},
+	{
+		"filter" : " by QuickPolitics",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Sabby Sabs",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Breezy Politics",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Hub Talks",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Useful Idiots",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Al Jazeera English",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by AJ+",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by The Real News Network",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Know Nothing",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Neutrality Studies",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by OnePath Network",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by The West Report",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Middle East Eye",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Declassified UK",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Judge Napolitano - Judging Freedom",
+		"labels" : "abusive,disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by DawnNews English",
+		"labels" : "abusive,disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by The Africa News Network",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by GDF",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Janta Ka Reporter",
+		"labels" : "misinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Bassem Youssef",
+		"labels" : "disruptive,misinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by BadEmpanada",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by De Andere Krant",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by sonja vandenende",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Multipolar World",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Relevant Today",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by exposed",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Asmongold TV",
+		"labels" : "disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Juste Milieu",
+		"labels" : "abusive,disinfo,disruptive",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Béatrice Rosen",
+		"labels" : "disruptive,misinfo",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by DME En Direct",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by everymanradio",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by FLORIAN PHILIPPOT",
+		"labels" : "disinfo,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video"
+	},
+	{
+		"filter" : " by Bad Faith",
+		"labels" : "abusive,disinfo,disruptive,network",
+		"actions" : "track=true,report=true,scope=any,match=substring",
+		"contingent" : "Youtube video,!Faith Doc"
+	},
+	{
+		"filter" : "Epoch Times",
+		"labels" : "disinfo",
+		"actions" : "track=true,report=true,scope=any,label=false,match=substring",
+		"contingent" : ""
+	}
+]}
