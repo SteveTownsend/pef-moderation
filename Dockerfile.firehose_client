@@ -1,5 +1,5 @@
 # install dependencies and build
-FROM ubuntu:24.10 AS build
+FROM ubuntu:24.04 AS build
 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16 peg pkg-config libedit-dev'
 RUN apt-get -y update && apt-get -y install $BUILD_DEPS
@@ -35,8 +35,8 @@ WORKDIR /usr/src/libcypher-parser
 RUN ./autogen.sh && ./configure && make clean check && make install
 
 WORKDIR /usr/src
-ADD https://api.github.com/repos/SteveTownsend/libneo4j-omni/git/refs/heads/main libneo4j-version.json
-RUN git clone https://github.com/SteveTownsend/libneo4j-omni.git
+ADD https://api.github.com/repos/majensen/libneo4j-omni/git/refs/heads/main libneo4j-version.json
+RUN git clone https://github.com/majensen/libneo4j-omni.git
 WORKDIR /usr/src/libneo4j-omni
 RUN ./autogen.sh && ./configure --disable-werror && make clean check && make install
 
@@ -48,7 +48,7 @@ RUN rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF &&
   apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
-FROM ubuntu:24.10
+FROM ubuntu:24.04
 
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
 RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
