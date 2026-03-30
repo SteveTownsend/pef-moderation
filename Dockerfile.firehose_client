@@ -35,8 +35,8 @@ WORKDIR /usr/src/libcypher-parser
 RUN ./autogen.sh && ./configure && make clean check && make install
 
 WORKDIR /usr/src
-ADD https://api.github.com/repos/SteveTownsend/libneo4j-omni/git/refs/heads/main libneo4j-version.json
-RUN git clone https://github.com/SteveTownsend/libneo4j-omni.git
+ADD https://api.github.com/repos/majensen/libneo4j-omni/git/refs/heads/main libneo4j-version.json
+RUN git clone https://github.com/majensen/libneo4j-omni.git
 WORKDIR /usr/src/libneo4j-omni
 RUN ./autogen.sh && ./configure --disable-werror && make clean check && make install
 
