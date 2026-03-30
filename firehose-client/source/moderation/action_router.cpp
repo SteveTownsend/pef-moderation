@@ -49,6 +49,23 @@ void action_router::start() {
   });
 }
 
+void action_router::update_blacklist(std::unordered_set<std::string> new_blacklist) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_blacklist, new_blacklist);
+}
+
+void action_router::check_wait_enqueue(std::string const & did, account_filter_matches &&value) {
+  // skip backlisted accounts
+  {
+    std::lock_guard<std::mutex> lock{_lock};
+    if (_blacklist.contains(did)) {
+      REL_INFO("Skipping blacklisted account {}", did);
+      return;
+    }
+  }
+  wait_enqueue(std::move(value));
+}
+
 void action_router::wait_enqueue(account_filter_matches &&value) {
   _queue.enqueue(value);
   metrics_factory::instance()

@@ -49,6 +49,7 @@ public:
   void check_rewind_point();
   void update_match_filters();
   void update_popular_hosts();
+  void update_blacklisted_accounts();
 
 private:
   static constexpr size_t UtcDateTimeMaxLength = 48;
@@ -64,6 +65,8 @@ private:
       std::chrono::minutes(5);
   static constexpr std::chrono::minutes PopularHostsRefreshInterval =
       std::chrono::minutes(15);
+  static constexpr std::chrono::minutes BlacklistedAccountsRefreshInterval =
+      std::chrono::minutes(30);
 
   std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
@@ -76,6 +79,7 @@ private:
   std::chrono::steady_clock::time_point _last_rewind_flush;
   std::chrono::steady_clock::time_point _last_match_filter_refresh;
   std::chrono::steady_clock::time_point _last_popular_host_refresh;
+  std::chrono::steady_clock::time_point _last_blacklisted_accounts_refresh;
   mutable std::mutex _lock;
   // Bluesky only for now
 };
