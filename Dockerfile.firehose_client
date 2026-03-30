@@ -48,7 +48,7 @@ RUN rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF &&
   apt-get purge -y --auto-remove $buildDeps
 
 # prepare the runtime environment
-FROM ubuntu:24.10
+FROM ubuntu:24.04
 
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
 RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
