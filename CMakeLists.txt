@@ -110,13 +110,12 @@ SET(Boost_USE_MULTITHREAD ON)
 SET(Boost_NO_BOOST_CMAKE TRUE)
 # SET(Boost_ROOT CACHE STRING $ENV{BOOST_ROOT})
 if (WIN32)
-  SET(Boost_DIR "$ENV{BOOST_ROOT}/stage/lib/cmake/Boost-1.86.0")
+  SET(Boost_DIR "$ENV{BOOST_ROOT}/stage/lib/cmake/Boost-1.90.0")
 endif()
 # set(BOOST_LIBRARYDIR CACHE STRING "$ENV{BOOST_LIBRARYDIR}")
 
 # includes those used by restc-cpp
 find_package(Boost REQUIRED COMPONENTS
-  system
   program_options
   filesystem
   date_time
@@ -163,7 +162,7 @@ set(spdlog_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 FetchContent_Declare(
  spdlog
  GIT_REPOSITORY https://github.com/gabime/spdlog
- GIT_TAG        v1.15.0
+ GIT_TAG        v1.17.0
  OVERRIDE_FIND_PACKAGE
 )
 FetchContent_GetProperties(spdlog)
@@ -178,8 +177,8 @@ find_package(spdlog CONFIG REQUIRED)
 # YAML reader
 FetchContent_Declare(
   yaml-cpp
-  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG 0.8.0
+  GIT_REPOSITORY https://github.com/SteveTownsend/yaml-cpp.git
+  GIT_TAG 1b7e0154d1addfa7f1f6c4acbc4135673a8ef79d
 )
 if (UNIX)
   SET(YAML_BUILD_SHARED_LIBS ON)
