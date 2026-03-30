@@ -21,6 +21,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "matcher.hpp"
+#include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 
 namespace bsky {
@@ -54,6 +55,9 @@ void auxiliary_data::start(YAML::Node const &settings) {
         // load/refresh string popular hosts used in embed:external and other
         // places
         update_popular_hosts();
+        // load/refresh blacklisted accounts - their content is skipped
+        // Used for persistent, frequent label-worthy content
+        update_blacklisted_accounts();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on net loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
@@ -180,6 +184,7 @@ void auxiliary_data::update_match_filters() {
     }
   }
 }
+
 void auxiliary_data::update_popular_hosts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(
@@ -197,6 +202,26 @@ void auxiliary_data::update_popular_hosts() {
       std::lock_guard guard(_lock);
       embed_checker::instance().refresh_hosts(std::move(new_hosts));
       _last_popular_host_refresh = std::chrono::steady_clock::now();
+    }
+  }
+}
+
+void auxiliary_data::update_blacklisted_accounts() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(
+          now - _last_blacklisted_accounts_refresh) > BlacklistedAccountsRefreshInterval) {
+    pqxx::work tx(*_cx);
+    bool load_failed(false);
+    std::unordered_set<std::string> new_blacklist;
+    for (auto [did] :
+         tx.query<std::string>("SELECT did FROM blacklisted_accounts;")) {
+      new_blacklist.insert(did);
+    }
+
+    if (!load_failed) {
+      // switch replacement rules into the main matcher
+      action_router::instance().update_blacklist(std::move(new_blacklist));
+      _last_blacklisted_accounts_refresh = std::chrono::steady_clock::now();
     }
   }
 }

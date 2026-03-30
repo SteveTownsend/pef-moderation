@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "yaml-cpp/yaml.h"
 #include <thread>
+#include <unordered_set>
 
 class action_router {
 public:
@@ -32,7 +33,9 @@ public:
   static action_router &instance();
 
   void start();
+  void check_wait_enqueue(std::string const & did, account_filter_matches &&value);
   void wait_enqueue(account_filter_matches &&value);
+  void update_blacklist(std::unordered_set<std::string> new_blacklist);
 
 private:
   action_router();
@@ -42,5 +45,7 @@ private:
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<account_filter_matches> _queue;
   std::shared_ptr<matcher> _matcher;
+  std::unordered_set<std::string> _blacklist;
+  mutable std::mutex _lock;
 };
 #endif
