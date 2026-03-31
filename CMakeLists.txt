@@ -180,9 +180,9 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
   GIT_TAG yaml-cpp-0.9.0
 )
-if (UNIX)
-  SET(YAML_BUILD_SHARED_LIBS ON)
-endif()
+# if (UNIX)
+#   SET(YAML_BUILD_SHARED_LIBS ON)
+# endif()
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 
