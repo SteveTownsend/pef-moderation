@@ -177,8 +177,8 @@ find_package(spdlog CONFIG REQUIRED)
 # YAML reader
 FetchContent_Declare(
   yaml-cpp
-  GIT_REPOSITORY https://github.com/SteveTownsend/yaml-cpp.git
-  GIT_TAG 1b7e0154d1addfa7f1f6c4acbc4135673a8ef79d
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG yaml-cpp-0.9.0
 )
 if (UNIX)
   SET(YAML_BUILD_SHARED_LIBS ON)
