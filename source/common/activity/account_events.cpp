@@ -40,7 +40,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 namespace activity {
 
-account::account(did_type const &did)
+account::account(const did_type &did)
     : _content_hits(std::make_shared<
                     lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>(
           MaxContentItems, CustomLFUCachePolicy<atproto::at_uri>(),
