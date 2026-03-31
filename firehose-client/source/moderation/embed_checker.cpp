@@ -402,6 +402,7 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
         .Increment();
 
     REL_INFO("Redirect matched rules for {}", url);
+    // malicious redirects are always reported - no blocklist filtering
     action_router::instance().wait_enqueue({_repo, {{_path, _cid, results}}});
   }
   return true;

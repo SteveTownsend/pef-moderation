@@ -280,7 +280,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             {repo, bsky::current_time(), activity::matches(count)});
 
         // forward account and its matched records for possible auto-moderation
-        action_router::instance().wait_enqueue({repo, std::move(matches)});
+        action_router::instance().check_wait_enqueue(repo, {repo, std::move(matches)});
       }
     }
     // update last-seen sequence number
