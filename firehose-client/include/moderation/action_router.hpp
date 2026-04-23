@@ -36,7 +36,8 @@ public:
   void check_wait_enqueue(std::string const & did, account_filter_matches &&value);
   void wait_enqueue(account_filter_matches &&value);
   void update_blacklist(std::unordered_set<std::string> new_blacklist);
-
+  void update_whitelist(std::unordered_set<std::string> new_whitelist);
+  void update_ignored(std::unordered_set<std::string> new_ignored);
 private:
   action_router();
   ~action_router() = default;
@@ -46,6 +47,8 @@ private:
   moodycamel::BlockingConcurrentQueue<account_filter_matches> _queue;
   std::shared_ptr<matcher> _matcher;
   std::unordered_set<std::string> _blacklist;
+  std::unordered_set<std::string> _whitelist;
+  std::unordered_set<std::string> _ignored;
   mutable std::mutex _lock;
 };
 #endif

@@ -153,7 +153,9 @@ int main(int argc, char **argv) {
                     // TODO reports of content not yet supported - move this
                     // when they are
                     bsky::moderation::report_subject target(match);
-                    pds_client.acknowledge_subject(target, comment);
+                    // ack all the account's reports to remove noise
+                    static bool ack_all_for_deleted_account(true);
+                    pds_client.acknowledge_subject(target, comment, ack_all_for_deleted_account);
                   } else {
                     comment.path = subject.first;
                   }

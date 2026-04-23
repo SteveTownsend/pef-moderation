@@ -58,6 +58,8 @@ void auxiliary_data::start(YAML::Node const &settings) {
         // load/refresh blacklisted accounts - their content is skipped
         // Used for persistent, frequent label-worthy content
         update_blacklisted_accounts();
+        update_whitelisted_accounts();
+        update_ignored_accounts();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on net loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
@@ -222,6 +224,46 @@ void auxiliary_data::update_blacklisted_accounts() {
       // switch replacement rules into the main matcher
       action_router::instance().update_blacklist(std::move(new_blacklist));
       _last_blacklisted_accounts_refresh = std::chrono::steady_clock::now();
+    }
+  }
+}
+
+void auxiliary_data::update_whitelisted_accounts() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(
+          now - _last_whitelisted_accounts_refresh) > WhitelistedAccountsRefreshInterval) {
+    pqxx::work tx(*_cx);
+    bool load_failed(false);
+    std::unordered_set<std::string> new_whitelist;
+    for (auto [did] :
+         tx.query<std::string>("SELECT did FROM whitelisted_accounts;")) {
+      new_whitelist.insert(did);
+    }
+
+    if (!load_failed) {
+      // switch replacement rules into the main matcher
+      action_router::instance().update_whitelist(std::move(new_whitelist));
+      _last_whitelisted_accounts_refresh = std::chrono::steady_clock::now();
+    }
+  }
+}
+
+void auxiliary_data::update_ignored_accounts() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(
+          now - _last_ignored_accounts_refresh) > IgnoredAccountsRefreshInterval) {
+    pqxx::work tx(*_cx);
+    bool load_failed(false);
+    std::unordered_set<std::string> new_ignored;
+    for (auto [did] :
+         tx.query<std::string>("SELECT did FROM ignored_accounts;")) {
+      new_ignored.insert(did);
+    }
+
+    if (!load_failed) {
+      // switch replacement rules into the main matcher
+      action_router::instance().update_ignored(std::move(new_ignored));
+      _last_ignored_accounts_refresh = std::chrono::steady_clock::now();
     }
   }
 }

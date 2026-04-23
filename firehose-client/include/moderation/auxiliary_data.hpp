@@ -50,6 +50,8 @@ public:
   void update_match_filters();
   void update_popular_hosts();
   void update_blacklisted_accounts();
+  void update_whitelisted_accounts();
+  void update_ignored_accounts();
 
 private:
   static constexpr size_t UtcDateTimeMaxLength = 48;
@@ -66,7 +68,11 @@ private:
   static constexpr std::chrono::minutes PopularHostsRefreshInterval =
       std::chrono::minutes(15);
   static constexpr std::chrono::minutes BlacklistedAccountsRefreshInterval =
+      std::chrono::minutes(5);
+  static constexpr std::chrono::minutes WhitelistedAccountsRefreshInterval =
       std::chrono::minutes(30);
+  static constexpr std::chrono::minutes IgnoredAccountsRefreshInterval =
+      std::chrono::minutes(60);
 
   std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
@@ -80,6 +86,8 @@ private:
   std::chrono::steady_clock::time_point _last_match_filter_refresh;
   std::chrono::steady_clock::time_point _last_popular_host_refresh;
   std::chrono::steady_clock::time_point _last_blacklisted_accounts_refresh;
+  std::chrono::steady_clock::time_point _last_whitelisted_accounts_refresh;
+  std::chrono::steady_clock::time_point _last_ignored_accounts_refresh;
   mutable std::mutex _lock;
   // Bluesky only for now
 };
