@@ -127,14 +127,16 @@ struct acknowledge_event_comment {
   std::string path;
 };
 struct acknowledge_event {
+  inline acknowledge_event(bool const ack_all_for_account)
+      : acknowledgeAccountSubjects(ack_all_for_account) {}
   std::string _type = std::string(bsky::moderation::EventAcknowledge);
   std::string comment;
-  bool acknowledgeAccountSubjects = false;
+  bool acknowledgeAccountSubjects;
 };
 struct emit_event_acknowledge_request {
 public:
-  inline emit_event_acknowledge_request(report_subject const &subject)
-      : subject(subject) {}
+  inline emit_event_acknowledge_request(report_subject const &subject, bool const ack_all_for_account)
+      : subject(subject), event(ack_all_for_account) {}
   acknowledge_event event;
   report_subject subject;
   std::string createdBy;
@@ -225,7 +227,9 @@ public:
       bsky::moderation::comment_event_comment const &comment);
   void acknowledge_subject(
       bsky::moderation::report_subject const &subject,
-      bsky::moderation::acknowledge_event_comment const &comment);
+      bsky::moderation::acknowledge_event_comment const &comment,
+      bool ack_all_for_account = false
+    );
   void tag_report_subject(bsky::moderation::report_subject const &subject,
                           bsky::moderation::tag_event_comment const &comment,
                           std::vector<std::string> const &add_tags,

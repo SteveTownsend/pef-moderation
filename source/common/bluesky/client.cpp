@@ -234,7 +234,8 @@ void client::add_comment_for_subject(
 
 void client::acknowledge_subject(
     bsky::moderation::report_subject const &subject,
-    bsky::moderation::acknowledge_event_comment const &comment) {
+    bsky::moderation::acknowledge_event_comment const &comment,
+    bool ack_all_for_account) {
   std::ostringstream oss;
   restc_cpp::SerializeToJson(comment, oss);
   if (_dry_run) {
@@ -249,7 +250,7 @@ void client::acknowledge_subject(
   }
   try {
     // TODO use a variant to branch for account/content
-    bsky::moderation::emit_event_acknowledge_request request(subject);
+    bsky::moderation::emit_event_acknowledge_request request(subject, ack_all_for_account);
     request.createdBy = _did;
     request.event.comment = oss.str();
 

@@ -54,12 +54,30 @@ void action_router::update_blacklist(std::unordered_set<std::string> new_blackli
   std::swap(_blacklist, new_blacklist);
 }
 
+void action_router::update_whitelist(std::unordered_set<std::string> new_whitelist) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_whitelist, new_whitelist);
+}
+
+void action_router::update_ignored(std::unordered_set<std::string> new_ignored) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_ignored, new_ignored);
+}
+
 void action_router::check_wait_enqueue(std::string const & did, account_filter_matches &&value) {
   // skip backlisted accounts
   {
     std::lock_guard<std::mutex> lock{_lock};
     if (_blacklist.contains(did)) {
       REL_INFO("Skipping blacklisted account {}", did);
+      return;
+    }
+    if (_whitelist.contains(did)) {
+      REL_INFO("Processing whitelisted account {}", did);
+      return;
+    }
+    if (_ignored.contains(did)) {
+      REL_INFO("Skipping ignored account {}", did);
       return;
     }
   }
