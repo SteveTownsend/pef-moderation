@@ -19,26 +19,31 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include <thread>
+#include <unordered_set>
+
 #include "blockingconcurrentqueue.h"
 #include "common/helpers.hpp"
 #include "matcher.hpp"
 #include "yaml-cpp/yaml.h"
-#include <thread>
-#include <unordered_set>
+
+constexpr std::string_view BlacklistName = "Soft-Deleted";
 
 class action_router {
-public:
+ public:
   static constexpr size_t QueueLimit = 1000;
 
   static action_router &instance();
 
   void start();
-  void check_wait_enqueue(std::string const & did, account_filter_matches &&value);
+  void check_wait_enqueue(std::string const &did,
+                          account_filter_matches &&value);
   void wait_enqueue(account_filter_matches &&value);
   void update_blacklist(std::unordered_set<std::string> new_blacklist);
   void update_whitelist(std::unordered_set<std::string> new_whitelist);
   void update_ignored(std::unordered_set<std::string> new_ignored);
-private:
+
+ private:
   action_router();
   ~action_router() = default;
 
