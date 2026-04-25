@@ -331,7 +331,7 @@ list_manager::archive_if_needed(std::string const &list_group_name,
       return list_uri;
     }
   } else {
-    REL_WARNING("Membership for list group {} not found, unexpected");
+    REL_WARNING("Membership for list group {} not found, unexpected", list_group_name);
     return list_uri;
   }
 }
