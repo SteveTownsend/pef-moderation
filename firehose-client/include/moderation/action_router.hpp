@@ -27,7 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "yaml-cpp/yaml.h"
 
-constexpr std::string_view BlacklistName = "Soft-Deleted";
+constexpr std::string_view BlacklistName = "Soft_Deleted";
 
 class action_router {
  public:
