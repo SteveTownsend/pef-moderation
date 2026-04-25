@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "moderation/action_router.hpp"
+
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
@@ -49,22 +50,35 @@ void action_router::start() {
   });
 }
 
-void action_router::update_blacklist(std::unordered_set<std::string> new_blacklist) {
+void action_router::update_blacklist(
+    std::unordered_set<std::string> new_blacklist) {
   std::lock_guard<std::mutex> lock{_lock};
+  // add new blacklist entries to Moderation List
+  std::ranges::for_each(
+      new_blacklist | std::views::filter([&](const std::string &did) {
+        return !_blacklist.contains(did);
+      }),
+      [&](const std::string &did) {
+        list_manager::instance().wait_enqueue(
+            {did, std::string(BlacklistName)});
+      });
   std::swap(_blacklist, new_blacklist);
 }
 
-void action_router::update_whitelist(std::unordered_set<std::string> new_whitelist) {
+void action_router::update_whitelist(
+    std::unordered_set<std::string> new_whitelist) {
   std::lock_guard<std::mutex> lock{_lock};
   std::swap(_whitelist, new_whitelist);
 }
 
-void action_router::update_ignored(std::unordered_set<std::string> new_ignored) {
+void action_router::update_ignored(
+    std::unordered_set<std::string> new_ignored) {
   std::lock_guard<std::mutex> lock{_lock};
   std::swap(_ignored, new_ignored);
 }
 
-void action_router::check_wait_enqueue(std::string const & did, account_filter_matches &&value) {
+void action_router::check_wait_enqueue(std::string const &did,
+                                       account_filter_matches &&value) {
   // skip backlisted accounts
   {
     std::lock_guard<std::mutex> lock{_lock};
