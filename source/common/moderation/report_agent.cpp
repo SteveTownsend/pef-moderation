@@ -19,15 +19,18 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/moderation/report_agent.hpp"
-#include "common/controller.hpp"
-#include "common/log_wrapper.hpp"
-#include "common/metrics_factory.hpp"
-#include "common/rest_utils.hpp"
-#include "restc-cpp/RequestBuilder.h"
-#include "restc-cpp/SerializeJson.h"
+
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
 #include <functional>
+
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
+#include "common/moderation/list_manager.hpp"
+#include "common/rest_utils.hpp"
+#include "restc-cpp/RequestBuilder.h"
+#include "restc-cpp/SerializeJson.h"
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
                           (std::string, _type), (std::string, did),
@@ -159,12 +162,16 @@ void report_agent::label_subject(
 void report_content_visitor::operator()(filter_matches const &value) {
   for (auto &next_scope : value._scoped_matches) {
     if (next_scope.second._labels.empty()) {
-      // no label, report for review
+      // no label, report for review unless ignoring the account.
+      if (list_manager::instance().skip_account(value._did)) {
+        return;
+      }
       _agent.string_match_report(
           _client, value._did, next_scope.first, next_scope.second._cid,
           next_scope.second._rules, next_scope.second._filters);
     } else {
-      // if we automatically label, report is not needed
+      // if we automatically label, report is not needed. This process continues
+      // for skipped accounts.
       bsky::moderation::acknowledge_event_comment comment(
           _agent.project_name());
       bsky::moderation::filter_match_info filter_info(_agent.project_name());
@@ -207,5 +214,5 @@ void report_content_visitor::operator()(high_facet_count const &value) {
   bsky::moderation::report_subject subject(_did, value._path, value._cid);
   _agent.label_subject(_client, subject, {value.get_name()}, {}, comment);
 }
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky

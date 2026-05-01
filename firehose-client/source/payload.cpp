@@ -19,6 +19,9 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "payload.hpp"
+
+#include <multiformats/cid.hpp>
+
 #include "common/activity/account_events.hpp"
 #include "common/activity/event_recorder.hpp"
 #include "common/moderation/ozone_adapter.hpp"
@@ -27,7 +30,6 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
-#include <multiformats/cid.hpp>
 
 jetstream_payload::jetstream_payload() {}
 jetstream_payload::jetstream_payload(std::string json_msg,
@@ -115,22 +117,22 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           // with string_view's C++23 range constructor:
           std::string field(token.cbegin(), token.cend());
           switch (count) {
-          case 0:
-            if (field.empty())
-              throw std::invalid_argument("Blank collection in op.path " +
-                                          path);
-            metrics_factory::instance()
-                .get_counter("firehose_content")
-                .Get({{"op", "message"},
-                      {"type", op_type},
-                      {"collection", field},
-                      {"kind", kind}})
-                .Increment();
-            break;
-          case 1:
-            if (field.empty())
-              throw std::invalid_argument("Blank key in op.path " + path);
-            break;
+            case 0:
+              if (field.empty())
+                throw std::invalid_argument("Blank collection in op.path " +
+                                            path);
+              metrics_factory::instance()
+                  .get_counter("firehose_content")
+                  .Get({{"op", "message"},
+                        {"type", op_type},
+                        {"collection", field},
+                        {"kind", kind}})
+                  .Increment();
+              break;
+            case 1:
+              if (field.empty())
+                throw std::invalid_argument("Blank key in op.path " + path);
+              break;
           }
           ++count;
         }
@@ -183,8 +185,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       if (message.contains("handle")) {
         std::string handle(message["handle"].template get<std::string>());
         _path_candidates.emplace_back(path_candidates{
-            std::string(matcher::HandleSentinel), // path
-            std::string(matcher::HandleSentinel), // cid
+            std::string(matcher::HandleSentinel),  // path
+            std::string(matcher::HandleSentinel),  // cid
             {{op_type, std::string(matcher::HandleSentinel), handle}}});
         processor.request_recording(
             {repo,
@@ -280,7 +282,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             {repo, bsky::current_time(), activity::matches(count)});
 
         // forward account and its matched records for possible auto-moderation
-        action_router::instance().check_wait_enqueue(repo, {repo, std::move(matches)});
+        action_router::instance().wait_enqueue({repo, std::move(matches)});
       }
     }
     // update last-seen sequence number
@@ -293,70 +295,70 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
   }
 }
 
-bsky::embed_type
-firehose_payload::context::process_embed(nlohmann::json const &embed) {
+bsky::embed_type firehose_payload::context::process_embed(
+    nlohmann::json const &embed) {
   // TODO pass along the embeds for checking
   std::string uri;
   std::string cid;
   nlohmann::json::binary_t encoded_cid;
   bsky::embed_type embed_type = bsky::embed_type_from_string(_embed_type_str);
   switch (embed_type) {
-  case bsky::embed_type::record:
-  case bsky::embed_type::record_with_media:
-    // Embedded record, this is a quote post
-    _event_type = bsky::tracked_event::quote;
-    _recorded = true;
-    uri = embed_type == bsky::embed_type::record
-              ? embed["record"]["uri"].template get<std::string>()
-              : embed["record"]["record"]["uri"].template get<std::string>();
-    _processor.request_recording(
-        {_repo,
-         bsky::time_stamp_from_iso_8601(
-             _content["createdAt"].template get<std::string>()),
-         activity::quote(_this_path, uri)});
-    // nested media must be checked
-    if (embed_type == bsky::embed_type::record_with_media) {
-      // TODO fix recursive checking
-      //      process_embed(embed["media"]);
-      add_embed(embed::record(uri));
-    }
-    break;
-  case bsky::embed_type::external:
-    add_embed(
-        embed::external(embed["external"]["uri"].template get<std::string>()));
-    if (embed["external"].contains("thumb")) {
-      encoded_cid = embed["external"]["thumb"]["ref"]
-                        .template get<nlohmann::json::binary_t>();
-      // nlohmann parser leaves a leading zero byte
-      cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
-                encoded_cid.cbegin() + 1, encoded_cid.cend())
-                .as_string();
-      add_embed(embed::image(cid));
-    }
-    break;
-  case bsky::embed_type::images:
-    // pass along the CID in each image
-    for (auto const &image : embed["images"]) {
+    case bsky::embed_type::record:
+    case bsky::embed_type::record_with_media:
+      // Embedded record, this is a quote post
+      _event_type = bsky::tracked_event::quote;
+      _recorded = true;
+      uri = embed_type == bsky::embed_type::record
+                ? embed["record"]["uri"].template get<std::string>()
+                : embed["record"]["record"]["uri"].template get<std::string>();
+      _processor.request_recording(
+          {_repo,
+           bsky::time_stamp_from_iso_8601(
+               _content["createdAt"].template get<std::string>()),
+           activity::quote(_this_path, uri)});
+      // nested media must be checked
+      if (embed_type == bsky::embed_type::record_with_media) {
+        // TODO fix recursive checking
+        //      process_embed(embed["media"]);
+        add_embed(embed::record(uri));
+      }
+      break;
+    case bsky::embed_type::external:
+      add_embed(embed::external(
+          embed["external"]["uri"].template get<std::string>()));
+      if (embed["external"].contains("thumb")) {
+        encoded_cid = embed["external"]["thumb"]["ref"]
+                          .template get<nlohmann::json::binary_t>();
+        // nlohmann parser leaves a leading zero byte
+        cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+                  encoded_cid.cbegin() + 1, encoded_cid.cend())
+                  .as_string();
+        add_embed(embed::image(cid));
+      }
+      break;
+    case bsky::embed_type::images:
+      // pass along the CID in each image
+      for (auto const &image : embed["images"]) {
+        encoded_cid =
+            image["image"]["ref"].template get<nlohmann::json::binary_t>();
+        // nlohmann parser leaves a leading zero byte
+        cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+                  encoded_cid.cbegin() + 1, encoded_cid.cend())
+                  .as_string();
+        add_embed(embed::image(cid));
+      }
+      break;
+    case bsky::embed_type::video:
       encoded_cid =
-          image["image"]["ref"].template get<nlohmann::json::binary_t>();
+          embed["video"]["ref"].template get<nlohmann::json::binary_t>();
       // nlohmann parser leaves a leading zero byte
       cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
                 encoded_cid.cbegin() + 1, encoded_cid.cend())
                 .as_string();
-      add_embed(embed::image(cid));
-    }
-    break;
-  case bsky::embed_type::video:
-    encoded_cid =
-        embed["video"]["ref"].template get<nlohmann::json::binary_t>();
-    // nlohmann parser leaves a leading zero byte
-    cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
-              encoded_cid.cbegin() + 1, encoded_cid.cend())
-              .as_string();
-    add_embed(embed::video(cid));
-    break;
-  default:
-    break;
+      add_embed(embed::video(cid));
+      break;
+    default:
+      break;
   }
   return embed_type;
 }

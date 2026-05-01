@@ -18,15 +18,15 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "blockingconcurrentqueue.h"
-#include "common/bluesky/client.hpp"
-#include "common/moderation/ozone_adapter.hpp"
-
-#include "common/bluesky/platform.hpp"
-#include "yaml-cpp/yaml.h"
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "blockingconcurrentqueue.h"
+#include "common/bluesky/client.hpp"
+#include "common/bluesky/platform.hpp"
+#include "common/moderation/ozone_adapter.hpp"
+#include "yaml-cpp/yaml.h"
 
 namespace bsky {
 namespace moderation {
@@ -70,16 +70,16 @@ struct blocks_moderation {};
 enum class facet_type { total = 1, link, mention, tag };
 inline std::string facet_type_label(const facet_type facet) {
   switch (facet) {
-  case facet_type::total:
-    return "high-total-facet-count";
-  case facet_type::link:
-    return "high-offsite-link-count";
-  case facet_type::mention:
-    return "high-user-mention-count";
-  case facet_type::tag:
-    return "high-hashtag-count";
-  default:
-    return "facet-type-unrecognized";
+    case facet_type::total:
+      return "high-total-facet-count";
+    case facet_type::link:
+      return "high-offsite-link-count";
+    case facet_type::mention:
+      return "high-user-mention-count";
+    case facet_type::tag:
+      return "high-hashtag-count";
+    default:
+      return "facet-type-unrecognized";
   }
 }
 struct high_facet_count {
@@ -87,7 +87,9 @@ struct high_facet_count {
                           const std::string &cid, const size_t count)
       : _facet(facet), _path(path), _cid(cid), _count(count) {}
   inline high_facet_count(const high_facet_count &rhs)
-      : _facet(rhs._facet), _path(rhs._path), _cid(rhs._cid),
+      : _facet(rhs._facet),
+        _path(rhs._path),
+        _cid(rhs._cid),
         _count(rhs._count) {}
   inline high_facet_count &operator=(const high_facet_count &rhs) {
     _facet = rhs._facet;
@@ -116,25 +118,26 @@ struct account_report {
 class report_agent;
 // visitor for report-specific logic
 struct report_content_visitor {
-public:
+ public:
   inline report_content_visitor(report_agent &agent, const size_t index,
                                 std::string const &did)
       : _agent(agent), _client(index), _did(did) {}
-  template <typename T> void operator()(T const &) {}
+  template <typename T>
+  void operator()(T const &) {}
 
   void operator()(filter_matches const &value);
   void operator()(link_redirection const &value);
   void operator()(blocks_moderation const &value);
   void operator()(high_facet_count const &value);
 
-private:
+ private:
   report_agent &_agent;
   size_t _client;
   std::string _did;
 };
 
 class report_agent {
-public:
+ public:
   static constexpr size_t QueueLimit = 10000;
   static constexpr std::chrono::milliseconds DequeueTimeout =
       std::chrono::milliseconds(10000);
@@ -152,16 +155,15 @@ public:
   void link_redirection_report(const size_t client, std::string const &did,
                                std::string const &path, std::string const &cid,
                                std::vector<std::string> const &uri_chain);
-  void
-  label_subject(const size_t client,
-                bsky::moderation::report_subject const &subject,
-                std::unordered_set<std::string> const &add_labels,
-                std::unordered_set<std::string> const &remove_labels,
-                bsky::moderation::acknowledge_event_comment const &comment);
+  void label_subject(
+      const size_t client, bsky::moderation::report_subject const &subject,
+      std::unordered_set<std::string> const &add_labels,
+      std::unordered_set<std::string> const &remove_labels,
+      bsky::moderation::acknowledge_event_comment const &comment);
   std::string service_did() const { return _service_did; }
   std::string project_name() const { return _project_name; }
 
-private:
+ private:
   report_agent();
   ~report_agent() = default;
 
@@ -177,5 +179,5 @@ private:
   bool _dry_run = true;
 };
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky

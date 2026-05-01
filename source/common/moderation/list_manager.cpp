@@ -18,25 +18,27 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "moderation/list_manager.hpp"
+#include "common/moderation/list_manager.hpp"
+
+#include <boost/fusion/adapted.hpp>
+#include <functional>
+
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/rest_utils.hpp"
 #include "jwt-cpp/traits/boost-json/traits.h"
-#include "matcher.hpp"
+// #include "matcher.hpp"
 #include "restc-cpp/RequestBuilder.h"
 #include "restc-cpp/SerializeJson.h"
-#include <boost/fusion/adapted.hpp>
-#include <functional>
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::byte_slice, (std::string, _type),
                           (int32_t, byteStart), (int32_t, byteEnd))
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::facet_data, (std::string, _type),
-                          (std::string, did), // mention
-                          (std::string, tag), // hashtag
-                          (std::string, uri)) // link
+                          (std::string, did),  // mention
+                          (std::string, tag),  // hashtag
+                          (std::string, uri))  // link
 
 // app.bsky.richtext.facet
 BOOST_FUSION_ADAPT_STRUCT(bsky::richtext_facet, (std::string, _type),
@@ -199,8 +201,8 @@ void list_manager::lazy_load_managed_lists() {
 }
 
 // creates empty list if if does not exist
-atproto::at_uri
-list_manager::load_or_create_list(std::string const &list_name) {
+atproto::at_uri list_manager::load_or_create_list(
+    std::string const &list_name) {
   // assumes list was not created by hand after we loaded the startup list
   // skip this check for archived lists which are only loaded
   atproto::at_uri list_uri(list_is_available(list_name));
@@ -275,9 +277,8 @@ atproto::at_uri list_manager::ensure_list_group_is_available(
 // we have in hand the URI and name for a group's active list. If it is too
 // large, archive with a timestamped rename and create a new group as the
 // active
-atproto::at_uri
-list_manager::archive_if_needed(std::string const &list_group_name,
-                                atproto::at_uri const &list_uri) {
+atproto::at_uri list_manager::archive_if_needed(
+    std::string const &list_group_name, atproto::at_uri const &list_uri) {
   auto const &list_members(
       _active_list_members_for_group.find(list_group_name));
   if (_dry_run) {
@@ -331,7 +332,8 @@ list_manager::archive_if_needed(std::string const &list_group_name,
       return list_uri;
     }
   } else {
-    REL_WARNING("Membership for list group {} not found, unexpected", list_group_name);
+    REL_WARNING("Membership for list group {} not found, unexpected",
+                list_group_name);
     return list_uri;
   }
 }
@@ -370,4 +372,47 @@ atproto::at_uri list_manager::add_account_to_list_and_group(
         .Increment();
   }
   return list_uri;
+}
+
+void list_manager::update_blacklist(
+    std::unordered_set<std::string> new_blacklist) {
+  std::lock_guard<std::mutex> lock{_lock};
+  // add new blacklist entries to Moderation List
+  std::ranges::for_each(
+      new_blacklist | std::views::filter([&](const std::string &did) {
+        return !_blacklist.contains(did);
+      }),
+      [&](const std::string &did) {
+        list_manager::instance().wait_enqueue(
+            {did, std::string(BlacklistName)});
+      });
+  std::swap(_blacklist, new_blacklist);
+}
+
+void list_manager::update_whitelist(
+    std::unordered_set<std::string> new_whitelist) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_whitelist, new_whitelist);
+}
+
+void list_manager::update_ignored(std::unordered_set<std::string> new_ignored) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_ignored, new_ignored);
+}
+
+bool list_manager::skip_account(std::string const &did) const {
+  std::lock_guard<std::mutex> lock{_lock};
+  if (_blacklist.contains(did)) {
+    REL_INFO("Skipping blacklisted account {}", did);
+    return true;
+  }
+  if (_whitelist.contains(did)) {
+    REL_INFO("Processing whitelisted account {}", did);
+    return true;
+  }
+  if (_ignored.contains(did)) {
+    REL_INFO("Skipping ignored account {}", did);
+    return true;
+  }
+  return false;
 }

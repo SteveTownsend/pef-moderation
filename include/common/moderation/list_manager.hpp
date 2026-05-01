@@ -19,6 +19,11 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include <optional>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "blockingconcurrentqueue.h"
 #include "common/bluesky/client.hpp"
 #include "common/helpers.hpp"
@@ -26,13 +31,11 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/session_manager.hpp"
 #include "jwt-cpp/jwt.h"
-#include "matcher.hpp"
-#include "project_defs.hpp"
+// #include "matcher.hpp"
+// #include "project_defs.hpp"
 #include "yaml-cpp/yaml.h"
-#include <optional>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
+
+constexpr std::string_view BlacklistName = "Soft_Deleted";
 
 namespace bsky {
 // app.bsky.richtext.facet
@@ -44,9 +47,9 @@ struct byte_slice {
 
 struct facet_data {
   std::string _type;
-  std::string did; // mention
-  std::string tag; // hashtag
-  std::string uri; // link
+  std::string did;  // mention
+  std::string tag;  // hashtag
+  std::string uri;  // link
 };
 
 // app.bsky.richtext.facet
@@ -107,7 +110,7 @@ struct get_list_response {
   std::vector<item_definition> items;
 };
 
-} // namespace bsky
+}  // namespace bsky
 
 namespace atproto {
 
@@ -136,7 +139,7 @@ struct put_record_list_request {
   bsky::list record;
 };
 
-} // namespace atproto
+}  // namespace atproto
 
 struct block_list_addition {
   std::string _did;
@@ -155,7 +158,7 @@ typedef std::unordered_map<std::string, std::unordered_set<std::string>>
     list_group_membership;
 
 class list_manager {
-public:
+ public:
   // allow a large backlog - queued items are small and we need to manage rate
   // of record creation to obey rate limits
   static constexpr size_t QueueLimit = 50000;
@@ -175,8 +178,12 @@ public:
   inline static bool is_active_list_for_group(std::string const &list_name) {
     return !list_name.contains('-');
   }
+  void update_blacklist(std::unordered_set<std::string> new_blacklist);
+  void update_whitelist(std::unordered_set<std::string> new_whitelist);
+  void update_ignored(std::unordered_set<std::string> new_ignored);
+  bool skip_account(std::string const &did) const;
 
-private:
+ private:
   list_manager();
   ~list_manager() = default;
 
@@ -190,9 +197,8 @@ private:
     return atproto::at_uri::empty();
   }
 
-  inline bool
-  is_account_in_list_group(std::string const &did,
-                           std::string const &list_group_name) const {
+  inline bool is_account_in_list_group(
+      std::string const &did, std::string const &list_group_name) const {
     auto const &list_group_members(_list_group_members.find(list_group_name));
     return list_group_members != _list_group_members.cend() &&
            list_group_members->second.contains(did);
@@ -240,16 +246,18 @@ private:
     // this is the normal case for list archival on size-limit being reached
     if (!_list_group_members.insert({as_list_group_name(list_name), {}})
              .second) {
-      REL_INFO("Registering group for list {} with uri {} failed, already "
-               "registered",
-               list_name, std::string(uri));
+      REL_INFO(
+          "Registering group for list {} with uri {} failed, already "
+          "registered",
+          list_name, std::string(uri));
     }
     if (is_active_list_for_group(list_name) &&
         !_active_list_members_for_group.insert({list_name, {}}).second) {
-      REL_ERROR("Registering active list {} with uri {} failed, "
-                "membership-list already "
-                "registered",
-                list_name, std::string(uri));
+      REL_ERROR(
+          "Registering active list {} with uri {} failed, "
+          "membership-list already "
+          "registered",
+          list_name, std::string(uri));
     }
   }
 
@@ -275,14 +283,13 @@ private:
   }
 
   atproto::at_uri load_or_create_list(std::string const &list_name);
-  atproto::at_uri
-  ensure_list_group_is_available(std::string const &list_group_name);
+  atproto::at_uri ensure_list_group_is_available(
+      std::string const &list_group_name);
   atproto::at_uri archive_if_needed(std::string const &list_group_name,
                                     atproto::at_uri const &list_uri);
 
-  atproto::at_uri
-  add_account_to_list_and_group(std::string const &did,
-                                std::string const &list_group_name);
+  atproto::at_uri add_account_to_list_and_group(
+      std::string const &did, std::string const &list_group_name);
 
   std::thread _thread;
   std::unique_ptr<bsky::client> _client;
@@ -300,5 +307,10 @@ private:
   active_list_membership_for_group _active_list_members_for_group;
   std::unordered_map<std::string, std::unordered_set<std::string>>
       _block_reasons;
+
+  std::unordered_set<std::string> _blacklist;
+  std::unordered_set<std::string> _whitelist;
+  std::unordered_set<std::string> _ignored;
+  mutable std::mutex _lock;
 };
 #endif
