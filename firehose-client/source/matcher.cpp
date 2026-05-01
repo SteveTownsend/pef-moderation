@@ -19,16 +19,18 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "matcher.hpp"
-#include "common/helpers.hpp"
-#include "common/log_wrapper.hpp"
-#include "common/metrics_factory.hpp"
-#include "common/moderation/report_agent.hpp"
-#include "moderation/list_manager.hpp"
-#include "parser.hpp"
+
 #include <exception>
 #include <fstream>
 #include <ranges>
 #include <string_view>
+
+#include "common/helpers.hpp"
+#include "common/log_wrapper.hpp"
+#include "common/metrics_factory.hpp"
+#include "common/moderation/list_manager.hpp"
+#include "common/moderation/report_agent.hpp"
+#include "parser.hpp"
 
 matcher::matcher() { _whole_word_trie.only_whole_words(); }
 
@@ -43,8 +45,7 @@ void matcher::set_config(const YAML::Node &filter_config) {
 void matcher::load_filter_file(std::string const &filename) {
   std::ifstream file;
   file.open(filename);
-  if (!file.is_open())
-    throw std::invalid_argument("Cannot open " + filename);
+  if (!file.is_open()) throw std::invalid_argument("Cannot open " + filename);
 
   std::string str;
   size_t line(0);
@@ -129,29 +130,26 @@ bool matcher::matches_any(beast::flat_buffer const &beast_data) const {
 bool matcher::check_candidates(candidate_list const &candidates) const {
   std::lock_guard lock(_lock);
   for (auto &next : candidates) {
-    if (next._value.empty())
-      continue;
+    if (next._value.empty()) continue;
     // use ICU canonical form for multilanguage support
     auto result = _substring_trie.parse_text(to_canonical(next._value));
-    if (!result.empty())
-      return true;
+    if (!result.empty()) return true;
   }
   return false;
 }
 
-match_results
-matcher::find_all_matches(beast::flat_buffer const &beast_data) const {
+match_results matcher::find_all_matches(
+    beast::flat_buffer const &beast_data) const {
   auto candidates(parser().get_candidates_from_flat_buffer(beast_data));
   return all_matches_for_candidates(candidates);
 }
 
-match_results
-matcher::all_matches_for_candidates(candidate_list const &candidates) const {
+match_results matcher::all_matches_for_candidates(
+    candidate_list const &candidates) const {
   std::lock_guard lock(_lock);
   match_results results;
   for (auto &next : candidates) {
-    if (next._value.empty())
-      continue;
+    if (next._value.empty()) continue;
     // use ICU canonical form for multilanguage support
     std::wstring canonical_form(to_canonical(next._value));
     aho_corasick::basic_trie<wchar_t>::emit_collection all_matches(
@@ -199,7 +197,6 @@ path_match_results matcher::all_matches_for_path_candidates(
 }
 
 void matcher::report_if_needed(account_filter_matches &matches) {
-
   // iterate the match results for any rules that are marked
   // auto-reportable
   // reports may be at account or content-item scope
@@ -278,43 +275,42 @@ matcher::rule::rule(std::string const &rule_string) {
     // with string_view's C++23 range constructor:
     std::string_view field(token);
     switch (count) {
-    case 0:
-      if (field.empty())
-        throw std::invalid_argument("Blank target in filter rule " +
-                                    rule_string);
-      _target = field;
-      break;
-    case 1:
-      if (field.empty())
-        throw std::invalid_argument("Blank labels in filter rule " +
-                                    rule_string);
-      for (const auto subtoken : std::views::split(std::string(field), ',')) {
-        _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
-      }
-      break;
-    case 2:
-      store_actions(field);
-      break;
-    case 3:
-      if (field.empty())
-        continue;
-      _contingent = field;
-      // make a trie of 'contingent strings' to confirm rule_string context
-      for (const auto subtoken : std::views::split(_contingent, ',')) {
-        std::string next(subtoken.cbegin(), subtoken.cend());
-        if (starts_with(next, "!")) {
-          next = next.substr(1);
-          _absent_substring_trie.insert(
-              to_canonical(std::string_view(subtoken)));
-        } else {
-          _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+      case 0:
+        if (field.empty())
+          throw std::invalid_argument("Blank target in filter rule " +
+                                      rule_string);
+        _target = field;
+        break;
+      case 1:
+        if (field.empty())
+          throw std::invalid_argument("Blank labels in filter rule " +
+                                      rule_string);
+        for (const auto subtoken : std::views::split(std::string(field), ',')) {
+          _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
         }
-      }
-      break;
-    default:
-      throw std::invalid_argument("More than " + std::to_string(field_count) +
-                                  " fields in filter rule " + rule_string);
-      break;
+        break;
+      case 2:
+        store_actions(field);
+        break;
+      case 3:
+        if (field.empty()) continue;
+        _contingent = field;
+        // make a trie of 'contingent strings' to confirm rule_string context
+        for (const auto subtoken : std::views::split(_contingent, ',')) {
+          std::string next(subtoken.cbegin(), subtoken.cend());
+          if (starts_with(next, "!")) {
+            next = next.substr(1);
+            _absent_substring_trie.insert(
+                to_canonical(std::string_view(subtoken)));
+          } else {
+            _substring_trie.insert(to_canonical(std::string_view(subtoken)));
+          }
+        }
+        break;
+      default:
+        throw std::invalid_argument("More than " + std::to_string(field_count) +
+                                    " fields in filter rule " + rule_string);
+        break;
     }
     ++count;
   }
@@ -328,11 +324,9 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
                     std::string const &actions, std::string const &contingent,
                     std::string const &categories, const int rule_id,
                     const bool track, const bool label) {
-  if (filter.empty())
-    throw std::invalid_argument("Blank filter");
+  if (filter.empty()) throw std::invalid_argument("Blank filter");
   _target = filter;
-  if (labels.empty())
-    throw std::invalid_argument("Blank labels");
+  if (labels.empty()) throw std::invalid_argument("Blank labels");
   for (const auto subtoken : std::views::split(std::string(labels), ',')) {
     _labels.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
   }
@@ -359,8 +353,7 @@ matcher::rule::rule(std::string const &filter, std::string const &labels,
       }
     }
   }
-  if (categories.empty())
-    throw std::invalid_argument("Blank categories");
+  if (categories.empty()) throw std::invalid_argument("Blank categories");
   for (const auto subtoken : std::views::split(std::string(categories), ',')) {
     _categories.push_back(std::string(subtoken.cbegin(), subtoken.cend()));
   }
@@ -416,10 +409,15 @@ void matcher::rule::store_actions(std::string_view actions) {
 }
 
 matcher::rule::rule(matcher::rule const &rhs)
-    : _target(rhs._target), _labels(rhs._labels), _id(rhs._id),
-      _track(rhs._track), _report(rhs._report), _label(rhs._label),
+    : _target(rhs._target),
+      _labels(rhs._labels),
+      _id(rhs._id),
+      _track(rhs._track),
+      _report(rhs._report),
+      _label(rhs._label),
       _content_scope(rhs._content_scope),
-      _block_list_name(rhs._block_list_name), _match_type(rhs._match_type),
+      _block_list_name(rhs._block_list_name),
+      _match_type(rhs._match_type),
       _contingent(rhs._contingent) {
   // make a trie that is used to confirm the rule match
   for (const auto subtoken : std::views::split(_contingent, ',')) {
@@ -435,13 +433,12 @@ matcher::rule::rule(matcher::rule const &rhs)
 
 bool matcher::rule::passes_contingent_checks(
     std::string const &candidate) const {
-  if (_contingent.empty())
-    return true;
+  if (_contingent.empty()) return true;
   // use ICU canonical form for multilanguage support
   auto normalized(to_canonical(candidate));
-  auto required = _substring_trie.parse_text(normalized); // at least one match
+  auto required = _substring_trie.parse_text(normalized);  // at least one match
   auto disallowed =
-      _absent_substring_trie.parse_text(normalized); // zero matches
+      _absent_substring_trie.parse_text(normalized);  // zero matches
 
   return !required.empty() && disallowed.empty();
 }
@@ -453,8 +450,7 @@ matcher::rule matcher::find_rule(std::wstring const &key) const {
 
 matcher::rule matcher::find_rule_unchecked(std::wstring const &key) const {
   auto result(_rule_lookup.find(key));
-  if (result != _rule_lookup.cend())
-    return result->second;
+  if (result != _rule_lookup.cend()) return result->second;
 
   std::ostringstream oss;
   oss << "Rule lookup failed for key " << wstring_to_utf8(key);

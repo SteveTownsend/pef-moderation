@@ -1,4 +1,4 @@
-project(firehose_client VERSION 2.8.8 LANGUAGES C CXX)
+project(firehose_client VERSION 2.8.9 LANGUAGES C CXX)
 
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 
@@ -14,8 +14,7 @@ add_executable(firehose_client
   ./source/payload.cpp
   ./source/moderation/action_router.cpp
   ./source/moderation/auxiliary_data.cpp
-  ./source/moderation/embed_checker.cpp
-  ./source/moderation/list_manager.cpp)
+  ./source/moderation/embed_checker.cpp)
 
 target_include_directories(firehose_client PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(firehose_client pef-tools::common ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}

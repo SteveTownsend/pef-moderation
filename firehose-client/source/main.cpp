@@ -38,9 +38,14 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
+#include "common/moderation/list_manager.hpp"
 #if defined(__GNUC__)
 #include "common/activity/neo4j_adapter.hpp"
 #endif
+#include <chrono>
+#include <iostream>
+#include <thread>
+
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "datasource.hpp"
@@ -48,13 +53,9 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
-#include "moderation/list_manager.hpp"
 #include "parser.hpp"
 #include "payload.hpp"
 #include "project_defs.hpp"
-#include <chrono>
-#include <iostream>
-#include <thread>
 
 int main(int argc, char **argv) {
   bool log_ready(false);

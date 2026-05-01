@@ -27,8 +27,6 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "yaml-cpp/yaml.h"
 
-constexpr std::string_view BlacklistName = "Soft_Deleted";
-
 class action_router {
  public:
   static constexpr size_t QueueLimit = 1000;
@@ -36,12 +34,7 @@ class action_router {
   static action_router &instance();
 
   void start();
-  void check_wait_enqueue(std::string const &did,
-                          account_filter_matches &&value);
   void wait_enqueue(account_filter_matches &&value);
-  void update_blacklist(std::unordered_set<std::string> new_blacklist);
-  void update_whitelist(std::unordered_set<std::string> new_whitelist);
-  void update_ignored(std::unordered_set<std::string> new_ignored);
 
  private:
   action_router();
@@ -51,9 +44,5 @@ class action_router {
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<account_filter_matches> _queue;
   std::shared_ptr<matcher> _matcher;
-  std::unordered_set<std::string> _blacklist;
-  std::unordered_set<std::string> _whitelist;
-  std::unordered_set<std::string> _ignored;
-  mutable std::mutex _lock;
 };
 #endif

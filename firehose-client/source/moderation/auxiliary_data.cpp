@@ -18,10 +18,11 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/auxiliary_data.hpp"
+
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/moderation/list_manager.hpp"
 #include "matcher.hpp"
-#include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 
 namespace bsky {
@@ -76,16 +77,17 @@ void auxiliary_data::start(YAML::Node const &settings) {
 }
 
 void auxiliary_data::prepare_statements() {
-  _cx->prepare("add_checkpoint", "INSERT INTO firehose_checkpoint (emitted_at, "
-                                 "seq) VALUES ($1, $2)");
-  _cx->prepare("update_cursor", "UPDATE firehose_state SET last_processed = "
-                                "$1, emitted_at = $2 WHERE true");
+  _cx->prepare("add_checkpoint",
+               "INSERT INTO firehose_checkpoint (emitted_at, "
+               "seq) VALUES ($1, $2)");
+  _cx->prepare("update_cursor",
+               "UPDATE firehose_state SET last_processed = "
+               "$1, emitted_at = $2 WHERE true");
 }
 
 void auxiliary_data::update_rewind_point(const int64_t seq,
                                          const std::string &emitted_at) {
-  if (!_enable_rewind)
-    return;
+  if (!_enable_rewind) return;
   // TODO should be safe but not guaranteed always accurate for lock-free read
   // seq/emitted_at may mismatch
   // emitted_at may contain part of old and new values
@@ -102,8 +104,7 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
 
 // prepare for data backfill - for malformed data, continue but do not backfill
 void auxiliary_data::set_rewind_point() {
-  if (!_enable_rewind)
-    return;
+  if (!_enable_rewind) return;
   pqxx::work tx(*_cx);
   bool first(true);
   auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
@@ -113,8 +114,7 @@ void auxiliary_data::set_rewind_point() {
 }
 
 void auxiliary_data::check_rewind_point() {
-  if (!_enable_rewind)
-    return;
+  if (!_enable_rewind) return;
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.
@@ -151,8 +151,7 @@ void auxiliary_data::check_rewind_point() {
 
 // Don't refresh until interval has elapsed
 void auxiliary_data::update_match_filters() {
-  if (!matcher::shared().use_db_for_rules())
-    return;
+  if (!matcher::shared().use_db_for_rules()) return;
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::minutes>(
           now - _last_match_filter_refresh) > MatchFiltersRefreshInterval) {
@@ -170,10 +169,11 @@ void auxiliary_data::update_match_filters() {
         replacement.add_rule(filter, labels, actions, contingent.value_or(""),
                              categories.value_or(""), rule_id, track, label);
       } catch (std::exception const &exc) {
-        REL_ERROR("check_refresh_match_filters "
-                  "'id={}|track={}|label={}|{}|{}|{}|{}' error {}",
-                  rule_id, track, label, filter, labels, actions,
-                  contingent.value_or(""), categories.value_or(""), exc.what());
+        REL_ERROR(
+            "check_refresh_match_filters "
+            "'id={}|track={}|label={}|{}|{}|{}|{}' error {}",
+            rule_id, track, label, filter, labels, actions,
+            contingent.value_or(""), categories.value_or(""), exc.what());
         load_failed = true;
       }
     }
@@ -211,7 +211,8 @@ void auxiliary_data::update_popular_hosts() {
 void auxiliary_data::update_blacklisted_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(
-          now - _last_blacklisted_accounts_refresh) > BlacklistedAccountsRefreshInterval) {
+          now - _last_blacklisted_accounts_refresh) >
+      BlacklistedAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
     bool load_failed(false);
     std::unordered_set<std::string> new_blacklist;
@@ -222,7 +223,7 @@ void auxiliary_data::update_blacklisted_accounts() {
 
     if (!load_failed) {
       // switch replacement rules into the main matcher
-      action_router::instance().update_blacklist(std::move(new_blacklist));
+      list_manager::instance().update_blacklist(std::move(new_blacklist));
       _last_blacklisted_accounts_refresh = std::chrono::steady_clock::now();
     }
   }
@@ -231,7 +232,8 @@ void auxiliary_data::update_blacklisted_accounts() {
 void auxiliary_data::update_whitelisted_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(
-          now - _last_whitelisted_accounts_refresh) > WhitelistedAccountsRefreshInterval) {
+          now - _last_whitelisted_accounts_refresh) >
+      WhitelistedAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
     bool load_failed(false);
     std::unordered_set<std::string> new_whitelist;
@@ -242,7 +244,7 @@ void auxiliary_data::update_whitelisted_accounts() {
 
     if (!load_failed) {
       // switch replacement rules into the main matcher
-      action_router::instance().update_whitelist(std::move(new_whitelist));
+      list_manager::instance().update_whitelist(std::move(new_whitelist));
       _last_whitelisted_accounts_refresh = std::chrono::steady_clock::now();
     }
   }
@@ -251,7 +253,8 @@ void auxiliary_data::update_whitelisted_accounts() {
 void auxiliary_data::update_ignored_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(
-          now - _last_ignored_accounts_refresh) > IgnoredAccountsRefreshInterval) {
+          now - _last_ignored_accounts_refresh) >
+      IgnoredAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
     bool load_failed(false);
     std::unordered_set<std::string> new_ignored;
@@ -262,7 +265,7 @@ void auxiliary_data::update_ignored_accounts() {
 
     if (!load_failed) {
       // switch replacement rules into the main matcher
-      action_router::instance().update_ignored(std::move(new_ignored));
+      list_manager::instance().update_ignored(std::move(new_ignored));
       _last_ignored_accounts_refresh = std::chrono::steady_clock::now();
     }
   }
@@ -287,5 +290,5 @@ std::string auxiliary_data::safe_connection_string() const {
   return _connection_string;
 }
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky

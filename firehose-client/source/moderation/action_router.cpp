@@ -25,7 +25,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/metrics_factory.hpp"
 #include "common/moderation/report_agent.hpp"
 #include "matcher.hpp"
-#include "moderation/list_manager.hpp"
 
 action_router &action_router::instance() {
   static action_router my_instance;
@@ -48,54 +47,6 @@ void action_router::start() {
     }
     REL_INFO("action_router stopping");
   });
-}
-
-void action_router::update_blacklist(
-    std::unordered_set<std::string> new_blacklist) {
-  std::lock_guard<std::mutex> lock{_lock};
-  // add new blacklist entries to Moderation List
-  std::ranges::for_each(
-      new_blacklist | std::views::filter([&](const std::string &did) {
-        return !_blacklist.contains(did);
-      }),
-      [&](const std::string &did) {
-        list_manager::instance().wait_enqueue(
-            {did, std::string(BlacklistName)});
-      });
-  std::swap(_blacklist, new_blacklist);
-}
-
-void action_router::update_whitelist(
-    std::unordered_set<std::string> new_whitelist) {
-  std::lock_guard<std::mutex> lock{_lock};
-  std::swap(_whitelist, new_whitelist);
-}
-
-void action_router::update_ignored(
-    std::unordered_set<std::string> new_ignored) {
-  std::lock_guard<std::mutex> lock{_lock};
-  std::swap(_ignored, new_ignored);
-}
-
-void action_router::check_wait_enqueue(std::string const &did,
-                                       account_filter_matches &&value) {
-  // skip backlisted accounts
-  {
-    std::lock_guard<std::mutex> lock{_lock};
-    if (_blacklist.contains(did)) {
-      REL_INFO("Skipping blacklisted account {}", did);
-      return;
-    }
-    if (_whitelist.contains(did)) {
-      REL_INFO("Processing whitelisted account {}", did);
-      return;
-    }
-    if (_ignored.contains(did)) {
-      REL_INFO("Skipping ignored account {}", did);
-      return;
-    }
-  }
-  wait_enqueue(std::move(value));
 }
 
 void action_router::wait_enqueue(account_filter_matches &&value) {

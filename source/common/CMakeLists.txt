@@ -12,6 +12,7 @@ add_library(common STATIC
   ./activity/event_cache.cpp
   ./activity/event_recorder.cpp
   ./activity/neo4j_adapter.cpp
+  ./moderation/list_manager.cpp
   ./moderation/ozone_adapter.cpp
   ./moderation/report_agent.cpp
   ./moderation/session_manager.cpp)
