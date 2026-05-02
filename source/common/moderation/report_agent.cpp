@@ -164,7 +164,7 @@ void report_content_visitor::operator()(filter_matches const &value) {
     if (next_scope.second._labels.empty()) {
       // no label, report for review unless ignoring the account.
       if (list_manager::instance().skip_account(value._did)) {
-        return;
+        continue;
       }
       _agent.string_match_report(
           _client, value._did, next_scope.first, next_scope.second._cid,
