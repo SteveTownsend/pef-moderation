@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_set>
 
 #include "blockingconcurrentqueue.h"
+#include "common/activity/rate_observer.hpp"
 #include "common/bluesky/client.hpp"
 #include "common/bluesky/platform.hpp"
 #include "common/moderation/ozone_adapter.hpp"
@@ -142,7 +143,9 @@ struct report_content_visitor {
 
 class report_agent {
  public:
-  static constexpr size_t QueueLimit = 10000;
+  static constexpr size_t QueueLimit =
+      50000;  // roughly: accommodate reports on 24 hours of backlog from the
+              // relay
   static constexpr std::chrono::milliseconds DequeueTimeout =
       std::chrono::milliseconds(10000);
   static constexpr size_t DefaultNumberOfReportingThreads = 3;
@@ -180,6 +183,16 @@ class report_agent {
   std::string _handle;
   std::string _did;
   std::string _service_did;
+
+  // Label rate limiters, values per
+  // https://docs.bsky.app/docs/advanced-guides/rate-limits
+  // Units must be approppriate for calculation of sleep when rate-limited
+  activity::rate_observer<std::chrono::seconds, int>
+      _label_per_day_rate_observer{std::chrono::seconds(24 * 60 * 60), 100000};
+  activity::rate_observer<std::chrono::seconds, int>
+      _label_per_hour_rate_observer{std::chrono::seconds(60 * 60), 10000};
+  activity::rate_observer<std::chrono::milliseconds, int>
+      _label_per_second_rate_observer{std::chrono::milliseconds(1000), 5};
   bool _dry_run = true;
 };
 

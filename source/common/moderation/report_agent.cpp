@@ -22,6 +22,7 @@ http://www.fsf.org/licensing/licenses
 
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
+#include <chrono>
 #include <functional>
 
 #include "common/controller.hpp"
@@ -155,10 +156,43 @@ void report_agent::label_subject(
     std::unordered_set<std::string> const &add_labels,
     std::unordered_set<std::string> const &remove_labels,
     bsky::moderation::acknowledge_event_comment const &comment) {
+  // Check rate limits before attempting to label.
+  using std::chrono::system_clock;
+  system_clock::time_point now = system_clock::now();
+  bool rate_limited(false);
+  while (!_label_per_second_rate_observer.observe_if_permitted() &&
+         controller::instance().is_active()) {
+    rate_limited = true;
+    std::this_thread::sleep_for(
+        _label_per_second_rate_observer.event_interval());
+  }
+  while (!_label_per_hour_rate_observer.observe_if_permitted() &&
+         controller::instance().is_active()) {
+    rate_limited = true;
+    std::this_thread::sleep_for(_label_per_hour_rate_observer.event_interval());
+  }
+  while (!_label_per_day_rate_observer.observe_if_permitted() &&
+         controller::instance().is_active()) {
+    rate_limited = true;
+    std::this_thread::sleep_for(_label_per_day_rate_observer.event_interval());
+  }
+
+  if (!controller::instance().is_active()) {
+    REL_WARNING("Skipping label for account {}, labeler backlog {}",
+                subject.did, _queue.size_approx());
+    return;
+  }
+  if (rate_limited) {
+    REL_INFO(
+        "Rate limited labeling account {}, labeler backlog now{}. "
+        "Waited {} milliseconds to label.",
+        subject.did, _queue.size_approx(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            system_clock::now() - now)
+            .count());
+  }
   _pds_clients[client]->label_subject(subject, add_labels, remove_labels,
                                       comment);
-  // Crude rate limiting - hard code a delay here
-  std::this_thread::sleep_for(LabelDailyRateLimitDelay);
 }
 
 void report_content_visitor::operator()(filter_matches const &value) {
