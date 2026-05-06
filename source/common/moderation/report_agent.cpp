@@ -157,6 +157,8 @@ void report_agent::label_subject(
     bsky::moderation::acknowledge_event_comment const &comment) {
   _pds_clients[client]->label_subject(subject, add_labels, remove_labels,
                                       comment);
+  // Crude rate limiting - hard code a delay here
+  std::this_thread::sleep_for(LabelDailyRateLimitDelay);
 }
 
 void report_content_visitor::operator()(filter_matches const &value) {
