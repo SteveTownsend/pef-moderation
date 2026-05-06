@@ -89,7 +89,7 @@ class rate_observer {
         static_cast<float>(_window_size.count());
     return static_cast<COUNT_UNIT>(
         std::floor((previous_window_weight * static_cast<float>(_last_count)) +
-                   static_cast<float>(++_current_count)));
+                   static_cast<float>(_current_count)));
   }
 
   // storage optimized order of fields
