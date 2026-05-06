@@ -186,13 +186,14 @@ class report_agent {
 
   // Label rate limiters, values per
   // https://docs.bsky.app/docs/advanced-guides/rate-limits
-  // Units must be approppriate for calculation of sleep when rate-limited
-  activity::rate_observer<std::chrono::seconds, int>
-      _label_per_day_rate_observer{std::chrono::seconds(24 * 60 * 60), 100000};
-  activity::rate_observer<std::chrono::seconds, int>
-      _label_per_hour_rate_observer{std::chrono::seconds(60 * 60), 10000};
+  // Units must be appropriate for calculation of fine-grain sleep when
+  // rate-limited
   activity::rate_observer<std::chrono::milliseconds, int>
-      _label_per_second_rate_observer{std::chrono::milliseconds(1000), 5};
+      _label_per_day_rate_observer{std::chrono::hours(24), 100000};
+  activity::rate_observer<std::chrono::milliseconds, int>
+      _label_per_hour_rate_observer{std::chrono::minutes(60), 10000};
+  activity::rate_observer<std::chrono::milliseconds, int>
+      _label_per_second_rate_observer{std::chrono::seconds(1), 5};
   bool _dry_run = true;
 };
 
