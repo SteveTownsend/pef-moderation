@@ -28,6 +28,10 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 #include "yaml-cpp/yaml.h"
 
+// per https://github.com/SteveTownsend/pef-moderation/issues/248
+std::chrono::milliseconds constexpr LabelDailyRateLimitDelay =
+    std::chrono::milliseconds((100000 / (24 * 60 * 60)) * 1000);
+
 namespace bsky {
 namespace moderation {
 
