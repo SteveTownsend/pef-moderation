@@ -179,13 +179,14 @@ void report_agent::label_subject(
 
   if (!controller::instance().is_active()) {
     REL_WARNING("Skipping label for account {}, labeler backlog {}",
-                subject.did, _queue.size_approx());
+                !subject.did.empty() ? subject.did : subject.uri,
+                _queue.size_approx());
     return;
   }
   if (rate_limited) {
     REL_INFO(
-        "Rate limited labeling account {}, labeler backlog now{}. "
-        "Waited {} milliseconds to label.",
+        "Rate limited labeling {}, labeler backlog now {}, "
+        "delay {} ms",
         subject.did, _queue.size_approx(),
         std::chrono::duration_cast<std::chrono::milliseconds>(
             system_clock::now() - now)
