@@ -70,7 +70,7 @@ constexpr std::string_view EventAcknowledge =
 constexpr std::string_view EventTag = "tools.ozone.moderation.defs#modEventTag";
 constexpr std::string_view EventComment =
     "tools.ozone.moderation.defs#modEventComment";
-} // namespace moderation
+}  // namespace moderation
 
 constexpr std::string_view DownReasonDeactivated = "deactivated";
 constexpr std::string_view DownReasonDeleted = "deleted";
@@ -132,8 +132,9 @@ inline bsky::time_stamp current_time() {
 
 // Parse ISO8601 time
 bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time);
+bool is_strict_iso_8601(std::string const &date_time);
 
-} // namespace bsky
+}  // namespace bsky
 
 namespace atproto {
 
@@ -177,9 +178,9 @@ struct at_uri {
   at_uri(at_uri const &uri);
   at_uri &operator=(at_uri const &uri);
   at_uri(at_uri &&uri);
-  std::string _authority; // in practice, this is a DID
+  std::string _authority;  // in practice, this is a DID
   std::string _collection;
-  std::string _rkey; // optional
+  std::string _rkey;  // optional
   bool _empty = false;
   inline operator std::string() const {
     return make_at_uri(_authority, _collection, _rkey);
@@ -190,7 +191,7 @@ struct at_uri {
     return empty_uri;
   }
 
-private:
+ private:
   inline at_uri() : _empty(true) {}
 };
 
@@ -223,8 +224,9 @@ inline bool operator==(const at_uri &lhs, const at_uri &rhs) {
          lhs._collection == rhs._collection && lhs._rkey == rhs._rkey;
 }
 
-template <typename IteratorType> class cid_decoder {
-public:
+template <typename IteratorType>
+class cid_decoder {
+ public:
   cid_decoder(IteratorType begin, IteratorType end)
       : _begin(begin), _end(end), _current(begin) {}
 
@@ -250,7 +252,7 @@ public:
     return cid.to_string(Multiformats::Multibase::Protocol::Base32);
   }
 
-private:
+ private:
   unsigned char get() const { return *_current++; }
 
   uint64_t read_u64_leb128() const {
@@ -272,6 +274,6 @@ private:
   mutable IteratorType _current;
 };
 
-} // namespace atproto
+}  // namespace atproto
 
 #endif
