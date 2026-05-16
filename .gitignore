@@ -15,5 +15,5 @@ labeler-update/logs/
 debug-gcc/
 logging-gcc/
 release-gcc/
-repo-reader/config/db_crawler_dev.yml
+repo-reader/config/repo_reader_dev.yml
 repo-reader/logs/
