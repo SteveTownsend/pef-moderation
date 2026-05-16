@@ -1,9 +1,12 @@
-#include "parser.hpp"
-#include "testdefs.hpp"
-#include <aho_corasick/aho_corasick.hpp>
+#include "common/parser.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <aho_corasick/aho_corasick.hpp>
 #include <ios>
+
+#include "testdefs.hpp"
 
 #if 0
 // Detection logic for switching

@@ -20,26 +20,27 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/activity/event_recorder.hpp"
-#include "common/helpers.hpp"
-#include "matcher.hpp"
-#include "parser.hpp"
-#include "post_processor.hpp"
 #include <unordered_map>
 
+#include "common/activity/event_recorder.hpp"
+#include "common/helpers.hpp"
+#include "common/parser.hpp"
+#include "matcher.hpp"
+#include "post_processor.hpp"
+
 class jetstream_payload {
-public:
+ public:
   jetstream_payload();
   jetstream_payload(std::string json_msg, match_results matches);
   void handle(post_processor<jetstream_payload> &processor);
   inline std::string to_string() const { return _json_msg; }
 
-private:
+ private:
   std::string _json_msg;
   match_results _matches;
 };
 class firehose_payload {
-public:
+ public:
   firehose_payload();
   firehose_payload(parser &my_parser);
   void handle(post_processor<firehose_payload> &processor);
@@ -52,7 +53,7 @@ public:
     return oss.str();
   }
 
-private:
+ private:
   struct context {
     inline context(post_processor<firehose_payload> &processor,
                    nlohmann::json const &content)
@@ -69,7 +70,7 @@ private:
     }
     auto const &get_embeds() const { return _embeds; }
 
-  private:
+   private:
     post_processor<firehose_payload> &_processor;
     nlohmann::json const &_content;
     std::vector<embed::embed_info> _embeds;

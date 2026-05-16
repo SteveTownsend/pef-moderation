@@ -1,0 +1,7 @@
+// the configured options and settings for
+// clang-format off
+#define PROJECT_NAME_VERSION_MAJOR @repo_reader_VERSION_MAJOR@
+#define PROJECT_NAME_VERSION_MINOR @repo_reader_VERSION_MINOR@
+#define PROJECT_NAME_VERSION_PATCH @repo_reader_VERSION_PATCH@
+#define PROJECT_NAME "@PROJECT_NAME@"
+// clang-format on

@@ -1,0 +1,24 @@
+project(repo_reader VERSION 1.0.0 LANGUAGES C CXX)
+
+configure_file(./cmake/repo_reader_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
+
+add_compile_definitions(
+  _REPO_READER
+)
+
+add_executable(repo_reader ./source/main.cpp)
+
+target_include_directories(repo_reader PUBLIC ./include ../include ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(repo_reader ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ICU_LIBRARIES}
+  nlohmann_json::nlohmann_json spdlog yaml-cpp::yaml-cpp prometheus-cpp::pull pqxx jwt-cpp::jwt-cpp pef-tools::common)
+
+if(UNIX)
+  target_link_libraries(repo_reader stdc++ ${RESTC_CPP_LIBRARIES} ${ZLIB_LIBRARY}  multiformats)
+else()
+  target_link_libraries(repo_reader ${ZLIB_LIBRARY} ${REST_CPP_LIBRARY} multiformats)
+endif()
+
+# TODO decide if I care about this
+# include(CTest)
+# enable_testing()
+# add_subdirectory(test)

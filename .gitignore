@@ -4,6 +4,7 @@ firehose-client/config/full_config_prod.yml
 firehose-client/promtail/
 firehose-client/config/promtail.local.yaml
 firehose-client/config/full_config_dev.yml
+firehose-client/config/graph_db_config_dev.yml
 debug-msvc/
 logging-msvc/
 release-msvc/
@@ -14,4 +15,5 @@ labeler-update/logs/
 debug-gcc/
 logging-gcc/
 release-gcc/
-firehose-client/config/graph_db_config_dev.yml
+repo-reader/config/db_crawler_dev.yml
+repo-reader/logs/

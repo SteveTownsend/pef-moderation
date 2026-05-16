@@ -19,10 +19,12 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/bluesky/client.hpp"
-#include "common/rest_utils.hpp"
+
 #include <algorithm>
 #include <boost/fusion/adapted.hpp>
 #include <functional>
+
+#include "common/rest_utils.hpp"
 
 // app.bsky.actor.getProfiles
 BOOST_FUSION_ADAPT_STRUCT(bsky::profile_view_detailed, (std::string, did),
@@ -111,6 +113,62 @@ void client::set_config(YAML::Node const &settings) {
   } catch (std::exception const &exc) {
     REL_ERROR("Error processing Bluesky client config {}", exc.what());
   }
+}
+
+std::string client::do_get_file(std::string const &relative_path,
+                                std::optional<get_callback_t> callback) {
+  size_t retries(0);
+  std::string response;
+
+  while (retries < 5) {
+    try {
+      restc_cpp::SerializeProperties properties;
+      properties.name_mapping = &json::TypeFieldMapping;
+      properties.max_memory_consumption = 0;  // trust the server
+      response =
+          _rest_client
+              ->ProcessWithPromiseT<std::string>([&](restc_cpp::Context &ctx) {
+                // This is a co-routine, running in a worker-thread
+                // Construct a request to the server
+                restc_cpp::RequestBuilder builder(ctx);
+                builder.Get(_host + relative_path);
+                if (_use_token) {
+                  builder.Header(
+                      "Authorization",
+                      std::string("Bearer " + _session->access_token()));
+                }
+                // Collect overrides if present
+                if (callback.has_value()) {
+                  callback.value()(builder);
+                }
+                auto reply = builder.Execute();
+
+                // Return the file data through C++
+                // future<>
+                return reply->GetBodyAsString(1024 * 1024 * 1024);
+              })
+
+              // Get the Post instance from the future<>, or any C++
+              // exception thrown within the lambda.
+              .get();
+      REL_TRACE("GET of file OK for {}", relative_path);
+      break;
+    } catch (boost::system::system_error const &exc) {
+      if (exc.code().value() == boost::asio::error::eof &&
+          exc.code().category() == boost::asio::error::get_misc_category()) {
+        REL_WARNING("IoReaderImpl::ReadSome(GET): asio eof, retry");
+        ++retries;
+      } else {
+        // unrecoverable error
+        REL_ERROR("GET for {} Boost exception {}", relative_path, exc.what())
+        throw;
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("GET for {} exception {}", relative_path, exc.what())
+      throw;
+    }
+  }
+  return response;
 }
 
 std::string client::raw_post(std::string const &relative_path,
@@ -250,7 +308,8 @@ void client::acknowledge_subject(
   }
   try {
     // TODO use a variant to branch for account/content
-    bsky::moderation::emit_event_acknowledge_request request(subject, ack_all_for_account);
+    bsky::moderation::emit_event_acknowledge_request request(
+        subject, ack_all_for_account);
     request.createdBy = _did;
     request.event.comment = oss.str();
 
@@ -293,8 +352,8 @@ void client::tag_report_subject(
   }
 }
 
-std::unordered_set<bsky::profile_view_detailed>
-client::get_profiles(std::unordered_set<std::string> const &dids) {
+std::unordered_set<bsky::profile_view_detailed> client::get_profiles(
+    std::unordered_set<std::string> const &dids) {
   std::unordered_set<bsky::profile_view_detailed> profiles;
   profiles.reserve(dids.size());
   size_t next(0);
@@ -338,4 +397,13 @@ bsky::profile_view_detailed client::get_profile(std::string const &did) {
                                              callback);
 }
 
-} // namespace bsky
+std::string client::get_repo(std::string const &did) {
+  bsky::client::get_callback_t callback =
+      [&](restc_cpp::RequestBuilder &builder) {
+        builder.Argument("did", did);
+        // omit optional revision ('rev')
+      };
+  return do_get_file("com.atproto.sync.getRepo", callback);
+}
+
+}  // namespace bsky

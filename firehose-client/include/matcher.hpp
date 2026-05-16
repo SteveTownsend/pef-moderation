@@ -19,8 +19,8 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "common/helpers.hpp"
-#include "common/rest_utils.hpp"
+#include <yaml-cpp/yaml.h>
+
 #include <aho_corasick/aho_corasick.hpp>
 #include <boost/beast/core.hpp>
 #include <mutex>
@@ -28,25 +28,12 @@ http://www.fsf.org/licensing/licenses
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
-#include <yaml-cpp/yaml.h>
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
+#include "common/helpers.hpp"
+#include "common/parser.hpp"
+#include "common/rest_utils.hpp"
 
-// filter match candidate
-struct candidate {
-  std::string _type;
-  std::string _field;
-  std::string _value;
-  bool operator==(candidate const &rhs) const;
-};
-// Path/cid->candidate association
-typedef std::vector<candidate> candidate_list;
-struct path_candidates {
-  std::string _path;
-  std::string _cid;
-  candidate_list _candidates;
-};
-typedef std::vector<path_candidates> path_candidate_list;
+namespace beast = boost::beast;  // from <boost/beast.hpp>
 
 // Stores context that matched one or more filters, and the matches
 struct match_result {
@@ -72,7 +59,7 @@ inline bool candidate::operator==(candidate const &rhs) const {
 }
 
 class matcher {
-public:
+ public:
   static constexpr std::string_view HandleSentinel = "handle";
   inline static matcher &shared() {
     static matcher instance;
@@ -96,8 +83,8 @@ public:
   bool check_candidates(candidate_list const &candidates) const;
 
   match_results find_all_matches(beast::flat_buffer const &beast_data) const;
-  match_results
-  all_matches_for_candidates(candidate_list const &candidates) const;
+  match_results all_matches_for_candidates(
+      candidate_list const &candidates) const;
   path_match_results all_matches_for_path_candidates(
       path_candidate_list const &path_candidates) const;
 
@@ -105,53 +92,42 @@ public:
   inline bool use_db_for_rules() const { return _use_db_for_rules; }
 
   class rule {
-  public:
+   public:
     enum class match_type { substring, whole_word };
     enum class content_scope { profile, any };
     enum class report_scope { none, content, account };
 
     inline content_scope content_scope_from_string(std::string_view str) {
-      if (str == "profile")
-        return content_scope::profile;
-      if (str == "any")
-        return content_scope::any;
+      if (str == "profile") return content_scope::profile;
+      if (str == "any") return content_scope::any;
       std::ostringstream err;
       err << "Bad content scope " << str;
       throw std::invalid_argument(err.str());
     }
 
     inline report_scope report_scope_from_string(std::string_view str) {
-      if (str == "content")
-        return report_scope::content;
-      if (str == "account")
-        return report_scope::account;
-      if (str == "none")
-        return report_scope::none;
+      if (str == "content") return report_scope::content;
+      if (str == "account") return report_scope::account;
+      if (str == "none") return report_scope::none;
       // Legacy boolean values - conservative
-      if (str == "false")
-        return report_scope::none;
-      if (str == "true")
-        return report_scope::content;
+      if (str == "false") return report_scope::none;
+      if (str == "true") return report_scope::content;
       std::ostringstream err;
       err << "Bad report scope " << str;
       throw std::invalid_argument(err.str());
     }
 
     inline match_type match_type_from_string(std::string_view str) {
-      if (str == "substring")
-        return match_type::substring;
-      if (str == "word")
-        return match_type::whole_word;
+      if (str == "substring") return match_type::substring;
+      if (str == "word") return match_type::whole_word;
       std::ostringstream err;
       err << "Bad match type " << str;
       throw std::invalid_argument(err.str());
     }
 
     inline std::string match_type_to_string(match_type my_match_type) {
-      if (my_match_type == match_type::substring)
-        return "substring";
-      if (my_match_type == match_type::whole_word)
-        return "word";
+      if (my_match_type == match_type::substring) return "substring";
+      if (my_match_type == match_type::whole_word) return "word";
       return std::string{};
     }
 
@@ -187,7 +163,7 @@ public:
     static constexpr size_t field_count = 7;
     bool passes_contingent_checks(std::string const &candidate) const;
 
-  private:
+   private:
     void store_actions(std::string_view actions);
     mutable aho_corasick::wtrie _substring_trie;
     mutable aho_corasick::wtrie _absent_substring_trie;
@@ -195,7 +171,7 @@ public:
 
   rule find_rule(std::wstring const &key) const;
 
-private:
+ private:
   bool insert_rule(rule &&new_rule);
   rule find_rule_unchecked(std::wstring const &key) const;
 

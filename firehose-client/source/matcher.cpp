@@ -30,7 +30,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/metrics_factory.hpp"
 #include "common/moderation/list_manager.hpp"
 #include "common/moderation/report_agent.hpp"
-#include "parser.hpp"
+#include "common/parser.hpp"
 
 matcher::matcher() { _whole_word_trie.only_whole_words(); }
 

@@ -1,5 +1,5 @@
 /*************************************************************************
-Public Education Forum Moderation DB Crawler
+Public Education Forum Moderation Labeler Update
 Copyright (c) Steve Townsend 2025
 
 >>> SOURCE LICENSE >>>
@@ -18,15 +18,16 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include <chrono>
+#include <iostream>
+#include <thread>
+
 #include "common/bluesky/client.hpp"
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "project_defs.hpp"
 #include "restc-cpp/logging.h"
-#include <chrono>
-#include <iostream>
-#include <thread>
 
 namespace bsky {
 namespace moderation {
@@ -71,7 +72,7 @@ struct labeler_update_signed {
   labeler_update_operation operation;
 };
 
-} // namespace moderation
+}  // namespace moderation
 
 template <>
 inline std::string as_string<bsky::moderation::labeler_update_signed>(
@@ -83,7 +84,7 @@ inline std::string as_string<bsky::moderation::labeler_update_signed>(
   restc_cpp::SerializeToJson(obj, oss, properties);
   return oss.str();
 }
-} // namespace bsky
+}  // namespace bsky
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::labeler_service,
                           (std::string, type), (std::string, endpoint))
