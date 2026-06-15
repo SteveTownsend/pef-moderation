@@ -180,8 +180,10 @@ class list_manager {
   }
   void update_blacklist(std::unordered_set<std::string> new_blacklist);
   void update_whitelist(std::unordered_set<std::string> new_whitelist);
+  void update_active_defenders(
+      std::unordered_set<std::string> new_active_defenders);
   void update_ignored(std::unordered_set<std::string> new_ignored);
-  bool skip_account(std::string const &did) const;
+  bool filter_if_special_account(std::string const &did) const;
 
  private:
   list_manager();
@@ -310,6 +312,7 @@ class list_manager {
 
   std::unordered_set<std::string> _blacklist;
   std::unordered_set<std::string> _whitelist;
+  std::unordered_set<std::string> _active_defenders;
   std::unordered_set<std::string> _ignored;
   mutable std::mutex _lock;
 };

@@ -200,7 +200,7 @@ void report_content_visitor::operator()(filter_matches const &value) {
   for (auto &next_scope : value._scoped_matches) {
     if (next_scope.second._labels.empty()) {
       // no label, report for review unless ignoring the account.
-      if (list_manager::instance().skip_account(value._did)) {
+      if (list_manager::instance().filter_if_special_account(value._did)) {
         continue;
       }
       _agent.string_match_report(
