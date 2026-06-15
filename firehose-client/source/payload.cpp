@@ -25,10 +25,10 @@ http://www.fsf.org/licensing/licenses
 #include "common/activity/account_events.hpp"
 #include "common/activity/event_recorder.hpp"
 #include "common/moderation/ozone_adapter.hpp"
+#include "common/parser.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
-#include "parser.hpp"
 #include "payload.hpp"
 
 jetstream_payload::jetstream_payload() {}

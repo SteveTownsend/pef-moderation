@@ -18,8 +18,6 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "common/bluesky/platform.hpp"
-#include "common/config.hpp"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -29,11 +27,14 @@ http://www.fsf.org/licensing/licenses
 #include <thread>
 #include <unordered_set>
 
+#include "common/bluesky/platform.hpp"
+#include "common/config.hpp"
+
 namespace bsky {
 namespace moderation {
 
 class auxiliary_data {
-public:
+ public:
   static inline auxiliary_data &instance() {
     static auxiliary_data data;
     return data;
@@ -51,9 +52,10 @@ public:
   void update_popular_hosts();
   void update_blacklisted_accounts();
   void update_whitelisted_accounts();
+  void update_active_defenders();
   void update_ignored_accounts();
 
-private:
+ private:
   static constexpr size_t UtcDateTimeMaxLength = 48;
   ~auxiliary_data() = default;
   std::string safe_connection_string() const;
@@ -71,6 +73,8 @@ private:
       std::chrono::minutes(5);
   static constexpr std::chrono::minutes WhitelistedAccountsRefreshInterval =
       std::chrono::minutes(30);
+  static constexpr std::chrono::minutes ActiveDefendersRefreshInterval =
+      std::chrono::minutes(10);
   static constexpr std::chrono::minutes IgnoredAccountsRefreshInterval =
       std::chrono::minutes(60);
 
@@ -87,10 +91,11 @@ private:
   std::chrono::steady_clock::time_point _last_popular_host_refresh;
   std::chrono::steady_clock::time_point _last_blacklisted_accounts_refresh;
   std::chrono::steady_clock::time_point _last_whitelisted_accounts_refresh;
+  std::chrono::steady_clock::time_point _last_active_defenders_refresh;
   std::chrono::steady_clock::time_point _last_ignored_accounts_refresh;
   mutable std::mutex _lock;
   // Bluesky only for now
 };
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky

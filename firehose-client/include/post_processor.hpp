@@ -20,22 +20,23 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include <prometheus/counter.h>
+#include <prometheus/gauge.h>
+#include <prometheus/histogram.h>
+
+#include <nlohmann/detail/exceptions.hpp>
+#include <thread>
+#include <unordered_map>
+
 #include "common/activity/event_recorder.hpp"
 #include "common/controller.hpp"
 #include "common/helpers.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
+#include "common/parser.hpp"
 #include "matcher.hpp"
 #include "moderation/embed_checker.hpp"
-#include "parser.hpp"
 #include "readerwriterqueue.h"
-#include <nlohmann/detail/exceptions.hpp>
-#include <prometheus/counter.h>
-#include <prometheus/gauge.h>
-#include <prometheus/histogram.h>
-#include <thread>
-#include <unordered_map>
-
 
 namespace firehose {
 
@@ -96,10 +97,11 @@ inline op_kind op_kind_from_string(std::string const &op_kind_str) {
   return op_kind::invalid;
 }
 
-} // namespace firehose
+}  // namespace firehose
 
-template <typename T> class post_processor {
-public:
+template <typename T>
+class post_processor {
+ public:
   static constexpr size_t QueueLimit = 10000;
 
   post_processor() : _queue(QueueLimit) {
@@ -139,7 +141,7 @@ public:
     activity::event_recorder::instance().wait_enqueue(std::move(event));
   }
 
-private:
+ private:
   // Declare queue between websocket and match post-processing
   moodycamel::BlockingReaderWriterQueue<T> _queue;
   std::thread _thread;

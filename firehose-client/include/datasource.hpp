@@ -19,6 +19,8 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include <prometheus/counter.h>
+
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
@@ -27,7 +29,6 @@ http://www.fsf.org/licensing/licenses
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <prometheus/counter.h>
 #include <string>
 
 #include "common/config.hpp"
@@ -38,22 +39,16 @@ http://www.fsf.org/licensing/licenses
 #include "matcher.hpp"
 #include "project_defs.hpp"
 
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+namespace beast = boost::beast;          // from <boost/beast.hpp>
+namespace http = beast::http;            // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket;  // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;             // from <boost/asio.hpp>
+namespace ssl = boost::asio::ssl;        // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;        // from <boost/asio/ip/tcp.hpp>
 
-inline bool is_full(config const &settings) {
-  constexpr std::string_view jetstream = "jetstream";
-  return !settings.get_config()[PROJECT_NAME]["datasource"]["hosts"]
-              .as<std::string>()
-              .contains(jetstream);
-}
-
-template <typename PAYLOAD> class datasource {
-public:
+template <typename PAYLOAD>
+class datasource {
+ public:
   static datasource &instance() {
     static datasource my_source;
     return my_source;
@@ -119,20 +114,19 @@ public:
           ssl::context ctx{ssl::context::tlsv12_client};
 
           // Launch the asynchronous operation
-          boost::asio::spawn(ioc,
-                             std::bind(&datasource::do_work, this,
-                                       std::ref(ioc), std::ref(ctx),
-                                       std::placeholders::_1),
-                             // on completion, spawn will call this function
-                             [](std::exception_ptr ex) {
-                               // if an exception occurred in the coroutine,
-                               // it's something critical, e.g. out of memory
-                               // we capture normal errors in the ec
-                               // so we just rethrow the exception here,
-                               // which will cause `ioc.run()` to throw
-                               if (ex)
-                                 std::rethrow_exception(ex);
-                             });
+          boost::asio::spawn(
+              ioc,
+              std::bind(&datasource::do_work, this, std::ref(ioc),
+                        std::ref(ctx), std::placeholders::_1),
+              // on completion, spawn will call this function
+              [](std::exception_ptr ex) {
+                // if an exception occurred in the coroutine,
+                // it's something critical, e.g. out of memory
+                // we capture normal errors in the ec
+                // so we just rethrow the exception here,
+                // which will cause `ioc.run()` to throw
+                if (ex) std::rethrow_exception(ex);
+              });
 
           // Run the I/O service. The call will return when
           // the socket is closed.
@@ -151,7 +145,7 @@ public:
 
   void wait_for_end_thread() { _thread.join(); }
 
-private:
+ private:
   // TODO support round robin if needed
   std::string _host;
   std::string _port;
@@ -171,16 +165,14 @@ private:
 
     // Look up the domain name
     auto const results = resolver.async_resolve(_host, _port, yield[ec]);
-    if (ec)
-      return fail(ec, "resolve");
+    if (ec) return fail(ec, "resolve");
 
     // Set a timeout on the operation
     beast::get_lowest_layer(ws).expires_after(std::chrono::seconds(30));
 
     // Make the connection on the IP address we get from a lookup
     auto ep = beast::get_lowest_layer(ws).async_connect(results, yield[ec]);
-    if (ec)
-      return fail(ec, "connect");
+    if (ec) return fail(ec, "connect");
 
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (!SSL_set_tlsext_host_name(ws.next_layer().native_handle(),
@@ -208,8 +200,7 @@ private:
 
     // Perform the SSL handshake
     ws.next_layer().async_handshake(ssl::stream_base::client, yield[ec]);
-    if (ec)
-      return fail(ec, "ssl_handshake");
+    if (ec) return fail(ec, "ssl_handshake");
 
     // Turn off the timeout on the tcp_stream, because
     // the websocket stream has its own timeout system.
@@ -218,16 +209,15 @@ private:
     // Set reasonably strict idle timeout for the websocket, social media
     // firehose is always-on
     websocket::stream_base::timeout opt{
-        std::chrono::seconds(30), // handshake timeout
-        std::chrono::seconds(30), // idle timeout
-        false                     // no keepalive
+        std::chrono::seconds(30),  // handshake timeout
+        std::chrono::seconds(30),  // idle timeout
+        false                      // no keepalive
     };
     ws.set_option(opt);
 
     // Perform the websocket handshake
     ws.async_handshake(_host, _subscription, yield[ec]);
-    if (ec)
-      return fail(ec, "handshake");
+    if (ec) return fail(ec, "handshake");
     // main processing loop
     while (controller::instance().is_active()) {
       // This buffer will hold the incoming message
@@ -235,8 +225,7 @@ private:
 
       // Read a message into our buffer
       ws.async_read(buffer, yield[ec]);
-      if (ec)
-        return fail(ec, "read");
+      if (ec) return fail(ec, "read");
 
       // update stats
       metrics_factory::instance()
@@ -253,8 +242,7 @@ private:
 
     // Close the WebSocket connection
     ws.async_close(websocket::close_code::normal, yield[ec]);
-    if (ec)
-      return fail(ec, "close");
+    if (ec) return fail(ec, "close");
 
     // If we get here then the connection is closed gracefully
     REL_INFO("websocket stopping");

@@ -263,6 +263,32 @@
             "cwd": "${workspaceFolder}/db-crawler",
             "environment": [],
             "console": "externalTerminal"
+        },
+        {
+            "name": "Repo Reader (Logging-GCC)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/logging-gcc/repo-reader/repo_reader",
+            "args": [
+                "./config/repo_reader_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/repo-reader",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Repo Reader (Debug-GCC)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug-gcc/repo-reader/repo_reader",
+            "args": [
+                "./config/repo_reader_dev.yml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/repo-reader",
+            "environment": [],
+            "console": "externalTerminal"
         }
     ]
 }

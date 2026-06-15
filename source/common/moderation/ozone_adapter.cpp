@@ -18,14 +18,16 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "common/moderation/ozone_adapter.hpp"
+
+#include <boost/fusion/adapted.hpp>
+#include <functional>
+#include <unordered_set>
+
 #include "common/activity/event_recorder.hpp"
 #include "common/bluesky/async_loader.hpp"
 #include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
-#include <boost/fusion/adapted.hpp>
-#include <functional>
-#include <unordered_set>
 
 namespace bsky {
 namespace moderation {
@@ -33,8 +35,7 @@ namespace moderation {
 void ozone_adapter::start(std::string const &connection_string,
                           const bool use_thread) {
   _connection_string = connection_string;
-  if (!use_thread)
-    return;
+  if (!use_thread) return;
   _thread = std::thread([&, this] {
     while (controller::instance().is_active()) {
       try {
@@ -180,7 +181,8 @@ void ozone_adapter::load_pending_report_tags() {
   }
 }
 
-void ozone_adapter::load_content_reporters(std::string const &auto_reporter) {
+void ozone_adapter::load_content_reporters(std::string const &auto_reporter,
+                                           std::string const &from) {
   try {
     if (!_cx) {
       _cx = std::make_unique<pqxx::connection>(_connection_string);
@@ -189,14 +191,16 @@ void ozone_adapter::load_content_reporters(std::string const &auto_reporter) {
     // load the list of open/escalated reports
     pqxx::work tx(*_cx);
     // default target is DID
+    auto sql = std::format(
+        "SELECT \"subjectDid\", \"subjectUri\", \"createdBy\", \"comment\" "
+        "FROM public.moderation_event "
+        "WHERE action = 'tools.ozone.moderation.defs#modEventReport' "
+        "AND meta->>'reportType' <> 'com.atproto.moderation.defs#reasonAppeal' "
+        "AND \"createdAt\" >= '{}';",
+        from);
     for (auto [target, full_path, reporter, reason] :
          tx.query<std::string, std::optional<std::string>, std::string,
-                  std::optional<std::string>>(
-             "SELECT \"subjectDid\", \"subjectUri\", \"createdBy\","
-             " \"comment\" FROM public.moderation_event"
-             " WHERE action = 'tools.ozone.moderation.defs#modEventReport' "
-             "  AND meta->>'reportType' <> "
-             "'com.atproto.moderation.defs#reasonAppeal';")) {
+                  std::optional<std::string>>(sql)) {
       if (full_path.has_value() && !full_path.value().empty()) {
         target = full_path.value();
       }
@@ -305,5 +309,5 @@ bool ozone_adapter::track_account(std::string const &did) {
   std::lock_guard guard(_lock);
   return _tracked_accounts.insert(did).second;
 }
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky

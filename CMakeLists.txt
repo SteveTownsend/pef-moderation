@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(DB_CRAWLER_BUILD "build db crawler" ON)
 option(FIREHOSE_CLIENT_BUILD "build firehose client" ON)
 option(LABELER_UPDATE_BUILD "build labeler update agent" ON)
+option(REPO_READER_BUILD "build repo reader" ON)
 
 # #######################################################################################################################
 # # Configuration for all targets
@@ -37,7 +38,7 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL Release)
   add_compile_definitions(
           NDEBUG
   )
-elseif(${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
+elseif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
   add_compile_definitions(
           _DEBUG
   )
@@ -61,7 +62,7 @@ include_directories(${caching_SOURCE_DIR}/include)
 # lock-free queues
 FetchContent_Declare(
   reader_writer_queue
-  GIT_TAG 16b48ae1148284e7b40abf72167206a4390a4592
+  GIT_TAG v1.0.7
   GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue
 )
 FetchContent_MakeAvailable(reader_writer_queue)
@@ -69,7 +70,7 @@ include_directories(${reader_writer_queue_SOURCE_DIR})
 
 FetchContent_Declare(
   concurrent_queue
-  GIT_TAG 6dd38b8a1dbaa7863aa907045f32308a56a6ff5d
+  GIT_TAG v1.0.5
   GIT_REPOSITORY https://github.com/cameron314/concurrentqueue
 )
 FetchContent_MakeAvailable(concurrent_queue)
@@ -162,7 +163,7 @@ set(spdlog_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 FetchContent_Declare(
  spdlog
  GIT_REPOSITORY https://github.com/gabime/spdlog
- GIT_TAG        79524ddd08a4ec981b7fea76afd08ee05f83755d
+ GIT_TAG        v1.17.0
  OVERRIDE_FIND_PACKAGE
 )
 FetchContent_GetProperties(spdlog)
@@ -191,7 +192,7 @@ SET(BUILD_TEST OFF)
 FetchContent_Declare(
   libpqxx
   GIT_REPOSITORY https://github.com/jtv/libpqxx
-  GIT_TAG 7.10.0
+  GIT_TAG 8.0.1
 )
 FetchContent_MakeAvailable(libpqxx)
 
@@ -224,7 +225,7 @@ endif()
 set(JWT_JSON_TRAITS_OPTIONS boost-json)
 FetchContent_Declare(jwt-cpp 
   GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
-  GIT_HASH 71c3d36507183ceb74b9cf10d1232fe1223bdfb0
+  GIT_TAG v0.7.2
 )
 FetchContent_MakeAvailable(jwt-cpp)
 
@@ -237,4 +238,7 @@ add_subdirectory(firehose-client)
 endif()
 if (LABELER_UPDATE_BUILD)
 add_subdirectory(labeler-update)
+endif()
+if (REPO_READER_BUILD)
+  add_subdirectory(repo-reader)
 endif()

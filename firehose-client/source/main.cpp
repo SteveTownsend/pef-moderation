@@ -48,12 +48,12 @@ http://www.fsf.org/licensing/licenses
 
 #include "common/moderation/ozone_adapter.hpp"
 #include "common/moderation/report_agent.hpp"
+#include "common/parser.hpp"
 #include "datasource.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
 #include "moderation/embed_checker.hpp"
-#include "parser.hpp"
 #include "payload.hpp"
 #include "project_defs.hpp"
 
@@ -126,73 +126,65 @@ int main(int argc, char **argv) {
       REL_INFO("No graph DB configured, returned error {}", exc.what());
     }
 
-    if (is_full(*settings)) {
-      metrics_factory::instance().add_counter(
-          "automation",
-          "Automated moderation activity: block-list, report, emit-event");
-      metrics_factory::instance().add_counter(
-          "realtime_alerts", "Alerts generated for possibly suspect activity");
-      metrics_factory::instance().add_gauge(
-          "process_operation", "Statistics about process internals");
+    metrics_factory::instance().add_counter(
+        "automation",
+        "Automated moderation activity: block-list, report, emit-event");
+    metrics_factory::instance().add_counter(
+        "realtime_alerts", "Alerts generated for possibly suspect activity");
+    metrics_factory::instance().add_gauge("process_operation",
+                                          "Statistics about process internals");
 
-      // seed database monitors before we start post-processing firehose
-      // messages
-      // requires poller thread
-      bsky::moderation::ozone_adapter::instance().start(
-          build_db_connection_string(
-              settings->get_config()[PROJECT_NAME]["moderation_data"]["db"]),
-          true);
+    // seed database monitors before we start post-processing firehose
+    // messages
+    // requires poller thread
+    bsky::moderation::ozone_adapter::instance().start(
+        build_db_connection_string(
+            settings->get_config()[PROJECT_NAME]["moderation_data"]["db"]),
+        true);
 
-      // prepare for Bluesky API calls
-      bsky::async_loader::instance().start(
-          settings->get_config()[PROJECT_NAME]["appview_client"]);
+    // prepare for Bluesky API calls
+    bsky::async_loader::instance().start(
+        settings->get_config()[PROJECT_NAME]["appview_client"]);
 
-      // Matcher is shared by many classes. Loads from file or DB.
-      matcher::shared().set_config(
-          settings->get_config()[PROJECT_NAME]["filters"]);
+    // Matcher is shared by many classes. Loads from file or DB.
+    matcher::shared().set_config(
+        settings->get_config()[PROJECT_NAME]["filters"]);
 
-      // seeds matcher with rules
-      bsky::moderation::auxiliary_data::instance().start(
-          settings->get_config()[PROJECT_NAME]["auxiliary_data"]);
-      int64_t cursor(
-          bsky::moderation::auxiliary_data::instance().get_rewind_point());
+    // seeds matcher with rules
+    bsky::moderation::auxiliary_data::instance().start(
+        settings->get_config()[PROJECT_NAME]["auxiliary_data"]);
+    int64_t cursor(
+        bsky::moderation::auxiliary_data::instance().get_rewind_point());
 
-      // wait for matcher and embed checker to be ready
-      do {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      } while (!matcher::shared().is_ready() ||
-               !bsky::moderation::embed_checker::instance().is_ready());
+    // wait for matcher and embed checker to be ready
+    do {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } while (!matcher::shared().is_ready() ||
+             !bsky::moderation::embed_checker::instance().is_ready());
 
-      datasource<firehose_payload>::instance().set_config(settings, cursor);
-      datasource<firehose_payload>::instance().start();
+    datasource<firehose_payload>::instance().set_config(settings, cursor);
+    datasource<firehose_payload>::instance().start();
 
-      // prepare action handlers after we start processing firehose messages
-      // this is time consuming - allow a backlog for handlers while
-      // existing members load
-      bsky::moderation::report_agent::instance().start(
-          settings->get_config()[PROJECT_NAME]["auto_reporter"], PROJECT_NAME);
+    // prepare action handlers after we start processing firehose messages
+    // this is time consuming - allow a backlog for handlers while
+    // existing members load
+    bsky::moderation::report_agent::instance().start(
+        settings->get_config()[PROJECT_NAME]["auto_reporter"], PROJECT_NAME);
 
-      action_router::instance().start();
+    action_router::instance().start();
 #if _DEBUG
-      // std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
 #endif
 
-      bsky::moderation::embed_checker::instance().set_config(
-          settings->get_config()[PROJECT_NAME]["embed_checker"]);
-      bsky::moderation::embed_checker::instance().start();
+    bsky::moderation::embed_checker::instance().set_config(
+        settings->get_config()[PROJECT_NAME]["embed_checker"]);
+    bsky::moderation::embed_checker::instance().start();
 
-      list_manager::instance().start(
-          settings->get_config()[PROJECT_NAME]["list_manager"]);
+    list_manager::instance().start(
+        settings->get_config()[PROJECT_NAME]["list_manager"]);
 
-      // continue as long as firehose runs OK
-      datasource<firehose_payload>::instance().wait_for_end_thread();
-    } else {
-      datasource<jetstream_payload>::instance().set_config(settings, 0);
-      datasource<jetstream_payload>::instance().start();
-
-      // continue as long as data feed runs OK
-      datasource<jetstream_payload>::instance().wait_for_end_thread();
-    }
+    // continue as long as firehose runs OK
+    datasource<firehose_payload>::instance().wait_for_end_thread();
 
     return EXIT_SUCCESS;
   } catch (std::exception const &exc) {

@@ -19,8 +19,6 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
-#include "common/activity/event_cache.hpp"
-#include "common/config.hpp"
 #include <chrono>
 #include <mutex>
 #include <pqxx/pqxx>
@@ -28,12 +26,15 @@ http://www.fsf.org/licensing/licenses
 #include <unordered_map>
 #include <unordered_set>
 
+#include "common/activity/event_cache.hpp"
+#include "common/config.hpp"
+
 namespace bsky {
 
 namespace moderation {
 
 class ozone_adapter {
-public:
+ public:
   static inline ozone_adapter &instance() {
     static ozone_adapter adapter;
     return adapter;
@@ -57,7 +58,8 @@ public:
   };
   typedef std::unordered_map<std::string, reports_by_category>
       content_reporters;
-  void load_content_reporters(std::string const &auto_reporter);
+  void load_content_reporters(std::string const &auto_reporter,
+                              std::string const &from);
   inline const content_reporters &get_content_reporters() {
     return _content_reporters;
   }
@@ -75,7 +77,7 @@ public:
   }
   bool track_account(std::string const &did);
 
-private:
+ private:
   void check_refresh_tracked_accounts();
   std::string safe_connection_string() const;
 
@@ -96,7 +98,7 @@ private:
   mutable std::mutex _lock;
 };
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky
 
 #endif

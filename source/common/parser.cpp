@@ -18,41 +18,37 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "parser.hpp"
-#include "common/helpers.hpp"
-#include "common/rest_utils.hpp"
-#include "datasource.hpp"
+#include "common/parser.hpp"
+
 #include <boost/asio/buffers_iterator.hpp>
 #include <sstream>
+
+#include "common/helpers.hpp"
+#include "common/rest_utils.hpp"
+// #include "datasource.hpp"
 
 std::shared_ptr<config> parser::_settings;
 
 // Extract UTF-8 string containing the material to be checked,  which is
 // context-dependent
-candidate_list
-parser::get_candidates_from_string(std::string const &full_content) const {
+candidate_list parser::get_candidates_from_string(
+    std::string const &full_content) const {
   nlohmann::json full_json(nlohmann::json::parse(full_content));
   return get_candidates_from_json(full_json);
 }
 
-candidate_list
-parser::get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data) {
+candidate_list parser::get_candidates_from_flat_buffer(
+    beast::flat_buffer const &beast_data) {
   auto buffer(beast_data.data());
-  if (is_full(*_settings)) {
-    bool parsed(json_from_cbor(buffers_begin(buffer), buffers_end(buffer)));
-    if (!parsed) {
-      // TODO error handling
-    }
-    return {};
-  } else {
-    nlohmann::json full_json(
-        nlohmann::json::parse(buffers_begin(buffer), buffers_end(buffer)));
-    return get_candidates_from_json(full_json);
+  bool parsed(json_from_cbor(buffers_begin(buffer), buffers_end(buffer)));
+  if (!parsed) {
+    // TODO error handling
   }
+  return {};
 }
 
-candidate_list
-parser::get_candidates_from_record(nlohmann::json const &record) {
+candidate_list parser::get_candidates_from_record(
+    nlohmann::json const &record) {
   auto record_type(record["$type"].template get<std::string>());
   auto const record_fields(json::TargetFieldNames.find(record_type));
   candidate_list results;
@@ -69,8 +65,8 @@ parser::get_candidates_from_record(nlohmann::json const &record) {
 }
 
 // TODO Could use SAX parsing down the line
-candidate_list
-parser::get_candidates_from_json(nlohmann::json &full_json) const {
+candidate_list parser::get_candidates_from_json(
+    nlohmann::json &full_json) const {
   // Handle exceptions as they come up.
   // Example: record["type"] can sometimes be a "proxy" object not a string
   try {
@@ -86,13 +82,11 @@ parser::get_candidates_from_json(nlohmann::json &full_json) const {
     }
 
     // other than handles, only interested in commits
-    if (full_json["kind"] != "commit")
-      return {};
+    if (full_json["kind"] != "commit") return {};
 
     auto commit(full_json["commit"]);
     // Skip deletions
-    if (commit["operation"] == "delete")
-      return {};
+    if (commit["operation"] == "delete") return {};
 
     return get_candidates_from_record(commit["record"]);
   } catch (std::exception const &exc) {

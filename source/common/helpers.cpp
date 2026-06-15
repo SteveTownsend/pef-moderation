@@ -19,11 +19,13 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/helpers.hpp"
-#include "common/config.hpp"
-#include "common/log_wrapper.hpp"
+
 #include <unicode/errorcode.h>
 #include <unicode/stringoptions.h>
 #include <unicode/ustring.h>
+
+#include "common/config.hpp"
+#include "common/log_wrapper.hpp"
 
 namespace bsky {
 down_reason down_reason_from_string(std::string_view down_reason_str) {
@@ -132,7 +134,14 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
   return current_time();
 }
 
-} // namespace bsky
+// strict ISO8601 format check
+bool is_strict_iso_8601(std::string const &date_time) {
+  std::istringstream is(date_time);
+  bsky::parse_time_stamp tp;
+  is >> std::chrono::parse(UtcDefault, tp);
+  return !is.fail();
+}
+}  // namespace bsky
 
 namespace atproto {
 
@@ -152,35 +161,37 @@ at_uri::at_uri(std::string const &uri_str) {
     // with string_view's C++23 range constructor:
     std::string field(token.cbegin(), token.cend());
     switch (count) {
-    case 0:
-      if (token.empty()) {
-        REL_ERROR("Blank authority in at-uri {}", uri_str);
-        return;
-      }
-      _authority.assign(token.cbegin(), token.cend());
-      break;
-    case 1:
-      if (token.empty()) {
-        // this is optional
-        return;
-      }
-      _collection.assign(token.cbegin(), token.cend());
-      break;
-    case 2:
-      if (token.empty()) {
-        // this is optional
-        return;
-      }
-      _rkey.assign(token.cbegin(), token.cend());
-      break;
+      case 0:
+        if (token.empty()) {
+          REL_ERROR("Blank authority in at-uri {}", uri_str);
+          return;
+        }
+        _authority.assign(token.cbegin(), token.cend());
+        break;
+      case 1:
+        if (token.empty()) {
+          // this is optional
+          return;
+        }
+        _collection.assign(token.cbegin(), token.cend());
+        break;
+      case 2:
+        if (token.empty()) {
+          // this is optional
+          return;
+        }
+        _rkey.assign(token.cbegin(), token.cend());
+        break;
     }
     ++count;
   }
 }
 
 at_uri::at_uri(at_uri const &uri)
-    : _authority(uri._authority), _collection(uri._collection),
-      _rkey(uri._rkey), _empty(uri._empty) {}
+    : _authority(uri._authority),
+      _collection(uri._collection),
+      _rkey(uri._rkey),
+      _empty(uri._empty) {}
 at_uri &at_uri::operator=(at_uri const &uri) {
   _authority = uri._authority;
   _collection = uri._collection;
@@ -191,14 +202,14 @@ at_uri &at_uri::operator=(at_uri const &uri) {
 
 at_uri::at_uri(at_uri &&uri)
     : _authority(std::move(uri._authority)),
-      _collection(std::move(uri._collection)), _rkey(std::move(uri._rkey)) {}
+      _collection(std::move(uri._collection)),
+      _rkey(std::move(uri._rkey)) {}
 
-} // namespace atproto
+}  // namespace atproto
 
 // convert UTF-8 input to canonical form where case differences are erased
 std::wstring to_canonical(std::string_view const input) {
-  if (input.empty())
-    return std::wstring();
+  if (input.empty()) return std::wstring();
   int32_t capacity((static_cast<int32_t>(input.length()) * 4));
   int32_t new_size;
   std::vector<UChar> workspace(capacity);
@@ -244,8 +255,7 @@ std::string wstring_to_utf8(std::wstring const &rc_string) {
 }
 
 std::string wstring_to_utf8(std::wstring_view rc_string) {
-  if (rc_string.empty())
-    return std::string();
+  if (rc_string.empty()) return std::string();
 
   size_t output_max(rc_string.size() * 4);
   std::vector<UChar> buffer(output_max, 0);

@@ -4,6 +4,7 @@ add_library(common STATIC
   ./config.cpp
   ./helpers.cpp
   ./log_wrapper.cpp
+  ./parser.cpp
   ./bluesky/async_loader.cpp
   ./bluesky/client.cpp
   ./metrics_factory.cpp

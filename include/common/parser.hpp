@@ -20,11 +20,6 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/config.hpp"
-#include "common/helpers.hpp"
-#include "common/log_wrapper.hpp"
-#include "matcher.hpp"
-#include "nlohmann/json.hpp"
 #include <algorithm>
 #include <boost/beast/core.hpp>
 #include <multiformats/cid.hpp>
@@ -32,24 +27,44 @@ http://www.fsf.org/licensing/licenses
 #include <tuple>
 #include <unordered_set>
 
+#include "common/config.hpp"
+#include "common/helpers.hpp"
+#include "common/log_wrapper.hpp"
+#include "nlohmann/json.hpp"
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
+namespace beast = boost::beast;  // from <boost/beast.hpp>
 using namespace std::literals;
 
+// filter match candidate
+struct candidate {
+  std::string _type;
+  std::string _field;
+  std::string _value;
+  bool operator==(candidate const &rhs) const;
+};
+// Path/cid->candidate association
+typedef std::vector<candidate> candidate_list;
+struct path_candidates {
+  std::string _path;
+  std::string _cid;
+  candidate_list _candidates;
+};
+typedef std::vector<path_candidates> path_candidate_list;
+
 class parser {
-public:
+ public:
   parser() = default;
   ~parser() = default;
 
   // Extract UTF-8 string containing the material to be checked,  which is
   // context-dependent
-  candidate_list
-  get_candidates_from_string(std::string const &full_content) const;
-  candidate_list
-  get_candidates_from_flat_buffer(beast::flat_buffer const &beast_data);
+  candidate_list get_candidates_from_string(
+      std::string const &full_content) const;
+  candidate_list get_candidates_from_flat_buffer(
+      beast::flat_buffer const &beast_data);
   candidate_list get_candidates_from_json(nlohmann::json &full_json) const;
-  static candidate_list
-  get_candidates_from_record(nlohmann::json const &record);
+  static candidate_list get_candidates_from_record(
+      nlohmann::json const &record);
 
   template <typename IteratorType>
   bool json_from_cbor(IteratorType first, IteratorType last) {
@@ -84,19 +99,19 @@ public:
   class car_reader
       : public nlohmann::detail::binary_reader<BasicJsonType, InputAdapterType,
                                                SAX> {
-  public:
+   public:
     using nlohmann::detail::binary_reader<BasicJsonType, InputAdapterType,
                                           SAX>::binary_reader;
     using char_int_type = typename nlohmann::detail::char_traits<
         typename InputAdapterType::char_type>::int_type;
 
     template <typename IteratorType>
-    bool
-    parse_car(IteratorType first, IteratorType last,
-              nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
-              const bool allow_exceptions = true, const bool strict = true,
-              const nlohmann::detail::cbor_tag_handler_t tag_handler =
-                  nlohmann::detail::cbor_tag_handler_t::error) {
+    bool parse_car(
+        IteratorType first, IteratorType last,
+        nlohmann::detail::parser_callback_t<BasicJsonType> cb = nullptr,
+        const bool allow_exceptions = true, const bool strict = true,
+        const nlohmann::detail::cbor_tag_handler_t tag_handler =
+            nlohmann::detail::cbor_tag_handler_t::error) {
       nlohmann::basic_json result;
       _tag_handler = tag_handler;
       _callback = cb;
@@ -108,7 +123,7 @@ public:
       return sax_parse_car(&sax, strict);
     }
 
-  protected:
+   protected:
     uint64_t read_u64_leb128(const bool get_char = true) {
       unsigned char uchar(0);
       uint32_t shift(0);
@@ -129,7 +144,7 @@ public:
 
     // Decode CAR header
     bool parse_car_header() {
-      read_u64_leb128(); // skip header length
+      read_u64_leb128();  // skip header length
       // decode DAG-CBOR
       nlohmann::basic_json result;
       SAX this_pass_sax(result, _callback, _allow_exceptions);
@@ -168,9 +183,8 @@ public:
     }
 
     bool parse_car_block(const bool get_char) {
-      read_u64_leb128(get_char); // skip block length
-      if (!parse_car_cid())
-        return false;
+      read_u64_leb128(get_char);  // skip block length
+      if (!parse_car_cid()) return false;
       // decode DAG-CBOR block
       nlohmann::basic_json result;
       SAX this_pass_sax(result, _callback, _allow_exceptions);
@@ -280,7 +294,7 @@ public:
 
   inline std::string block_cid() const { return _block_cid; }
 
-private:
+ private:
   bool cbor_callback(int depth, nlohmann::json::parse_event_t event,
                      nlohmann::json &parsed);
 

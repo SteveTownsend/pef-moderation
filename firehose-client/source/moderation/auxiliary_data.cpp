@@ -60,6 +60,7 @@ void auxiliary_data::start(YAML::Node const &settings) {
         // Used for persistent, frequent label-worthy content
         update_blacklisted_accounts();
         update_whitelisted_accounts();
+        update_active_defenders();
         update_ignored_accounts();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on net loop
@@ -250,6 +251,27 @@ void auxiliary_data::update_whitelisted_accounts() {
   }
 }
 
+void auxiliary_data::update_active_defenders() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(
+          now - _last_active_defenders_refresh) >
+      ActiveDefendersRefreshInterval) {
+    pqxx::work tx(*_cx);
+    bool load_failed(false);
+    std::unordered_set<std::string> new_active_defenders;
+    for (auto [did] :
+         tx.query<std::string>("SELECT did FROM active_defenders;")) {
+      new_active_defenders.insert(did);
+    }
+
+    if (!load_failed) {
+      // switch replacement rules into the main matcher
+      list_manager::instance().update_active_defenders(
+          std::move(new_active_defenders));
+      _last_active_defenders_refresh = std::chrono::steady_clock::now();
+    }
+  }
+}
 void auxiliary_data::update_ignored_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(

@@ -28,13 +28,14 @@ http://www.fsf.org/licensing/licenses
 // clang-format off
 #include "restc-cpp/restc-cpp.h"
 // clang-format on
+#include <format>
+#include <thread>
+#include <unordered_set>
+
 #include "restc-cpp/RequestBody.h"
 #include "restc-cpp/RequestBuilder.h"
 #include "restc-cpp/SerializeJson.h"
 #include "yaml-cpp/yaml.h"
-#include <format>
-#include <thread>
-#include <unordered_set>
 
 namespace bsky {
 struct empty {};
@@ -52,7 +53,7 @@ namespace moderation {
 // clumsy way to mimic union from
 // https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/createReport.json
 struct report_subject {
-public:
+ public:
   inline report_subject(std::string const &repo, std::string const &path = {},
                         std::string const &hash = {}) {
     if (path.empty()) {
@@ -76,20 +77,20 @@ public:
   std::string uri;
   std::string cid;
 
-private:
+ private:
   report_subject() = delete;
 };
 
 // Report content indicates context.
 struct report_request {
-public:
+ public:
   inline report_request(bsky::moderation::report_subject const &subject)
       : subject(subject) {}
   std::string reasonType = std::string(bsky::moderation::ReasonOther);
   std::string reason;
   report_subject subject;
 
-private:
+ private:
   report_request() = delete;
 };
 struct report_response {
@@ -107,14 +108,14 @@ struct label_event {
 };
 // Label auto-reported account. Associated eport indicates context
 struct emit_event_label_request {
-public:
+ public:
   inline emit_event_label_request(report_subject const &subject)
       : subject(subject) {}
   label_event event;
   report_subject subject;
   std::string createdBy;
 
-private:
+ private:
   emit_event_label_request() = delete;
 };
 struct acknowledge_event_comment {
@@ -134,14 +135,15 @@ struct acknowledge_event {
   bool acknowledgeAccountSubjects;
 };
 struct emit_event_acknowledge_request {
-public:
-  inline emit_event_acknowledge_request(report_subject const &subject, bool const ack_all_for_account)
+ public:
+  inline emit_event_acknowledge_request(report_subject const &subject,
+                                        bool const ack_all_for_account)
       : subject(subject), event(ack_all_for_account) {}
   acknowledge_event event;
   report_subject subject;
   std::string createdBy;
 
-private:
+ private:
   emit_event_acknowledge_request() = delete;
 };
 struct tag_event_comment {
@@ -158,14 +160,14 @@ struct tag_event {
   std::vector<std::string> remove;
 };
 struct emit_event_tag_request {
-public:
+ public:
   inline emit_event_tag_request(report_subject const &subject)
       : subject(subject) {}
   tag_event event;
   report_subject subject;
   std::string createdBy;
 
-private:
+ private:
   emit_event_tag_request() = delete;
 };
 struct comment_event_comment {
@@ -182,14 +184,14 @@ struct comment_event {
 };
 
 struct emit_event_comment_request {
-public:
+ public:
   inline emit_event_comment_request(report_subject const &subject)
       : subject(subject) {}
   comment_event event;
   report_subject subject;
   std::string createdBy;
 
-private:
+ private:
   emit_event_comment_request() = delete;
 };
 struct emit_event_response {
@@ -198,7 +200,7 @@ struct emit_event_response {
   int64_t id;
   std::string createdBy;
 };
-} // namespace moderation
+}  // namespace moderation
 
 template <typename OBJ>
 std::string as_string(OBJ const &obj,
@@ -209,7 +211,7 @@ std::string as_string(OBJ const &obj,
 }
 
 class client {
-public:
+ public:
   client() = default;
   ~client() = default;
 
@@ -217,19 +219,18 @@ public:
   std::string service_did() const { return _service_did; }
   inline bool is_ready() const { return _is_ready; }
 
-  void
-  label_subject(bsky::moderation::report_subject const &subject,
-                std::unordered_set<std::string> const &add_labels,
-                std::unordered_set<std::string> const &remove_labels,
-                bsky::moderation::acknowledge_event_comment const &comment);
+  void label_subject(
+      bsky::moderation::report_subject const &subject,
+      std::unordered_set<std::string> const &add_labels,
+      std::unordered_set<std::string> const &remove_labels,
+      bsky::moderation::acknowledge_event_comment const &comment);
   void add_comment_for_subject(
       bsky::moderation::report_subject const &subject,
       bsky::moderation::comment_event_comment const &comment);
   void acknowledge_subject(
       bsky::moderation::report_subject const &subject,
       bsky::moderation::acknowledge_event_comment const &comment,
-      bool ack_all_for_account = false
-    );
+      bool ack_all_for_account = false);
   void tag_report_subject(bsky::moderation::report_subject const &subject,
                           bsky::moderation::tag_event_comment const &comment,
                           std::vector<std::string> const &add_tags,
@@ -342,8 +343,7 @@ public:
         if (exc.code().value() == boost::asio::error::eof &&
             exc.code().category() == boost::asio::error::get_misc_category()) {
           REL_WARNING("IoReaderImpl::ReadSome(getRecord): asio eof, retry");
-          if (++retries >= 5)
-            throw;
+          if (++retries >= 5) throw;
         } else {
           // unrecoverable error
           REL_ERROR("getRecord for {} {} {} Boost exception {}", did,
@@ -487,10 +487,11 @@ public:
                 // Get the Post instance from the future<>, or any C++
                 // exception thrown within the lambda.
                 .get();
-        REL_INFO("Report of {} {} recorded at {}, reporter "
-                 "{} id={}",
-                 subject, request.reason, response.createdAt,
-                 response.reportedBy, response.id);
+        REL_INFO(
+            "Report of {} {} recorded at {}, reporter "
+            "{} id={}",
+            subject, request.reason, response.createdAt, response.reportedBy,
+            response.id);
         metrics_factory::instance()
             .get_counter("automation")
             .Get({{"report", reason.get_name()}})
@@ -585,6 +586,10 @@ public:
     return response;
   }
 
+  std::string do_get_file(
+      std::string const &relative_path,
+      std::optional<get_callback_t> callback = std::optional<get_callback_t>());
+
   std::string raw_post(std::string const &relative_path,
                        const std::string &&body = std::string());
 
@@ -673,14 +678,15 @@ public:
     return response;
   }
 
-  std::unordered_set<bsky::profile_view_detailed>
-  get_profiles(std::unordered_set<std::string> const &dids);
+  std::unordered_set<bsky::profile_view_detailed> get_profiles(
+      std::unordered_set<std::string> const &dids);
   bsky::profile_view_detailed get_profile(std::string const &did);
+  std::string get_repo(std::string const &did);
 
-private:
+ private:
   template <typename EVENT_REQUEST>
-  bsky::moderation::emit_event_response
-  emit_event(EVENT_REQUEST const &request) {
+  bsky::moderation::emit_event_response emit_event(
+      EVENT_REQUEST const &request) {
     // negateLabelsVals is mandatory but unused for Label
     // remove (tags) is mandatory but unused for Tag
     constexpr bool ignore_empty(false);
@@ -738,10 +744,10 @@ private:
                 // Get the Post instance from the future<>, or any C++
                 // exception thrown within the lambda.
                 .get();
-        REL_INFO("emit-event {} recorded at {}, reporter "
-                 "{} id={}",
-                 body.str(), response.createdAt, response.createdBy,
-                 response.id);
+        REL_INFO(
+            "emit-event {} recorded at {}, reporter "
+            "{} id={}",
+            body.str(), response.createdAt, response.createdBy, response.id);
         break;
       } catch (boost::system::system_error const &exc) {
         if (exc.code().value() == boost::asio::error::eof &&
@@ -781,15 +787,17 @@ inline std::string as_string<bsky::empty>(bsky::empty const &,
   return {};
 }
 
-} // namespace bsky
+}  // namespace bsky
 namespace std {
-template <> struct equal_to<bsky::profile_view_detailed> {
+template <>
+struct equal_to<bsky::profile_view_detailed> {
   inline bool operator()(bsky::profile_view_detailed const &lhs,
                          bsky::profile_view_detailed const &rhs) const {
     return lhs.did == rhs.did;
   }
 };
-template <> struct hash<bsky::profile_view_detailed> {
+template <>
+struct hash<bsky::profile_view_detailed> {
   inline size_t operator()(bsky::profile_view_detailed const &profile) const {
     return std::hash<std::string>()(profile.did);
   }
@@ -808,4 +816,4 @@ struct formatter<bsky::moderation::report_subject> : formatter<string> {
   }
 };
 
-} // namespace std
+}  // namespace std

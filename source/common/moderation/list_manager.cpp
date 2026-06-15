@@ -395,13 +395,23 @@ void list_manager::update_whitelist(
   std::swap(_whitelist, new_whitelist);
 }
 
+void list_manager::update_active_defenders(
+    std::unordered_set<std::string> new_active_defenders) {
+  std::lock_guard<std::mutex> lock{_lock};
+  std::swap(_active_defenders, new_active_defenders);
+}
+
 void list_manager::update_ignored(std::unordered_set<std::string> new_ignored) {
   std::lock_guard<std::mutex> lock{_lock};
   std::swap(_ignored, new_ignored);
 }
 
-bool list_manager::skip_account(std::string const &did) const {
+bool list_manager::filter_if_special_account(std::string const &did) const {
   std::lock_guard<std::mutex> lock{_lock};
+  if (_active_defenders.contains(did)) {
+    REL_INFO("Processing active defender account {}", did);
+    return false;
+  }
   if (_blacklist.contains(did)) {
     REL_INFO("Skipping blacklisted account {}", did);
     return true;

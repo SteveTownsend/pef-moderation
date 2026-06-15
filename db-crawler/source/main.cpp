@@ -18,7 +18,15 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include <boost/fusion/adapted.hpp>
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <ranges>
+#include <thread>
+
 #include "common/bluesky/client.hpp"
+#include "common/bluesky/platform.hpp"
 #include "common/config.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
@@ -26,12 +34,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 #include "project_defs.hpp"
 #include "restc-cpp/logging.h"
-#include <boost/fusion/adapted.hpp>
-#include <chrono>
-#include <functional>
-#include <iostream>
-#include <ranges>
-#include <thread>
 
 int main(int argc, char **argv) {
   bool log_ready(false);
@@ -155,7 +157,8 @@ int main(int argc, char **argv) {
                     bsky::moderation::report_subject target(match);
                     // ack all the account's reports to remove noise
                     static bool ack_all_for_deleted_account(true);
-                    pds_client.acknowledge_subject(target, comment, ack_all_for_deleted_account);
+                    pds_client.acknowledge_subject(target, comment,
+                                                   ack_all_for_deleted_account);
                   } else {
                     comment.path = subject.first;
                   }
@@ -171,8 +174,14 @@ int main(int argc, char **argv) {
       // we need moderation events of type report to correlate with the subject
       std::string automatic_reporter(
           tag_source_settings["auto-reporter"].as<std::string>(""));
+      std::string from(tag_source_settings["from"].as<std::string>(""));
+      if (!bsky::is_strict_iso_8601(from)) {
+        REL_ERROR("Invalid 'from' timestamp for tag_manual_and_auto job: {}",
+                  from);
+        return EXIT_FAILURE;
+      }
       bsky::moderation::ozone_adapter::instance().load_content_reporters(
-          automatic_reporter);
+          automatic_reporter, from);
 
       // For active profiles pending review, tag them as manual/auto-reported if
       // not already done
@@ -269,9 +278,10 @@ int main(int argc, char **argv) {
       }
       REL_INFO("Manual/auto tag updated : {} manual, {} auto, {} both, {} none",
                manual, automatic, both, removed_all);
-      REL_INFO("Manual/auto tag no update: {} inactive, {} no report, {} "
-               "untouched",
-               inactive, no_report, untouched);
+      REL_INFO(
+          "Manual/auto tag no update: {} inactive, {} no report, {} "
+          "untouched",
+          inactive, no_report, untouched);
     }
     // Acknowledge all reports that match a given SQL WHERE filter
     auto ack_settings(settings->get_config()[PROJECT_NAME]["jobs"]
