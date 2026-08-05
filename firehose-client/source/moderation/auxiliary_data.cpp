@@ -51,17 +51,19 @@ void auxiliary_data::start(YAML::Node const &settings) {
         }
         // update firehose checkpoint regularly
         check_rewind_point();
-        // load/refresh string match filters
-        update_match_filters();
-        // load/refresh string popular hosts used in embed:external and other
-        // places
-        update_popular_hosts();
         // load/refresh blacklisted accounts - their content is skipped
         // Used for persistent, frequent label-worthy content
+        // We do this before loading filters so lists are in place before event
+        // processing starts
         update_blacklisted_accounts();
         update_whitelisted_accounts();
         update_active_defenders();
         update_ignored_accounts();
+        // load/refresh string popular hosts used in embed:external and other
+        // places
+        update_popular_hosts();
+        // load/refresh string match filters
+        update_match_filters();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on net loop
         REL_ERROR("pqxx::broken_connection {}", exc.what());
