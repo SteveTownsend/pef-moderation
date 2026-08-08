@@ -140,9 +140,9 @@ void report_agent::string_match_report(
     std::vector<std::string> add_tags;
     for (const auto &rule : rules) {
       add_tags.push_back("rid:" + std::to_string(rule));
-      bsky::moderation::tag_event_comment comment(_project_name);
-      _pds_clients[client]->tag_report_subject(target, comment, add_tags, {});
     }
+    bsky::moderation::tag_event_comment comment(_project_name);
+    _pds_clients[client]->tag_report_subject(target, comment, add_tags, {});
   }
 }
 
