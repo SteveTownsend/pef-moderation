@@ -19,11 +19,15 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/moderation/session_manager.hpp"
+
+#include <jwt-cpp/traits/boost-json/traits.h>
+
+#include <boost/fusion/adapted.hpp>
+
 #include "common/bluesky/client.hpp"
+#include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "restc-cpp/RequestBuilder.h"
-#include <boost/fusion/adapted.hpp>
-#include <jwt-cpp/traits/boost-json/traits.h>
 
 // com.atproto.server.createSession
 BOOST_FUSION_ADAPT_STRUCT(bsky::session_tokens,
@@ -32,6 +36,13 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::login_info,
                           (std::string, identifier)(std::string, password))
 
 namespace bsky {
+
+activity::rate_observer<std::chrono::milliseconds, int>
+    pds_session::_session_per_day_rate_observer = {std::chrono::hours(24), 300};
+activity::rate_observer<std::chrono::milliseconds, int>
+    pds_session::_label_per_5minutes_rate_observer = {
+        std::chrono::seconds(5 * 60), 30};
+
 pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
@@ -43,6 +54,37 @@ void pds_session::connect(bsky::login_info const &credentials) {
 void pds_session::internal_connect() {
   constexpr bool needs_refresh_check(false);
   constexpr bool no_post_log(true);
+
+  // Respect rate limits
+  using std::chrono::system_clock;
+  system_clock::time_point now = system_clock::now();
+  bool rate_limited(false);
+  while (!_session_per_5minutes_rate_observer.observe_if_permitted() &&
+         controller::instance().is_active()) {
+    rate_limited = true;
+    std::this_thread::sleep_for(
+        _session_per_5minutes_rate_observer.event_interval());
+  }
+  while (!_session_per_day_rate_observer.observe_if_permitted() &&
+         controller::instance().is_active()) {
+    rate_limited = true;
+    std::this_thread::sleep_for(
+        _session_per_day_rate_observer.event_interval());
+  }
+
+  if (!controller::instance().is_active()) {
+    REL_WARNING("Skipping connect to {} for {}", _host,
+                _credentials.identifier);
+    return;
+  }
+  if (rate_limited) {
+    REL_INFO("Rate limited create-session to {} for {}", "delay {} ms", _host,
+             _credentials.identifier,
+             std::chrono::duration_cast<std::chrono::milliseconds>(
+                 system_clock::now() - now)
+                 .count());
+  }
+
   _tokens = _client.do_post<bsky::login_info, bsky::session_tokens>(
       "com.atproto.server.createSession", _credentials, needs_refresh_check,
       no_post_log);
@@ -103,4 +145,4 @@ void pds_session::check_refresh() {
   }
 }
 
-} // namespace bsky
+}  // namespace bsky

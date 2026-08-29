@@ -18,6 +18,7 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include "common/activity/rate_observer.hpp"
 #include "jwt-cpp/jwt.h"
 #include "restc-cpp/RequestBody.h"
 #include "restc-cpp/restc-cpp.h"
@@ -38,7 +39,7 @@ struct login_info {
 };
 
 class pds_session {
-public:
+ public:
   pds_session(bsky::client &client, std::string const &host);
   pds_session() = delete;
 
@@ -52,7 +53,7 @@ public:
   static constexpr std::chrono::milliseconds RefreshExpiryBuffer =
       std::chrono::milliseconds(60000 * 30);
 
-private:
+ private:
   void internal_connect();
 
   bsky::client &_client;
@@ -65,8 +66,17 @@ private:
   //    2025-01-10 17:50:33.778475000     info  36816 bsky session refresh token
   //      expires at 2025-04-10 22:50:34.0000000
 
-  jwt::date _access_expiry;  // a few hours
-  jwt::date _refresh_expiry; // a few months
+  jwt::date _access_expiry;   // a few hours
+  jwt::date _refresh_expiry;  // a few months
+
+  // Label rate limiters, values per
+  // https://docs.bsky.app/docs/advanced-guides/rate-limits
+  // Units must be appropriate for calculation of fine-grain sleep when
+  // rate-limited
+  static activity::rate_observer<std::chrono::milliseconds, int>
+      _session_per_day_rate_observer;
+  static activity::rate_observer<std::chrono::milliseconds, int>
+      _session_per_5minutes_rate_observer;
 };
 
-} // namespace bsky
+}  // namespace bsky
