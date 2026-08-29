@@ -40,7 +40,7 @@ namespace bsky {
 activity::rate_observer<std::chrono::milliseconds, int>
     pds_session::_session_per_day_rate_observer = {std::chrono::hours(24), 300};
 activity::rate_observer<std::chrono::milliseconds, int>
-    pds_session::_label_per_5minutes_rate_observer = {
+    pds_session::_session_per_5minutes_rate_observer = {
         std::chrono::seconds(5 * 60), 30};
 
 pds_session::pds_session(bsky::client &client, std::string const &host)
