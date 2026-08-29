@@ -60,19 +60,19 @@ void pds_session::internal_connect() {
   system_clock::time_point now = system_clock::now();
   bool rate_limited(false);
   while (!_session_per_5minutes_rate_observer.observe_if_permitted() &&
-         controller::instance().is_active()) {
+         controller::instance().is_valid()) {
     rate_limited = true;
     std::this_thread::sleep_for(
         _session_per_5minutes_rate_observer.event_interval());
   }
   while (!_session_per_day_rate_observer.observe_if_permitted() &&
-         controller::instance().is_active()) {
+         controller::instance().is_valid()) {
     rate_limited = true;
     std::this_thread::sleep_for(
         _session_per_day_rate_observer.event_interval());
   }
 
-  if (!controller::instance().is_active()) {
+  if (!controller::instance().is_valid()) {
     REL_WARNING("Skipping connect to {} for {}", _host,
                 _credentials.identifier);
     return;
