@@ -69,7 +69,7 @@ class pds_session {
   jwt::date _access_expiry;   // a few hours
   jwt::date _refresh_expiry;  // a few months
 
-  // Label rate limiters, values per
+  // create-session rate limiters, values per
   // https://docs.bsky.app/docs/advanced-guides/rate-limits
   // Units must be appropriate for calculation of fine-grain sleep when
   // rate-limited

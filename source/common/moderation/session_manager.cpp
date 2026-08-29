@@ -78,7 +78,7 @@ void pds_session::internal_connect() {
     return;
   }
   if (rate_limited) {
-    REL_INFO("Rate limited create-session to {} for {}", "delay {} ms", _host,
+    REL_INFO("Rate limited create-session to {} for {}, delay {} ms", _host,
              _credentials.identifier,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  system_clock::now() - now)

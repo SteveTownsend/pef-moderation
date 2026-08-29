@@ -43,6 +43,7 @@ class controller {
   inline bool is_valid() const { return _active || _pending; }
   inline void force_stop() {
     _active = false;
+    _pending = false;
     REL_CRITICAL("controller shutdown requested");
   }
 
