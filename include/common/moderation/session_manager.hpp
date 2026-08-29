@@ -38,6 +38,35 @@ struct login_info {
   std::string password;
 };
 
+// create-session rate limiters, values per
+// https://docs.bsky.app/docs/advanced-guides/rate-limits
+// Units must be appropriate for calculation of fine-grain sleep when
+// rate-limited
+class session_throttle {
+ public:
+  static inline session_throttle &instance() {
+    static session_throttle my_instance;
+    return my_instance;
+  }
+  inline activity::rate_observer<std::chrono::milliseconds, int> &per_day() {
+    return _session_per_day_rate_observer;
+  }
+  inline activity::rate_observer<std::chrono::milliseconds, int> &
+  per_5minutes() {
+    return _session_per_5minutes_rate_observer;
+  }
+
+ private:
+  inline session_throttle()
+      : _session_per_day_rate_observer(std::chrono::hours(24), 300),
+        _session_per_5minutes_rate_observer(std::chrono::minutes(5), 30) {}
+  ~session_throttle() = default;
+  activity::rate_observer<std::chrono::milliseconds, int>
+      _session_per_day_rate_observer;
+  activity::rate_observer<std::chrono::milliseconds, int>
+      _session_per_5minutes_rate_observer;
+};
+
 class pds_session {
  public:
   pds_session(bsky::client &client, std::string const &host);
@@ -68,15 +97,6 @@ class pds_session {
 
   jwt::date _access_expiry;   // a few hours
   jwt::date _refresh_expiry;  // a few months
-
-  // create-session rate limiters, values per
-  // https://docs.bsky.app/docs/advanced-guides/rate-limits
-  // Units must be appropriate for calculation of fine-grain sleep when
-  // rate-limited
-  static activity::rate_observer<std::chrono::milliseconds, int>
-      _session_per_day_rate_observer;
-  static activity::rate_observer<std::chrono::milliseconds, int>
-      _session_per_5minutes_rate_observer;
 };
 
 }  // namespace bsky

@@ -37,12 +37,6 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::login_info,
 
 namespace bsky {
 
-activity::rate_observer<std::chrono::milliseconds, int>
-    pds_session::_session_per_day_rate_observer = {std::chrono::hours(24), 300};
-activity::rate_observer<std::chrono::milliseconds, int>
-    pds_session::_session_per_5minutes_rate_observer = {
-        std::chrono::seconds(5 * 60), 30};
-
 pds_session::pds_session(bsky::client &client, std::string const &host)
     : _client(client), _host(host) {}
 
@@ -59,17 +53,17 @@ void pds_session::internal_connect() {
   using std::chrono::system_clock;
   system_clock::time_point now = system_clock::now();
   bool rate_limited(false);
-  while (!_session_per_5minutes_rate_observer.observe_if_permitted() &&
+  while (!session_throttle::instance().per_5minutes().observe_if_permitted() &&
          controller::instance().is_valid()) {
     rate_limited = true;
     std::this_thread::sleep_for(
-        _session_per_5minutes_rate_observer.event_interval());
+        session_throttle::instance().per_5minutes().event_interval());
   }
-  while (!_session_per_day_rate_observer.observe_if_permitted() &&
+  while (!session_throttle::instance().per_day().observe_if_permitted() &&
          controller::instance().is_valid()) {
     rate_limited = true;
     std::this_thread::sleep_for(
-        _session_per_day_rate_observer.event_interval());
+        session_throttle::instance().per_day().event_interval());
   }
 
   if (!controller::instance().is_valid()) {
