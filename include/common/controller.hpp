@@ -20,12 +20,13 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/config.hpp"
-#include "common/log_wrapper.hpp"
 #include <atomic>
 
+#include "common/config.hpp"
+#include "common/log_wrapper.hpp"
+
 class controller {
-public:
+ public:
   inline static controller &instance() {
     static controller my_controller;
     return my_controller;
@@ -35,9 +36,11 @@ public:
   }
   inline void start() {
     _active = true;
+    _pending = false;
     std::set_terminate(&on_terminate);
   }
   inline bool is_active() const { return _active; }
+  inline bool is_valid() const { return _active || _pending; }
   inline void force_stop() {
     _active = false;
     REL_CRITICAL("controller shutdown requested");
@@ -49,8 +52,9 @@ public:
     std::abort();
   }
 
-private:
+ private:
   std::atomic<bool> _active = false;
+  std::atomic<bool> _pending = true;
   std::shared_ptr<config> _settings;
 };
 
