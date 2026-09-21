@@ -136,7 +136,7 @@ void list_manager::start(YAML::Node const &settings) {
           // do not process same account/list pair twice
           if (is_account_in_list_group(to_block._did,
                                        to_block._list_group_name)) {
-            REL_INFO("skipping {}, aleady in list-group {}", to_block._did,
+            REL_INFO("skipping {}, already in list-group {}", to_block._did,
                      to_block._list_group_name);
             continue;
           }
