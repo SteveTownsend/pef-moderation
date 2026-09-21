@@ -128,9 +128,19 @@ void auxiliary_data::check_rewind_point() {
     return;
   } else {
     auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
-    if (std::chrono::duration_cast<std::chrono::minutes>(
-            current_cursor - _last_rewind_checkpoint) >
-        RewindCheckpointInterval) {
+    /* weird, unrecoverable error was observed here - firehose ordering problem?
+      2026-09-21 16:58:21.895878797    error     14 database exception Failure
+      during 'add_checkpoint': ERROR:  duplicate key value violates unique
+      constraint "firehose_checkpoint_emitted_at_idx" DETAIL:  Key
+      (emitted_at)=(2026-09-21T01:18:27.679Z) already exists.
+      */
+    // enforce strict monotonic behaviour in the DB
+    if (current_cursor <= _last_rewind_checkpoint) {
+      REL_ERROR("firehose cursor {} is earlier than rewind checkpoint {}",
+                last_event_time, _last_rewind_checkpoint);
+    } else if (std::chrono::duration_cast<std::chrono::minutes>(
+                   current_cursor - _last_rewind_checkpoint) >
+               RewindCheckpointInterval) {
       pqxx::work tx(*_cx);
       static pqxx::prepped inserter(
           "INSERT INTO firehose_checkpoint (emitted_at, "
