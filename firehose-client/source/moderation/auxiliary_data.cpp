@@ -69,9 +69,9 @@ void auxiliary_data::start(YAML::Node const &settings) {
         REL_ERROR("pqxx::broken_connection {}", exc.what());
         _cx.reset();
       } catch (std::exception const &exc) {
-        // try to reconnect on next loop, unlikely to work though
+        // allow this for now, reconnecting appears to crash the process
+        // TODO - add a limit on error count, then force stop
         REL_ERROR("database exception {}", exc.what());
-        _cx.reset();
       }
       std::this_thread::sleep_for(RewindFlushInterval);
     }
@@ -98,6 +98,10 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
   if (seq < prior) {
     REL_ERROR("seq in hand {} precedes current cursor {}", seq, prior);
     controller::instance().force_stop();
+  }
+  constexpr char *bad_timestamp = "2026-09-21T01:18:27.679Z";
+  if (emitted_at.compare(0, emitted_at.length(), bad_timestamp) == 0) {
+    REL_ERROR("'emitted-at' sentinel has seq {}", seq);
   }
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
   _emitted_at[emitted_at.length()] = 0;
