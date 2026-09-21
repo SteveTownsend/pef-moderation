@@ -91,9 +91,7 @@ void auxiliary_data::prepare_statements() {
 void auxiliary_data::update_rewind_point(const int64_t seq,
                                          const std::string &emitted_at) {
   if (!_enable_rewind) return;
-  // TODO should be safe but not guaranteed always accurate for lock-free read
-  // seq/emitted_at may mismatch
-  // emitted_at may contain part of old and new values
+  std::lock_guard<std::mutex> lock(_rewind_lock);
   const int64_t prior = _cursor.exchange(seq);
   // During backfill, observed the firehose apparently sometimes incorrectly
   // winds back. Treat this as a fatal error.
@@ -101,8 +99,8 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
     REL_ERROR("seq in hand {} precedes current cursor {}", seq, prior);
     controller::instance().force_stop();
   }
-  _emitted_at[emitted_at.length()] = 0;
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
+  _emitted_at[emitted_at.length()] = 0;
 }
 
 // prepare for data backfill - for malformed data, continue but do not backfill
@@ -113,6 +111,7 @@ void auxiliary_data::set_rewind_point() {
   auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
   auto [last_processed] = result.as<int64_t>();
   REL_INFO("Backfill to {}", last_processed);
+  std::lock_guard<std::mutex> lock(_rewind_lock);
   _cursor = last_processed;
 }
 
@@ -121,9 +120,11 @@ void auxiliary_data::check_rewind_point() {
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.
+  std::lock_guard<std::mutex> lock(_rewind_lock);
   int64_t cursor(get_rewind_point());
   std::string last_event_time(_emitted_at.data());
-  if (cursor == 0 || _emitted_at[0] == '\0') {
+  lock.~lock_guard();
+  if (cursor == 0 || last_event_time.empty()) {
     REL_INFO("No firehose data processed, skip check");
     return;
   } else {
