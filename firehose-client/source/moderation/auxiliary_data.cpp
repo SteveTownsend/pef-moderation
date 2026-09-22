@@ -101,8 +101,13 @@ void auxiliary_data::update_rewind_point(const int64_t seq,
   }
   // Skip bad data - see https://github.com/bluesky-social/indigo/issues/1478
   constexpr char *bad_timestamp = "2026-09-21T01:18:27.679Z";
+  constexpr int64_t bad_seq = 33802112114;
   if (emitted_at.compare(0, emitted_at.length(), bad_timestamp) == 0) {
     REL_ERROR("'emitted-at' sentinel has seq {}", seq);
+    return;
+  }
+  if (seq == bad_seq) {
+    REL_ERROR("'seq' sentinel has emitted-at {}", emitted_at);
     return;
   }
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
