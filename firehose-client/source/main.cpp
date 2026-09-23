@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     do {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     } while (!list_manager::instance().is_ready() ||
-             !async_loader::instance().is_ready());
+             !bsky::async_loader::instance().is_ready());
 
     // continue as long as firehose runs OK
     datasource<firehose_payload>::instance().set_config(settings, cursor);
