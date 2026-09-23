@@ -29,7 +29,8 @@ http://www.fsf.org/licensing/licenses
 
 class action_router {
  public:
-  static constexpr size_t QueueLimit = 1000;
+  // allow 90% of 24-hour backlog
+  static constexpr size_t QueueLimit = 45000;
 
   static action_router &instance();
 

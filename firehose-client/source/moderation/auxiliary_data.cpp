@@ -88,30 +88,34 @@ void auxiliary_data::prepare_statements() {
                "$1, emitted_at = $2 WHERE true");
 }
 
-void auxiliary_data::update_rewind_point(const int64_t seq,
-                                         const std::string &emitted_at) {
-  if (!_enable_rewind) return;
+int64_t auxiliary_data::get_rewind_point() const {
   std::lock_guard<std::mutex> lock(_rewind_lock);
-  const int64_t prior = _cursor.exchange(seq);
+  return _cursor;
+};
+
+bool auxiliary_data::update_rewind_point_if_valid(
+    const int64_t seq, const std::string &emitted_at) {
+  if (!_enable_rewind) return true;
+  std::lock_guard<std::mutex> lock(_rewind_lock);
   // During backfill, observed the firehose apparently sometimes incorrectly
-  // winds back. Treat this as a fatal error.
-  if (seq < prior) {
-    REL_ERROR("seq in hand {} precedes current cursor {}", seq, prior);
-    controller::instance().force_stop();
+  // winds back. Also see https://github.com/bluesky-social/indigo/issues/1478
+  // Do not process these packets as valid rewind points. Otherwise process as
+  // normal, auto-reporting the sequence error
+  bool out_of_order(false);
+  if (seq <= _cursor) {
+    out_of_order = true;
+    REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
   }
-  // Skip bad data - see https://github.com/bluesky-social/indigo/issues/1478
-  constexpr char *bad_timestamp = "2026-09-21T01:18:27.679Z";
-  constexpr int64_t bad_seq = 33802112114;
-  if (emitted_at.compare(0, emitted_at.length(), bad_timestamp) == 0) {
-    REL_ERROR("'emitted-at' sentinel has seq {}", seq);
-    return;
+  if (emitted_at < _emitted_at.data()) {
+    out_of_order = true;
+    REL_ERROR("emitted_at in hand {} precedes last-known-good {}", seq,
+              _emitted_at.data());
   }
-  if (seq == bad_seq) {
-    REL_ERROR("'seq' sentinel has emitted-at {}", emitted_at);
-    return;
-  }
+  if (out_of_order) return false;
+  _cursor = seq;
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
   _emitted_at[emitted_at.length()] = 0;
+  return true;
 }
 
 // prepare for data backfill - for malformed data, continue but do not backfill
@@ -132,7 +136,7 @@ void auxiliary_data::check_rewind_point() {
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.
   std::lock_guard<std::mutex> lock(_rewind_lock);
-  int64_t cursor(get_rewind_point());
+  int64_t cursor(_cursor);
   std::string last_event_time(_emitted_at.data());
   lock.~lock_guard();
   if (cursor == 0 || last_event_time.empty()) {
