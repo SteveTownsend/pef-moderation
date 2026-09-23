@@ -50,8 +50,7 @@ void async_loader::start(YAML::Node const &settings) {
             std::vector<std::string> did_batch;
             did_batch.reserve(BatchSize);
             while (did_batch.size() < BatchSize) {
-              // destructive op on input container
-              did_batch.emplace_back(std::move(did));
+              did_batch.emplace_back(did);
             }
             _batch_in_progress = true;
             // batch load happens only at startup - use batch API, and do not
@@ -59,18 +58,24 @@ void async_loader::start(YAML::Node const &settings) {
             auto profiles(
                 _appview_client->get_profiles(std::unordered_set<std::string>(
                     did_batch.cbegin(), did_batch.cend())));
+            size_t batch_ok(0);
             for (auto const &profile : profiles) {
               activity::event_recorder::instance().update_handle(
                   profile.did, profile.handle);
               REL_TRACE("Batch load: DID {} has handle {}", profile.did,
                         profile.handle);
+              ++batch_ok;
               if (++done % GroupSize == 0) {
                 REL_INFO("Batch load: progress: {}/{}", done, dids.size());
               }
             }
+            REL_INFO("Batch load: got {}/{} accounts", batch_ok,
+                     did_batch.size());
           }
-          REL_INFO("Batch load: complete for {} accounts", dids.size());
+          REL_INFO("Batch load: complete for {}/{} accounts", done,
+                   dids.size());
           if (!_is_ready) {
+            REL_INFO("Batch load: ready");
             _is_ready = true;
           }
         } else {
