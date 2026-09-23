@@ -18,20 +18,20 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include <thread>
+
 #include "common/bluesky/client.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/rest_utils.hpp"
 #include "readerwriterqueue.h"
 
-#include <thread>
-
 namespace bsky {
 
 class async_loader {
-public:
+ public:
   // aloow load spike during startup
-  static constexpr size_t MaxBacklog = 10000;
+  static constexpr size_t MaxBacklog = 2000000;
   async_loader();
   static inline async_loader &instance() {
     static async_loader loader;
@@ -42,7 +42,7 @@ public:
   void wait_enqueue(std::unordered_set<std::string> &&value);
   inline bool batch_in_progress() const { return _batch_in_progress; }
 
-private:
+ private:
   ~async_loader() = default;
   // Use queue to buffer incoming requests for bsky API data
   moodycamel::BlockingReaderWriterQueue<std::unordered_set<std::string>> _queue;
@@ -51,4 +51,4 @@ private:
   bool _batch_in_progress = false;
 };
 
-} // namespace bsky
+}  // namespace bsky
