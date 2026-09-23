@@ -102,7 +102,7 @@ bool auxiliary_data::update_rewind_point_if_valid(
   // Do not process these packets as valid rewind points. Otherwise process as
   // normal, auto-reporting the sequence error
   bool out_of_order(false);
-  if (seq <= _cursor) {
+  if (seq < _cursor) {
     out_of_order = true;
     REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
   }
