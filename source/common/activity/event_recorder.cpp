@@ -19,9 +19,11 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/activity/event_recorder.hpp"
+
 #include "common/bluesky/async_loader.hpp"
 #include "common/controller.hpp"
 #include "common/metrics_factory.hpp"
+#include "common/moderation/ozone_adapter.hpp"
 
 namespace activity {
 event_recorder::event_recorder() : _queue(MaxBacklog) {
@@ -53,14 +55,14 @@ void event_recorder::wait_enqueue(timed_event &&value) {
 std::string event_recorder::ensure_loaded(std::string const &did) {
   std::string handle(get_handle(did));
   if (handle.empty()) {
-    // try to load the handle
-    bsky::async_loader::instance().wait_enqueue({did});
+    // try to load the handle in the next batch
+    bsky::moderation::ozone_adapter::instance().track_account(did);
   }
   return handle;
 }
 
-caches::WrappedValue<account>
-event_recorder::add_if_needed(std::string const &did) {
+caches::WrappedValue<account> event_recorder::add_if_needed(
+    std::string const &did) {
   return _events.get_account(did);
 }
 
@@ -73,4 +75,4 @@ std::string event_recorder::get_handle(std::string const &did) {
   return add_if_needed(did)->get_statistics()._handle;
 }
 
-} // namespace activity
+}  // namespace activity

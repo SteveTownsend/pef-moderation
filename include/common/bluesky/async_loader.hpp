@@ -30,8 +30,9 @@ namespace bsky {
 
 class async_loader {
  public:
-  // aloow load spike during startup
-  static constexpr size_t MaxBacklog = 2000000;
+  // allow load spike during startup - TODO remove the queue, just use data
+  // structures
+  static constexpr size_t MaxBacklog = 1000;
   async_loader();
   static inline async_loader &instance() {
     static async_loader loader;
