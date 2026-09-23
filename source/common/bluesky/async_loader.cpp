@@ -41,18 +41,18 @@ void async_loader::start(YAML::Node const &settings) {
           .Get({{"bsky_api", "backlog"}})
           .Decrement();
       try {
-        constexpr size_t BatchSize = 1000;
+        constexpr size_t BatchSize = 10000;
         constexpr size_t GroupSize = 25000;
         size_t done(0);
         if (dids.size() != 1) {
           REL_INFO("Batch load: {} accounts", dids.size());
+          _batch_in_progress = true;
           for (const auto &did : dids) {
             std::vector<std::string> did_batch;
             did_batch.reserve(BatchSize);
             while (did_batch.size() < BatchSize) {
-              did_batch.emplace_back(did);
+              did_batch.push_back(did);
             }
-            _batch_in_progress = true;
             // batch load happens only at startup - use batch API, and do not
             // spam log
             auto profiles(
