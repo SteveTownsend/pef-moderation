@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/bluesky/async_loader.hpp"
+
 #include "common/activity/event_recorder.hpp"
 #include "common/controller.hpp"
 #include "common/metrics_factory.hpp"
@@ -54,6 +55,9 @@ void async_loader::start(YAML::Node const &settings) {
             REL_TRACE("Batch-load DID {} has handle {}", profile.did,
                       profile.handle);
           }
+          if (!_is_ready) {
+            _is_ready = true;
+          }
         } else {
           auto profile(_appview_client->get_profile(*dids.cbegin()));
           activity::event_recorder::instance().update_handle(profile.did,
@@ -77,4 +81,4 @@ void async_loader::wait_enqueue(std::unordered_set<std::string> &&value) {
       .Increment();
 }
 
-} // namespace bsky
+}  // namespace bsky
