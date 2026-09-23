@@ -20,21 +20,23 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/activity/account_events.hpp"
 #include <cache.hpp>
 #include <lfu_cache_policy.hpp>
 #include <mutex>
 
+#include "common/activity/account_events.hpp"
+
 namespace activity {
 constexpr size_t MaxAccounts = 500000;
-constexpr size_t MaxBacklog = 10000;
+// allow 25 events per inbound message
+constexpr size_t MaxBacklog = 250000;
 
 template <typename Key, typename Value>
 using lfu_cache_t =
     typename caches::fixed_sized_cache<Key, Value, caches::LFUCachePolicy>;
 
 class event_cache {
-public:
+ public:
   event_cache();
   ~event_cache() = default;
 
@@ -45,16 +47,17 @@ public:
   void record(timed_event const &value);
   caches::WrappedValue<account> get_account(std::string const &did);
 
-private:
+ private:
   // visitor for event-specific logic
   struct augment_event {
-    template <typename T> void operator()(T const &) {}
+    template <typename T>
+    void operator()(T const &) {}
   };
 
   // LFU cache of recently-active accounts
   std::mutex _cache_lock;
   lfu_cache_t<std::string, account> _account_events;
 };
-} // namespace activity
+}  // namespace activity
 
 #endif
