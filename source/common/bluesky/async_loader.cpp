@@ -47,30 +47,31 @@ void async_loader::start(YAML::Node const &settings) {
         if (dids.size() != 1) {
           REL_INFO("Batch load: {} accounts", dids.size());
           _batch_in_progress = true;
+          std::vector<std::string> did_batch;
+          did_batch.reserve(BatchSize);
           for (const auto &did : dids) {
-            std::vector<std::string> did_batch;
-            did_batch.reserve(BatchSize);
-            while (did_batch.size() < BatchSize) {
-              did_batch.push_back(did);
+            did_batch.push_back(did);
+            if (++done % GroupSize == 0) {
+              REL_INFO("Batch load: progress: {}/{}", done, dids.size());
             }
-            // batch load happens only at startup - use batch API, and do not
-            // spam log
-            auto profiles(
-                _appview_client->get_profiles(std::unordered_set<std::string>(
-                    did_batch.cbegin(), did_batch.cend())));
-            size_t batch_ok(0);
-            for (auto const &profile : profiles) {
-              activity::event_recorder::instance().update_handle(
-                  profile.did, profile.handle);
-              REL_TRACE("Batch load: DID {} has handle {}", profile.did,
-                        profile.handle);
-              ++batch_ok;
-              if (++done % GroupSize == 0) {
-                REL_INFO("Batch load: progress: {}/{}", done, dids.size());
+            if (did_batch.size() == BatchSize || done == dids.size()) {
+              // batch load happens only at startup - use batch API, and do not
+              // spam log
+              auto profiles(
+                  _appview_client->get_profiles(std::unordered_set<std::string>(
+                      did_batch.cbegin(), did_batch.cend())));
+              size_t batch_ok(0);
+              for (auto const &profile : profiles) {
+                activity::event_recorder::instance().update_handle(
+                    profile.did, profile.handle);
+                REL_TRACE("Batch load: DID {} has handle {}", profile.did,
+                          profile.handle);
+                ++batch_ok;
               }
+              did_batch.clear();
+              REL_INFO("Batch load: got {}/{} accounts", batch_ok,
+                       did_batch.size());
             }
-            REL_INFO("Batch load: got {}/{} accounts", batch_ok,
-                     did_batch.size());
           }
           REL_INFO("Batch load: complete for {}/{} accounts", done,
                    dids.size());
