@@ -90,6 +90,7 @@ class ozone_adapter {
   std::string _connection_string;
   std::thread _thread;
   account_list _tracked_accounts;
+  account_list _new_tracked_accounts;
   std::chrono::steady_clock::time_point _last_refresh;
   std::unordered_set<std::string> _closed_reports;
   pending_report_tags _pending_report_tags;

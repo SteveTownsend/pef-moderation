@@ -71,19 +71,13 @@ void ozone_adapter::check_refresh_tracked_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(now - _last_refresh) >
       ProcessedAccountRefreshInterval) {
-    decltype(_tracked_accounts) new_tracked;
     pqxx::work tx(*_cx);
-    // Track account if it was ever labeled or has an open report
+    // Track blacklisted accounts
     for (auto [did] : tx.query<std::string>(
-             "select ms.\"subjectDid\" from moderation_event ms "
-             "where ms.\"action\" = "
-             "'tools.ozone.moderation.defs#modEventLabel' union "
-             "select did from moderation_subject_status mss "
-             "where mss.\"reviewState\" in "
-             "('tools.ozone.moderation.defs#reviewOpen', "
-             "'tools.ozone.moderation.defs#reviewEscalated')")) {
-      new_tracked.insert(did);
+             "select ba.\"did\" from blacklisted_accounts ba")) {
+      bsky::moderation::ozone_adapter::instance().track_account(did);
     }
+    // TODO was this ever useful?
     // Closed reports at account level
     decltype(_closed_reports) new_closed;
     for (auto [did] : tx.query<std::string>(
@@ -91,31 +85,33 @@ void ozone_adapter::check_refresh_tracked_accounts() {
              "(mss.\"recordPath\" <> '') IS NOT true AND "
              "(mss.\"reviewState\" = "
              "'tools.ozone.moderation.defs#reviewClosed')")) {
-      if (!new_tracked.contains(did)) {
+      if (!bsky::moderation::ozone_adapter::instance().is_tracked(did)) {
         new_closed.insert(did);
       }
     }
 
+    std::lock_guard guard(_lock);
     metrics_factory::instance()
         .get_gauge("process_operation")
         .Get({{"accounts", "tracked"}})
-        .Set(static_cast<double>(new_tracked.size()));
-
-    std::lock_guard guard(_lock);
-    _tracked_accounts.swap(new_tracked);
+        .Set(static_cast<double>(_tracked_accounts.size()));
     _closed_reports.swap(new_closed);
+
     // make tracked accounts sticky in the tracked account event cache by
     // touching them each time
-    new_tracked.clear();
     for (auto const &account : _tracked_accounts) {
-      auto handle(activity::event_recorder::instance().get_handle(account));
-      if (handle.empty()) {
-        new_tracked.insert(account);
-      }
+      activity::event_recorder::instance().get_handle(account);
     }
+    // reset the container that tracks new reports
+    decltype(_new_tracked_accounts) new_tracked;
+    new_tracked.swap(_new_tracked_accounts);
+
     _last_refresh = std::chrono::steady_clock::now();
     guard.~lock_guard();
-    bsky::async_loader::instance().wait_enqueue(std::move(new_tracked));
+
+    // resolve handles for new reports
+    bsky::async_loader::instance().request_resolve_handles(
+        std::move(new_tracked));
   }
 }
 
@@ -308,7 +304,12 @@ std::string ozone_adapter::safe_connection_string() const {
 // run
 bool ozone_adapter::track_account(std::string const &did) {
   std::lock_guard guard(_lock);
-  return _tracked_accounts.insert(did).second;
+  bool tracked(_tracked_accounts.insert(did).second);
+  if (!tracked) {
+    // trigger handle resolve on first sighting, for logs
+    _new_tracked_accounts.insert(did);
+  }
+  return tracked;
 }
 }  // namespace moderation
 }  // namespace bsky

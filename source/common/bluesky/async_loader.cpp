@@ -25,7 +25,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/metrics_factory.hpp"
 
 namespace bsky {
-async_loader::async_loader() : _queue(MaxBacklog) {}
+async_loader::async_loader() {}
 
 void async_loader::start(YAML::Node const &settings) {
   // create client
@@ -34,15 +34,19 @@ void async_loader::start(YAML::Node const &settings) {
   _thread = std::thread([&, this] {
     static size_t matches(0);
     while (controller::instance().is_active()) {
-      std::unordered_set<std::string> dids;
-      _queue.wait_dequeue(dids);
-      metrics_factory::instance()
-          .get_gauge("process_operation")
-          .Get({{"bsky_api", "backlog"}})
-          .Decrement();
+      if (_pending_handles.empty()) {
+        // no work, rest for a bit
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        continue;
+      }
+      // obtain queued work so new values may accumulate while we process it
+      __decltype(_pending_handles) dids;
+      {
+        std::lock_guard guard(_lock);
+        dids.swap(_pending_handles);
+      }
       try {
-        constexpr size_t BatchSize = 10000;
-        constexpr size_t GroupSize = 25000;
+        constexpr size_t BatchSize = 1000;
         size_t done(0);
         if (dids.size() != 1) {
           REL_INFO("Batch load: {} accounts", dids.size());
@@ -51,12 +55,9 @@ void async_loader::start(YAML::Node const &settings) {
           did_batch.reserve(BatchSize);
           for (const auto &did : dids) {
             did_batch.push_back(did);
-            if (++done % GroupSize == 0) {
-              REL_INFO("Batch load: progress: {}/{}", done, dids.size());
-            }
             if (did_batch.size() == BatchSize || done == dids.size()) {
-              // batch load happens only at startup - use batch API, and do not
-              // spam log
+              // batch load happens only at startup - use batch API, and do
+              // not spam log
               auto profiles(
                   _appview_client->get_profiles(std::unordered_set<std::string>(
                       did_batch.cbegin(), did_batch.cend())));
@@ -94,12 +95,10 @@ void async_loader::start(YAML::Node const &settings) {
   });
 }
 
-void async_loader::wait_enqueue(std::unordered_set<std::string> &&value) {
-  _queue.enqueue(value);
-  metrics_factory::instance()
-      .get_gauge("process_operation")
-      .Get({{"bsky_api", "backlog"}})
-      .Increment();
+void async_loader::request_resolve_handles(
+    std::unordered_set<std::string> &&value) {
+  std::lock_guard guard(_lock);
+  _pending_handles.insert(value.cbegin(), value.cend());
 }
 
 }  // namespace bsky
