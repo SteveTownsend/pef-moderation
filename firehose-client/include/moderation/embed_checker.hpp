@@ -19,6 +19,13 @@ A copy of the GNU General Public License is available at
 http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
+#include <boost/url.hpp>
+#include <cache.hpp>
+#include <lfu_cache_policy.hpp>
+#include <optional>
+#include <thread>
+#include <unordered_set>
+
 #include "blockingconcurrentqueue.h"
 #include "common/helpers.hpp"
 #include "jwt-cpp/jwt.h"
@@ -26,12 +33,6 @@ http://www.fsf.org/licensing/licenses
 #include "project_defs.hpp"
 #include "restc-cpp/restc-cpp.h"
 #include "yaml-cpp/yaml.h"
-#include <boost/url.hpp>
-#include <cache.hpp>
-#include <lfu_cache_policy.hpp>
-#include <optional>
-#include <thread>
-#include <unordered_set>
 
 namespace embed {
 
@@ -56,7 +57,7 @@ struct embed_info_list {
   std::vector<embed_info> _embeds;
 };
 
-} // namespace embed
+}  // namespace embed
 
 namespace bsky {
 namespace moderation {
@@ -64,12 +65,15 @@ namespace moderation {
 // visitor for report-specific logic
 class embed_checker;
 struct embed_handler {
-public:
+ public:
   inline embed_handler(embed_checker &checker,
                        restc_cpp::RestClient &rest_client,
                        std::string const &repo, std::string const &path,
                        std::string const &cid)
-      : _checker(checker), _rest_client(rest_client), _repo(repo), _path(path),
+      : _checker(checker),
+        _rest_client(rest_client),
+        _repo(repo),
+        _path(path),
         _cid(cid) {
     if (_repo.empty() || _path.empty() || _cid.empty()) {
       std::ostringstream oss;
@@ -78,7 +82,8 @@ public:
       throw std::invalid_argument(oss.str());
     }
   }
-  template <typename T> void operator()(T const &) {}
+  template <typename T>
+  void operator()(T const &) {}
 
   void operator()(embed::external const &value);
   void operator()(embed::image const &value);
@@ -88,7 +93,7 @@ public:
   bool on_url_redirect(int code, std::string &url,
                        const restc_cpp::Reply &reply);
 
-private:
+ private:
   embed_checker &_checker;
   restc_cpp::RestClient &_rest_client;
   std::string _repo;
@@ -100,10 +105,10 @@ private:
 };
 
 class embed_checker {
-public:
+ public:
   // allow a large backlog - queued items are small and we need to manage rate
   // of record creation to obey rate limits
-  static constexpr size_t QueueLimit = 50000;
+  static constexpr size_t QueueLimit = 250000;
   static constexpr size_t DefaultNumberOfThreads = 5;
   static constexpr size_t UrlRedirectLimit = 10;
   static constexpr size_t MaxHosts = 10000;
@@ -136,7 +141,7 @@ public:
                   std::string const &cid);
   inline bool follow_links() const { return _follow_links; }
 
-private:
+ private:
   embed_checker();
   ~embed_checker() = default;
 
@@ -161,7 +166,7 @@ private:
       std::chrono::system_clock::now();
 };
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky
 
 #endif
