@@ -116,6 +116,7 @@ void list_manager::start(YAML::Node const &settings) {
       // this requires HTTP lookups and could take a while. Allow backlog while
       // we are doing this.
       lazy_load_managed_lists();
+      _is_ready = true;
 
       while (controller::instance().is_active()) {
         block_list_addition to_block;

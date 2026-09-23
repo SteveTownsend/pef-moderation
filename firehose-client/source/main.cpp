@@ -162,10 +162,7 @@ int main(int argc, char **argv) {
     } while (!matcher::shared().is_ready() ||
              !bsky::moderation::embed_checker::instance().is_ready());
 
-    datasource<firehose_payload>::instance().set_config(settings, cursor);
-    datasource<firehose_payload>::instance().start();
-
-    // prepare action handlers after we start processing firehose messages
+    // prepare action handlers before we start processing firehose messages
     // this is time consuming - allow a backlog for handlers while
     // existing members load
     bsky::moderation::report_agent::instance().start(
@@ -183,7 +180,14 @@ int main(int argc, char **argv) {
     list_manager::instance().start(
         settings->get_config()[PROJECT_NAME]["list_manager"]);
 
+    // wait for list manager to be ready
+    do {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } while (!list_manager::instance().is_ready());
+
     // continue as long as firehose runs OK
+    datasource<firehose_payload>::instance().set_config(settings, cursor);
+    datasource<firehose_payload>::instance().start();
     datasource<firehose_payload>::instance().wait_for_end_thread();
 
     return EXIT_SUCCESS;
