@@ -185,6 +185,7 @@ class list_manager {
       std::unordered_set<std::string> new_active_defenders);
   void update_ignored(std::unordered_set<std::string> new_ignored);
   bool filter_if_special_account(std::string const &did) const;
+  const std::unordered_set<std::string> blacklist() const;
 
  private:
   list_manager();
