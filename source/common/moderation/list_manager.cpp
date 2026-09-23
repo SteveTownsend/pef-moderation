@@ -427,3 +427,8 @@ bool list_manager::filter_if_special_account(std::string const &did) const {
   }
   return false;
 }
+
+const std::unordered_set<std::string> list_manager::blacklist() const {
+  std::lock_guard lock(_lock);
+  return _blacklist;
+}

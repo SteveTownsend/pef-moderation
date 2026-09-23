@@ -28,6 +28,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/bluesky/client.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
+#include "common/moderation/list_manager.hpp"
 
 namespace bsky {
 namespace moderation {
@@ -71,14 +72,15 @@ void ozone_adapter::check_refresh_tracked_accounts() {
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if (std::chrono::duration_cast<std::chrono::seconds>(now - _last_refresh) >
       ProcessedAccountRefreshInterval) {
-    pqxx::work tx(*_cx);
     // Track blacklisted accounts
-    for (auto [did] : tx.query<std::string>(
-             "select ba.\"did\" from blacklisted_accounts ba")) {
+    auto blacklist(list_manager::instance().blacklist());
+    for (auto did : blacklist) {
       bsky::moderation::ozone_adapter::instance().track_account(did);
     }
+
     // TODO was this ever useful?
     // Closed reports at account level
+    pqxx::work tx(*_cx);
     decltype(_closed_reports) new_closed;
     for (auto [did] : tx.query<std::string>(
              "SELECT mss.did FROM moderation_subject_status mss WHERE "

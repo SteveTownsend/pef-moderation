@@ -243,18 +243,15 @@ void auxiliary_data::update_blacklisted_accounts() {
           now - _last_blacklisted_accounts_refresh) >
       BlacklistedAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_blacklist;
     for (auto [did] :
          tx.query<std::string>("SELECT did FROM blacklisted_accounts;")) {
       new_blacklist.insert(did);
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      list_manager::instance().update_blacklist(std::move(new_blacklist));
-      _last_blacklisted_accounts_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    list_manager::instance().update_blacklist(std::move(new_blacklist));
+    _last_blacklisted_accounts_refresh = std::chrono::steady_clock::now();
   }
 }
 
