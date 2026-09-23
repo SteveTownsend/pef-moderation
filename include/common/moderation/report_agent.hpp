@@ -36,6 +36,9 @@ std::chrono::milliseconds constexpr LabelDailyRateLimitDelay =
 namespace bsky {
 namespace moderation {
 
+static constexpr char *ModerationServiceIdentity =
+    "did:plc:uac6er53o2pvr5y2qmvaf7hw";
+
 struct filter_match_info {
   filter_match_info() = delete;
   inline filter_match_info(std::string const &project_name)
@@ -52,6 +55,18 @@ struct link_redirection_info {
   std::string descriptor;
   std::vector<std::string> uris;
   constexpr std::string get_name() const { return "link_redirection"; }
+};
+
+struct out_of_sequence_info {
+  out_of_sequence_info() = delete;
+  inline out_of_sequence_info(std::string const &project_name)
+      : descriptor(project_name) {}
+  std::string descriptor;
+  int64_t seq;
+  std::string emitted_at;
+  std::string header;
+  std::string message;
+  constexpr std::string get_name() const { return "out_of_sequence"; }
 };
 
 struct no_content {};
@@ -109,8 +124,32 @@ struct high_facet_count {
   std::string _cid;
   size_t _count;
 };
+struct out_of_sequence {
+  inline out_of_sequence(int64_t seq, std::string const &emitted_at,
+                         std::string const &header, std::string const &message)
+      : _seq(seq),
+        _emitted_at(emitted_at),
+        _header(header),
+        _message(message) {}
+  inline out_of_sequence(const out_of_sequence &rhs)
+      : _seq(rhs._seq),
+        _emitted_at(rhs._emitted_at),
+        _header(rhs._header),
+        _message(rhs._message) {}
+  inline out_of_sequence &operator=(const out_of_sequence &rhs) {
+    _seq = rhs._seq;
+    _emitted_at = rhs._emitted_at;
+    _header = rhs._header;
+    _message = rhs._message;
+    return *this;
+  }
+  int64_t _seq;
+  std::string _emitted_at;
+  std::string _header;
+  std::string _message;
+};
 typedef std::variant<no_content, filter_matches, link_redirection,
-                     blocks_moderation, high_facet_count>
+                     blocks_moderation, high_facet_count, out_of_sequence>
     report_content;
 struct account_report {
   inline account_report() : _content(no_content()) {}
@@ -134,6 +173,7 @@ struct report_content_visitor {
   void operator()(link_redirection const &value);
   void operator()(blocks_moderation const &value);
   void operator()(high_facet_count const &value);
+  void operator()(out_of_sequence const &value);
 
  private:
   report_agent &_agent;
@@ -162,6 +202,11 @@ class report_agent {
   void link_redirection_report(const size_t client, std::string const &did,
                                std::string const &path, std::string const &cid,
                                std::vector<std::string> const &uri_chain);
+  void out_of_sequence_report(const size_t client,
+                              std::string const &service_did, int64_t _seq,
+                              std::string_view _emitted_at,
+                              std::string_view _header,
+                              std::string_view _message);
   void label_subject(
       const size_t client, bsky::moderation::report_subject const &subject,
       std::unordered_set<std::string> const &add_labels,

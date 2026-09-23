@@ -25,6 +25,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/activity/account_events.hpp"
 #include "common/activity/event_recorder.hpp"
 #include "common/moderation/ozone_adapter.hpp"
+#include "common/moderation/report_agent.hpp"
 #include "common/parser.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/auxiliary_data.hpp"
@@ -289,8 +290,16 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
     if (op_type != firehose::OpTypeInfo) {
       int64_t seq(message["seq"].template get<int64_t>());
       std::string emitted_at(message["time"].template get<std::string>());
-      bsky::moderation::auxiliary_data::instance().update_rewind_point(
-          seq, emitted_at);
+      // if packet is out of sequence, auto-report against Moderation Service
+      // DID - an administrative report not for any particular account
+      if (!bsky::moderation::auxiliary_data::instance()
+               .update_rewind_point_if_valid(seq, emitted_at)) {
+        bsky::moderation::report_agent::instance().wait_enqueue(
+            bsky::moderation::account_report(
+                bsky::moderation::ModerationServiceIdentity,
+                bsky::moderation::out_of_sequence(
+                    seq, emitted_at, dump_json(header), dump_json(message))));
+      }
     }
   }
 }

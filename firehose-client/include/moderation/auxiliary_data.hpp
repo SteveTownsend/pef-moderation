@@ -43,8 +43,9 @@ class auxiliary_data {
   void start(YAML::Node const &settings);
   void set_rewind_point();
   // this returns 0 by design, if handling is disabled
-  inline int64_t get_rewind_point() const { return _cursor.load(); };
-  void update_rewind_point(const int64_t seq, const std::string &emitted_at);
+  int64_t get_rewind_point() const;
+  bool update_rewind_point_if_valid(const int64_t seq,
+                                    const std::string &emitted_at);
 
   // Periodic refresh
   void check_rewind_point();
@@ -82,9 +83,9 @@ class auxiliary_data {
   std::string _connection_string;
   std::thread _thread;
 
-  std::mutex _rewind_lock;
+  mutable std::mutex _rewind_lock;
   bool _enable_rewind = false;
-  std::atomic<int64_t> _cursor = 0;
+  int64_t _cursor = 0;
   std::array<char, UtcDateTimeMaxLength> _emitted_at = {};
   bsky::time_stamp _last_rewind_checkpoint;
   std::chrono::steady_clock::time_point _last_rewind_flush;

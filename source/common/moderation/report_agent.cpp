@@ -49,6 +49,10 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
                           (std::string, descriptor)(std::vector<std::string>,
                                                     uris))
+BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::out_of_sequence_info,
+                          (std::string, descriptor), (int64_t, seq),
+                          (std::string, emitted_at), (std::string, header),
+                          (std::string, message))
 
 namespace bsky {
 namespace moderation {
@@ -159,6 +163,23 @@ void report_agent::link_redirection_report(
           target, reason);
 }
 
+void report_agent::out_of_sequence_report(const size_t client,
+                                          std::string const &service_did,
+                                          int64_t seq,
+                                          std::string_view emitted_at,
+                                          std::string_view header,
+                                          std::string_view message) {
+  bsky::moderation::out_of_sequence_info reason(_project_name);
+  reason.seq = seq;
+  reason.emitted_at = emitted_at;
+  reason.header = header;
+  reason.message = message;
+  bsky::moderation::report_subject target(service_did);
+  _pds_clients[client]
+      ->send_report_for_subject<bsky::moderation::out_of_sequence_info>(target,
+                                                                        reason);
+}
+
 // TODO add metrics
 void report_agent::label_subject(
     const size_t client, bsky::moderation::report_subject const &subject,
@@ -259,6 +280,12 @@ void report_content_visitor::operator()(high_facet_count const &value) {
   comment.did = _agent.service_did();
   bsky::moderation::report_subject subject(_did, value._path, value._cid);
   _agent.label_subject(_client, subject, {value.get_name()}, {}, comment);
+}
+void report_content_visitor::operator()(out_of_sequence const &value) {
+  // report packet using mod-service DID, it applies to no particular account
+  _agent.out_of_sequence_report(
+      _client, bsky::moderation::ModerationServiceIdentity, value._seq,
+      value._emitted_at, value._header, value._message);
 }
 }  // namespace moderation
 }  // namespace bsky
