@@ -85,6 +85,7 @@ class auxiliary_data {
 
   mutable std::mutex _rewind_lock;
   bool _enable_rewind = false;
+  bool _enforce_sequencing = false;
   int64_t _cursor = 0;
   std::array<char, UtcDateTimeMaxLength> _emitted_at = {};
   bsky::time_stamp _last_rewind_checkpoint;
