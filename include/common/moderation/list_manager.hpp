@@ -167,6 +167,7 @@ class list_manager {
   static constexpr size_t MaxItemsInList = 5000;
 
   static list_manager &instance();
+  bool is_ready() const { return _is_ready; }
 
   void start(YAML::Node const &settings);
   void wait_enqueue(block_list_addition &&value);
@@ -304,6 +305,7 @@ class list_manager {
   std::string _port;
   std::string _client_did;
   bool _dry_run = true;
+  bool _is_ready = false;
   list_uris_by_name _list_lookup;
   list_group_membership _list_group_members;
   active_list_membership_for_group _active_list_members_for_group;
