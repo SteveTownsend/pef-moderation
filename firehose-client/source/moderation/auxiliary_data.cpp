@@ -34,6 +34,7 @@ void auxiliary_data::start(YAML::Node const &settings) {
 
   _connection_string = build_db_connection_string(settings["db"]);
   _enable_rewind = settings["enable_rewind"].as<bool>(false);
+  _enforce_sequencing = settings["enforce_sequencing"].as<bool>(false);
   try {
     _cx = std::make_unique<pqxx::connection>(_connection_string);
     REL_INFO("Connected OK to auxiliary DB: {}", safe_connection_string());
@@ -101,17 +102,19 @@ bool auxiliary_data::update_rewind_point_if_valid(
   // winds back. Also see https://github.com/bluesky-social/indigo/issues/1478
   // Do not process these packets as valid rewind points. Otherwise process as
   // normal, auto-reporting the sequence error
-  bool out_of_order(false);
-  if (seq < _cursor) {
-    out_of_order = true;
-    REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
+  if (_enforce_sequencing) {
+    bool out_of_order(false);
+    if (seq < _cursor) {
+      out_of_order = true;
+      REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
+    }
+    if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
+      out_of_order = true;
+      REL_ERROR("emitted_at in hand {} precedes last-known-good {}", emitted_at,
+                _emitted_at.data());
+    }
+    if (out_of_order) return false;
   }
-  if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
-    out_of_order = true;
-    REL_ERROR("emitted_at in hand {} precedes last-known-good {}", emitted_at,
-              _emitted_at.data());
-  }
-  if (out_of_order) return false;
   _cursor = seq;
   std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
   _emitted_at[emitted_at.length()] = 0;
@@ -152,8 +155,10 @@ void auxiliary_data::check_rewind_point() {
       */
     // enforce strict monotonic behaviour in the DB
     if (current_cursor <= _last_rewind_checkpoint) {
-      REL_ERROR("firehose cursor {} is earlier than rewind checkpoint {}",
-                last_event_time, _last_rewind_checkpoint);
+      if (_enforce_sequencing) {
+        REL_ERROR("firehose cursor {} is earlier than rewind checkpoint {}",
+                  last_event_time, _last_rewind_checkpoint);
+      }
     } else if (std::chrono::duration_cast<std::chrono::minutes>(
                    current_cursor - _last_rewind_checkpoint) >
                RewindCheckpointInterval) {
