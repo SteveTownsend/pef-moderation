@@ -41,6 +41,8 @@ void async_loader::start(YAML::Node const &settings) {
           .Get({{"bsky_api", "backlog"}})
           .Decrement();
       try {
+        constexpr size_t GroupLogSize = 25000;
+        size_t done(0);
         if (dids.size() != 1) {
           // Avoid a backlog of batch invocations, all but the first should be
           // small
@@ -52,8 +54,11 @@ void async_loader::start(YAML::Node const &settings) {
           for (auto const &profile : profiles) {
             activity::event_recorder::instance().update_handle(profile.did,
                                                                profile.handle);
-            REL_TRACE("Batch-load DID {} has handle {}", profile.did,
+            REL_TRACE("Batch load DID {} has handle {}", profile.did,
                       profile.handle);
+            if (++done % GroupLogSize == 0) {
+              REL_INFO("Batch load progress: {}/{}", done, dids.size());
+            }
           }
           if (!_is_ready) {
             _is_ready = true;
