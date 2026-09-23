@@ -294,11 +294,14 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       // DID - an administrative report not for any particular account
       if (!bsky::moderation::auxiliary_data::instance()
                .update_rewind_point_if_valid(seq, emitted_at)) {
+#if 0 
+        // logs too much data for 50K per day report rate limit, use when needed
         bsky::moderation::report_agent::instance().wait_enqueue(
             bsky::moderation::account_report(
                 bsky::moderation::ModerationServiceIdentity,
                 bsky::moderation::out_of_sequence(
                     seq, emitted_at, dump_json(header), dump_json(message))));
+#endif
       }
     }
   }
