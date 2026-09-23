@@ -45,7 +45,7 @@ void ozone_adapter::start(std::string const &connection_string,
                    safe_connection_string());
         }
         // Load the list of labeled and pending-review accounts
-        // we may track some false positines but that's no big deal
+        // we may track some false positives but that's no big deal
         check_refresh_tracked_accounts();
       } catch (pqxx::broken_connection const &exc) {
         // will reconnect on next loop
@@ -113,8 +113,9 @@ void ozone_adapter::check_refresh_tracked_accounts() {
         new_tracked.insert(account);
       }
     }
-    bsky::async_loader::instance().wait_enqueue(std::move(new_tracked));
     _last_refresh = std::chrono::steady_clock::now();
+    guard.~lock_guard();
+    bsky::async_loader::instance().wait_enqueue(std::move(new_tracked));
   }
 }
 
