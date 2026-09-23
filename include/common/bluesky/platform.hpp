@@ -27,7 +27,7 @@ http://www.fsf.org/licensing/licenses
 #include <string_view>
 
 namespace bsky {
-constexpr size_t GetProfilesMax = 100;
+constexpr size_t GetProfilesMax = 25;
 
 constexpr std::string_view HandleInvalid = "@handle.invalid";
 
