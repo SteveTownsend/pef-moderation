@@ -39,6 +39,7 @@ class async_loader {
   }
 
   void start(YAML::Node const &settings);
+  inline bool is_ready() const { return _is_ready; }
   void wait_enqueue(std::unordered_set<std::string> &&value);
   inline bool batch_in_progress() const { return _batch_in_progress; }
 
@@ -49,6 +50,7 @@ class async_loader {
   std::thread _thread;
   std::unique_ptr<client> _appview_client;
   bool _batch_in_progress = false;
+  bool _is_ready = false;
 };
 
 }  // namespace bsky

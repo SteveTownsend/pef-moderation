@@ -167,7 +167,7 @@ class list_manager {
   static constexpr size_t MaxItemsInList = 5000;
 
   static list_manager &instance();
-  bool is_ready() const { return _is_ready; }
+  inline bool is_ready() const { return _is_ready; }
 
   void start(YAML::Node const &settings);
   void wait_enqueue(block_list_addition &&value);
