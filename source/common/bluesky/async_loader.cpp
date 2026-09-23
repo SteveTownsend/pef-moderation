@@ -41,20 +41,35 @@ void async_loader::start(YAML::Node const &settings) {
           .Get({{"bsky_api", "backlog"}})
           .Decrement();
       try {
+        constexpr size_t BatchSize = 1000;
+        constexpr size_t GroupSize = 25000;
+        size_t done(0);
         if (dids.size() != 1) {
-          // Avoid a backlog of batch invocations, all but the first should be
-          // small
-          _batch_in_progress = true;
-          REL_INFO("Batch load {} accounts", dids.size());
-          // batch load happens only at startup - use batch API, and do not spam
-          // log
-          auto profiles(_appview_client->get_profiles(dids));
-          for (auto const &profile : profiles) {
-            activity::event_recorder::instance().update_handle(profile.did,
-                                                               profile.handle);
-            REL_TRACE("Batch-load DID {} has handle {}", profile.did,
-                      profile.handle);
+          REL_INFO("Batch load: {} accounts", dids.size());
+          for (const auto &did : dids) {
+            std::vector<std::string> did_batch;
+            did_batch.reserve(BatchSize);
+            while (did_batch.size() < BatchSize) {
+              // destructive op on input container
+              did_batch.emplace_back(std::move(did));
+            }
+            _batch_in_progress = true;
+            // batch load happens only at startup - use batch API, and do not
+            // spam log
+            auto profiles(
+                _appview_client->get_profiles(std::unordered_set<std::string>(
+                    did_batch.cbegin(), did_batch.cend())));
+            for (auto const &profile : profiles) {
+              activity::event_recorder::instance().update_handle(
+                  profile.did, profile.handle);
+              REL_TRACE("Batch load: DID {} has handle {}", profile.did,
+                        profile.handle);
+              if (++done % GroupSize == 0) {
+                REL_INFO("Batch load: progress: {}/{}", done, dids.size());
+              }
+            }
           }
+          REL_INFO("Batch load: complete for {} accounts", dids.size());
           if (!_is_ready) {
             _is_ready = true;
           }
