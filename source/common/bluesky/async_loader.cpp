@@ -68,9 +68,9 @@ void async_loader::start(YAML::Node const &settings) {
                           profile.handle);
                 ++batch_ok;
               }
-              did_batch.clear();
               REL_INFO("Batch load: got {}/{} accounts", batch_ok,
                        did_batch.size());
+              did_batch.clear();
             }
           }
           REL_INFO("Batch load: complete for {}/{} accounts", done,
