@@ -106,9 +106,9 @@ bool auxiliary_data::update_rewind_point_if_valid(
     out_of_order = true;
     REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
   }
-  if (emitted_at < _emitted_at.data()) {
+  if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
     out_of_order = true;
-    REL_ERROR("emitted_at in hand {} precedes last-known-good {}", seq,
+    REL_ERROR("emitted_at in hand {} precedes last-known-good {}", emitted_at,
               _emitted_at.data());
   }
   if (out_of_order) return false;
