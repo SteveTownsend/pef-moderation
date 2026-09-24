@@ -75,7 +75,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/debug-gcc/firehose-client/firehose_client",
             "args": [
-                "./config/graph_db_config_dev.yml"
+                "./config/prod_config.yml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/firehose-client",
