@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "content_handler.hpp"
+
 #include "payload.hpp"
 
 template <>
@@ -26,5 +27,8 @@ void content_handler<firehose_payload>::handle(
     beast::flat_buffer const &beast_data) {
   parser my_parser;
   my_parser.get_candidates_from_flat_buffer(beast_data);
+#if 0  
   _post_processor.wait_enqueue(firehose_payload(my_parser));
+#endif
+  firehose_payload(my_parser).handle(_post_processor);
 }
