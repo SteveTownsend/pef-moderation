@@ -124,6 +124,7 @@ typedef std::chrono::sys_time<std::chrono::nanoseconds> parse_time_stamp;
 
 // optimal format for UTC offset 'Z'
 constexpr const char *UtcDefault = "%FT%TZ";
+constexpr const char *UtcDefaultFormat = "{:%FT%TZ}";
 
 inline bsky::parse_time_stamp strict_current_time() {
   return std::chrono::time_point_cast<std::chrono::nanoseconds>(
@@ -143,7 +144,7 @@ bool is_strict_iso_8601(std::string const &date_time);
 // stream ISO8601 time
 template <typename TimePoint>
 std::string iso_8601_from_time_stamp(TimePoint const timestamp) {
-  return std::format(UtcDefault, timestamp);
+  return std::format(UtcDefaultFormat, timestamp);
 }
 
 }  // namespace bsky

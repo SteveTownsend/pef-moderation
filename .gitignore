@@ -17,3 +17,4 @@ logging-gcc/
 release-gcc/
 repo-reader/config/repo_reader_dev.yml
 repo-reader/logs/
+firehose-client/config/prod_config.yml
