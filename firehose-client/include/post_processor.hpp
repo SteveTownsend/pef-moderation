@@ -103,59 +103,11 @@ template <typename T>
 class post_processor {
  public:
   post_processor() = default;
-#if 0 
-static constexpr size_t QueueLimit = 10000;
-
-  post_processor() : _queue(QueueLimit) {
-    _thread = std::thread([&, this] {
-      try {
-        while ((controller::instance().is_active())) {
-          T my_payload;
-          try {
-            _queue.wait_dequeue(my_payload);
-            metrics_factory::instance()
-                .get_gauge("process_operation")
-                .Get({{"message", "backlog"}})
-                .Decrement();
-
-            my_payload.handle(*this);
-          } catch (nlohmann::detail::exception const &exc) {
-            REL_ERROR("post_processor JSON error {} on payload {}", exc.what(),
-                      my_payload.to_string());
-          }
-        }
-      } catch (std::exception const &exc) {
-        REL_ERROR("post_processor exception {}", exc.what());
-        controller::instance().force_stop();
-      }
-      REL_INFO("post_processor stopping");
-    });
-  }
-#endif
   ~post_processor() = default;
-#if 0
-  void wait_enqueue(T &&value) {
-    _queue.enqueue(value);
-    metrics_factory::instance()
-        .get_gauge("process_operation")
-        .Get({{"message", "backlog"}})
-        .Increment();
-  }
-#endif
   inline void request_recording(activity::timed_event &&event) {
     // inline event recording
-#if 0    
-    activity::event_recorder::instance().wait_enqueue(std::move(event));
-#endif
     activity::event_recorder::instance().record(std::move(event));
   }
-
-#if 0    
- private:
-  // Declare queue between websocket and match post-processing
-  moodycamel::BlockingReaderWriterQueue<T> _queue;
-  std::thread _thread;
-#endif
 };
 
 #endif

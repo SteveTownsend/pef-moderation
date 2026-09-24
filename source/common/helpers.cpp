@@ -93,13 +93,14 @@ embed_type embed_type_from_string(std::string_view embed_type_str) {
 }
 
 // Parse ISO8601 time permissively
-bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
+bsky::parse_time_stamp strict_time_stamp_from_iso_8601(
+    std::string const &date_time) {
   std::istringstream is(date_time);
   bsky::parse_time_stamp tp;
   // is >> date::parse<bsky::parse_time_stamp, char>(UtcDefault, tp);
   is >> std::chrono::parse(UtcDefault, tp);
   if (!is.fail()) {
-    return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+    return tp;
   }
   // fix and parse for invalid +00:00
   constexpr std::string_view bad_zero = "+00:00";
@@ -112,7 +113,7 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
     // is_new >> date::parse<bsky::parse_time_stamp, char>(UtcDefault, tp);
     is_new >> std::chrono::parse(UtcDefault, tp);
     if (!is_new.fail()) {
-      return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+      return tp;
     }
   }
   // fix and parse for alternate form of UTC offset -03:00
@@ -126,12 +127,17 @@ bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
     // is_new >> date::parse<bsky::parse_time_stamp, char>(UtcWithOffset, tp);
     is_new >> std::chrono::parse(UtcWithOffset, tp);
     if (!is_new.fail()) {
-      return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
+      return tp;
     }
   }
 
   REL_WARNING("Failed to parse {} as ISO8601 date-time", date_time);
-  return current_time();
+  return strict_current_time();
+}
+
+bsky::time_stamp time_stamp_from_iso_8601(std::string const &date_time) {
+  return std::chrono::time_point_cast<std::chrono::milliseconds>(
+      strict_time_stamp_from_iso_8601(date_time));
 }
 
 // strict ISO8601 format check
@@ -141,6 +147,7 @@ bool is_strict_iso_8601(std::string const &date_time) {
   is >> std::chrono::parse(UtcDefault, tp);
   return !is.fail();
 }
+
 }  // namespace bsky
 
 namespace atproto {

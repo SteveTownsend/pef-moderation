@@ -95,7 +95,7 @@ int64_t auxiliary_data::get_rewind_point() const {
 }
 
 bool auxiliary_data::update_rewind_point_if_valid(
-    const int64_t seq, const std::string &emitted_at) {
+    const int64_t seq, const bsky::parse_time_stamp emitted_at) {
   if (!_enable_rewind) return true;
   std::lock_guard<std::mutex> lock(_rewind_lock);
   // During backfill, observed the firehose apparently sometimes incorrectly
@@ -110,10 +110,12 @@ bool auxiliary_data::update_rewind_point_if_valid(
       if (!sequence_error) {
         sequence_error = true;
         REL_ERROR("out-of-sequence: seq {}/{} precedes current cursor {}/{}",
-                  seq, emitted_at, _cursor, _emitted_at.data());
+                  seq, iso_8601_from_time_stamp(emitted_at), _cursor,
+                  iso_8601_from_time_stamp(_emitted_at));
       }
     }
-    if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
+    if (_emitted_at.time_since_epoch().count() != 0 &&
+        emitted_at < _emitted_at) {
       static bool sequence_error = false;
       out_of_order = true;
       if (!sequence_error) {
@@ -122,14 +124,14 @@ bool auxiliary_data::update_rewind_point_if_valid(
             "out-of-sequence: emitted_at in hand {}/{} precedes "
             "last-known-good "
             "{}/{}",
-            seq, emitted_at, _cursor, _emitted_at.data());
+            seq, iso_8601_from_time_stamp(emitted_at), _cursor,
+            iso_8601_from_time_stamp(_emitted_at));
       }
     }
     if (out_of_order) return false;
   }
   _cursor = seq;
-  std::copy(emitted_at.cbegin(), emitted_at.cend(), _emitted_at.data());
-  _emitted_at[emitted_at.length()] = 0;
+  _emitted_at = emitted_at;
   return true;
 }
 
@@ -156,13 +158,12 @@ void auxiliary_data::check_rewind_point() {
   // current/real time.
   std::lock_guard<std::mutex> lock(_rewind_lock);
   int64_t cursor(_cursor);
-  std::string last_event_time(_emitted_at.data());
+  bsky::parse_time_stamp timestamp(_emitted_at);
   lock.~lock_guard();
-  if (cursor == 0 || last_event_time.empty()) {
+  if (cursor == 0 || timestamp.time_since_epoch().count() == 0) {
     REL_INFO("No firehose data processed, skip check");
     return;
   } else {
-    auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
     /* weird, unrecoverable error was observed here - firehose ordering
       problem? 2026-09-21 16:58:21.895878797    error     14 database
       exception Failure during 'add_checkpoint': ERROR:  duplicate key value
@@ -170,7 +171,7 @@ void auxiliary_data::check_rewind_point() {
       Key (emitted_at)=(2026-09-21T01:18:27.679Z) already exists.
       */
     // enforce strict monotonic behaviour in the DB
-    if (current_cursor <= _last_rewind_checkpoint) {
+    if (timestamp < _last_rewind_checkpoint) {
       if (_enforce_sequencing) {
         static bool sequence_error = false;
         if (!sequence_error) {
@@ -178,31 +179,34 @@ void auxiliary_data::check_rewind_point() {
           REL_ERROR(
               "out-of-sequence: firehose cursor {} is earlier than rewind "
               "checkpoint {}",
-              last_event_time, _last_rewind_checkpoint);
+              iso_8601_from_time_stamp(timestamp),
+              iso_8601_from_time_stamp(_last_rewind_checkpoint));
         }
         return;
       }
     } else if (std::chrono::duration_cast<std::chrono::minutes>(
-                   current_cursor - _last_rewind_checkpoint) >
+                   timestamp - _last_rewind_checkpoint) >
                RewindCheckpointInterval) {
       pqxx::work tx(*_cx);
       static pqxx::prepped inserter(
           "INSERT INTO firehose_checkpoint (emitted_at, "
           "seq) VALUES ($1, $2)");
-      pqxx::params fields(last_event_time, cursor);
+      pqxx::params fields(iso_8601_from_time_stamp(timestamp), cursor);
       tx.exec(pqxx::prepped("add_checkpoint"), fields);
       tx.commit();
-      REL_INFO("firehose_checkpoint {} {}", last_event_time, cursor);
-      _last_rewind_checkpoint = current_cursor;
+      REL_INFO("firehose_checkpoint {} {}", iso_8601_from_time_stamp(timestamp),
+               cursor);
+      _last_rewind_checkpoint = timestamp;
     }
   }
   {
     // Update rewind position on every valid pass
     pqxx::work tx(*_cx);
-    pqxx::params fields(cursor, last_event_time);
+    pqxx::params fields(cursor, iso_8601_from_time_stamp(timestamp));
     tx.exec(pqxx::prepped("update_cursor"), fields);
     tx.commit();
-    REL_TRACE("cursor advanced to {} {}", cursor, last_event_time);
+    REL_TRACE("cursor advanced to {} {}", cursor,
+              iso_8601_from_time_stamp(timestamp));
   }
 }
 

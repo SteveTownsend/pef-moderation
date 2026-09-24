@@ -26,33 +26,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 
 namespace activity {
-#if 0  
-event_recorder::event_recorder() : _queue(MaxBacklog) {
-  _thread = std::thread([&, this] {
-    static size_t matches(0);
-    while (controller::instance().is_active()) {
-      timed_event my_payload;
-      _queue.wait_dequeue(my_payload);
-      metrics_factory::instance()
-          .get_gauge("process_operation")
-          .Get({{"events", "backlog"}})
-          .Decrement();
-
-      // record the activity
-      _events.record(my_payload);
-    }
-    REL_INFO("event_recorder stopping");
-  });
-}
-
-void event_recorder::wait_enqueue(timed_event &&value) {
-  _queue.enqueue(value);
-  metrics_factory::instance()
-      .get_gauge("process_operation")
-      .Get({{"events", "backlog"}})
-      .Increment();
-}
-#endif
 
 std::string event_recorder::ensure_loaded(std::string const &did) {
   std::string handle(get_handle(did));
