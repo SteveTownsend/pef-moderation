@@ -91,8 +91,8 @@ void auxiliary_data::prepare_statements() {
 
 int64_t auxiliary_data::get_rewind_point() const {
   std::lock_guard<std::mutex> lock(_rewind_lock);
-  return _cursor;
-};
+  return _enable_rewind ? _cursor : 0;
+}
 
 bool auxiliary_data::update_rewind_point_if_valid(
     const int64_t seq, const std::string &emitted_at) {
@@ -105,13 +105,24 @@ bool auxiliary_data::update_rewind_point_if_valid(
   if (_enforce_sequencing) {
     bool out_of_order(false);
     if (seq < _cursor) {
+      static bool sequence_error = false;
       out_of_order = true;
-      REL_ERROR("seq in hand {} precedes current cursor {}", seq, _cursor);
+      if (!sequence_error) {
+        sequence_error = true;
+        REL_ERROR("out-of-sequence: seq in hand {} precedes current cursor {}",
+                  seq, _cursor);
+      }
     }
     if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
+      static bool sequence_error = false;
       out_of_order = true;
-      REL_ERROR("emitted_at in hand {} precedes last-known-good {}", emitted_at,
-                _emitted_at.data());
+      if (!sequence_error) {
+        sequence_error = true;
+        REL_ERROR(
+            "out-of-sequence: emitted_at in hand {} precedes last-known-good "
+            "{}",
+            emitted_at, _emitted_at.data());
+      }
     }
     if (out_of_order) return false;
   }
@@ -123,7 +134,10 @@ bool auxiliary_data::update_rewind_point_if_valid(
 
 // prepare for data backfill - for malformed data, continue but do not backfill
 void auxiliary_data::set_rewind_point() {
-  if (!_enable_rewind) return;
+  if (!_enable_rewind) {
+    _cursor = 0;
+    return;
+  }
   pqxx::work tx(*_cx);
   bool first(true);
   auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
@@ -147,17 +161,24 @@ void auxiliary_data::check_rewind_point() {
     return;
   } else {
     auto current_cursor(bsky::time_stamp_from_iso_8601(last_event_time));
-    /* weird, unrecoverable error was observed here - firehose ordering problem?
-      2026-09-21 16:58:21.895878797    error     14 database exception Failure
-      during 'add_checkpoint': ERROR:  duplicate key value violates unique
-      constraint "firehose_checkpoint_emitted_at_idx" DETAIL:  Key
-      (emitted_at)=(2026-09-21T01:18:27.679Z) already exists.
+    /* weird, unrecoverable error was observed here - firehose ordering
+      problem? 2026-09-21 16:58:21.895878797    error     14 database
+      exception Failure during 'add_checkpoint': ERROR:  duplicate key value
+      violates unique constraint "firehose_checkpoint_emitted_at_idx" DETAIL:
+      Key (emitted_at)=(2026-09-21T01:18:27.679Z) already exists.
       */
     // enforce strict monotonic behaviour in the DB
     if (current_cursor <= _last_rewind_checkpoint) {
       if (_enforce_sequencing) {
-        REL_ERROR("firehose cursor {} is earlier than rewind checkpoint {}",
-                  last_event_time, _last_rewind_checkpoint);
+        static bool sequence_error = false;
+        if (!sequence_error) {
+          sequence_error = true;
+          REL_ERROR(
+              "out-of-sequence: firehose cursor {} is earlier than rewind "
+              "checkpoint {}",
+              last_event_time, _last_rewind_checkpoint);
+        }
+        return;
       }
     } else if (std::chrono::duration_cast<std::chrono::minutes>(
                    current_cursor - _last_rewind_checkpoint) >
@@ -174,7 +195,7 @@ void auxiliary_data::check_rewind_point() {
     }
   }
   {
-    // Update rewind position on every pass
+    // Update rewind position on every valid pass
     pqxx::work tx(*_cx);
     pqxx::params fields(cursor, last_event_time);
     tx.exec(pqxx::prepped("update_cursor"), fields);
