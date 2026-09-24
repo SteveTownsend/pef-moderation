@@ -1,4 +1,4 @@
-project(firehose_client VERSION 2.10.31 LANGUAGES C CXX)
+project(firehose_client VERSION 2.10.32 LANGUAGES C CXX)
 
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 
