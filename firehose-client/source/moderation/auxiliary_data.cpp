@@ -144,11 +144,13 @@ void auxiliary_data::set_rewind_point() {
   }
   pqxx::work tx(*_cx);
   bool first(true);
-  auto result = tx.exec("SELECT last_processed from firehose_state").one_row();
-  auto [last_processed] = result.as<int64_t>();
-  REL_INFO("Backfill to {}", last_processed);
+  auto result = tx.exec("SELECT last_processed, emitted_at from firehose_state")
+                    .one_row();
+  auto [last_processed, emitted_at] = result.as<int64_t, std::string>();
+  REL_INFO("Backfill to {}/{}", last_processed, emitted_at);
   std::lock_guard<std::mutex> lock(_rewind_lock);
   _cursor = last_processed;
+  _emitted_at = bsky::strict_time_stamp_from_iso_8601(emitted_at);
 }
 
 void auxiliary_data::check_rewind_point() {
