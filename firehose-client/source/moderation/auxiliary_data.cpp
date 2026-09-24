@@ -177,9 +177,10 @@ void auxiliary_data::check_rewind_point() {
         if (!sequence_error) {
           sequence_error = true;
           REL_ERROR(
-              "out-of-sequence: firehose cursor {} is earlier than rewind "
-              "checkpoint {}",
-              iso_8601_from_time_stamp(timestamp),
+              "out-of-sequence: firehose event timestamp {}/{} is earlier than "
+              "rewind "
+              "checkpoint {}/{}",
+              cursor, iso_8601_from_time_stamp(timestamp), _last_rewind_cursor,
               iso_8601_from_time_stamp(_last_rewind_checkpoint));
         }
         return;
@@ -194,9 +195,10 @@ void auxiliary_data::check_rewind_point() {
       pqxx::params fields(iso_8601_from_time_stamp(timestamp), cursor);
       tx.exec(pqxx::prepped("add_checkpoint"), fields);
       tx.commit();
-      REL_INFO("firehose_checkpoint {} {}", iso_8601_from_time_stamp(timestamp),
-               cursor);
+      REL_INFO("firehose_checkpoint {}/{}", cursor,
+               iso_8601_from_time_stamp(timestamp));
       _last_rewind_checkpoint = timestamp;
+      _last_rewind_cursor = cursor;
     }
   }
   {
