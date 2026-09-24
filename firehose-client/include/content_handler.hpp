@@ -20,17 +20,19 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include <boost/beast/core.hpp>
+
 #include "common/log_wrapper.hpp"
 #include "matcher.hpp"
 #include "moderation/action_router.hpp"
 #include "moderation/embed_checker.hpp"
 #include "post_processor.hpp"
-#include <boost/beast/core.hpp>
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
+namespace beast = boost::beast;  // from <boost/beast.hpp>
 
-template <typename PAYLOAD> class content_handler {
-public:
+template <typename PAYLOAD>
+class content_handler {
+ public:
   content_handler() = default;
   ~content_handler() = default;
 
@@ -42,10 +44,18 @@ public:
     }
     std::string json_msg(boost::beast::buffers_to_string(beast_data.data()));
 
-    _post_processor.wait_enqueue(PAYLOAD(json_msg, matches));
+    // With Sync 1.1 firehose, the backlog here grows too fast, blowing up RAM -
+    // do work inline
+    // _post_processor.wait_enqueue(PAYLOAD(json_msg, matches));
+    try {
+      PAYLOAD(json_msg, matches).handle(_post_processor);
+    } catch (std::exception const &exc) {
+      REL_ERROR("content_handler exception {}", exc.what());
+      controller::instance().force_stop();
+    }
   }
 
-private:
+ private:
   post_processor<PAYLOAD> _post_processor;
 };
 
