@@ -26,6 +26,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/moderation/ozone_adapter.hpp"
 
 namespace activity {
+#if 0  
 event_recorder::event_recorder() : _queue(MaxBacklog) {
   _thread = std::thread([&, this] {
     static size_t matches(0);
@@ -51,6 +52,7 @@ void event_recorder::wait_enqueue(timed_event &&value) {
       .Get({{"events", "backlog"}})
       .Increment();
 }
+#endif
 
 std::string event_recorder::ensure_loaded(std::string const &did) {
   std::string handle(get_handle(did));
@@ -73,6 +75,11 @@ void event_recorder::update_handle(std::string const &did,
 
 std::string event_recorder::get_handle(std::string const &did) {
   return add_if_needed(did)->get_statistics()._handle;
+}
+
+void event_recorder::record(timed_event &&value) {
+  // record the activity
+  _events.record(value);
 }
 
 }  // namespace activity

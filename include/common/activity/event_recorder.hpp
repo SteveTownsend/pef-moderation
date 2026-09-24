@@ -25,26 +25,30 @@ http://www.fsf.org/licensing/licenses
 
 namespace activity {
 class event_recorder {
-public:
+ public:
   static inline event_recorder &instance() {
     static event_recorder recorder;
     return recorder;
   }
+#if 0
   void wait_enqueue(timed_event &&value);
+#endif
   std::string ensure_loaded(std::string const &did);
   void update_handle(std::string const &did, std::string const &handle);
   std::string get_handle(std::string const &did);
+  void record(timed_event &&value);
 
-private:
-  event_recorder();
+ private:
+  event_recorder() = default;
   caches::WrappedValue<account> add_if_needed(std::string const &did);
 
+#if 0
   // Declare queue between post-processing and recording
-  moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
-  std::thread _thread;
-
+  // moodycamel::BlockingReaderWriterQueue<timed_event> _queue;
+  // std::thread _thread;
+#endif
   event_cache _events;
 };
-} // namespace activity
+}  // namespace activity
 
 #endif
