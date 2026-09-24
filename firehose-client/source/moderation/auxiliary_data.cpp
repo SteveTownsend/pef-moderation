@@ -109,8 +109,8 @@ bool auxiliary_data::update_rewind_point_if_valid(
       out_of_order = true;
       if (!sequence_error) {
         sequence_error = true;
-        REL_ERROR("out-of-sequence: seq in hand {} precedes current cursor {}",
-                  seq, _cursor);
+        REL_ERROR("out-of-sequence: seq {}/{} precedes current cursor {}/{}",
+                  seq, emitted_at, _cursor, _emitted_at.data());
       }
     }
     if (_emitted_at[0] && emitted_at < _emitted_at.data()) {
@@ -119,9 +119,10 @@ bool auxiliary_data::update_rewind_point_if_valid(
       if (!sequence_error) {
         sequence_error = true;
         REL_ERROR(
-            "out-of-sequence: emitted_at in hand {} precedes last-known-good "
-            "{}",
-            emitted_at, _emitted_at.data());
+            "out-of-sequence: emitted_at in hand {}/{} precedes "
+            "last-known-good "
+            "{}/{}",
+            seq, emitted_at, _cursor, _emitted_at.data());
       }
     }
     if (out_of_order) return false;
@@ -132,7 +133,8 @@ bool auxiliary_data::update_rewind_point_if_valid(
   return true;
 }
 
-// prepare for data backfill - for malformed data, continue but do not backfill
+// prepare for data backfill - for malformed data, continue but do not
+// backfill
 void auxiliary_data::set_rewind_point() {
   if (!_enable_rewind) {
     _cursor = 0;
