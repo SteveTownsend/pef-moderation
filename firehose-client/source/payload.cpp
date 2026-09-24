@@ -289,19 +289,13 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
     // update last-seen sequence number
     if (op_type != firehose::OpTypeInfo) {
       int64_t seq(message["seq"].template get<int64_t>());
-      std::string emitted_at(message["time"].template get<std::string>());
+      std::string time_string(message["time"].template get<std::string>());
+      bsky::parse_time_stamp emitted_at =
+          bsky::strict_time_stamp_from_iso_8601(time_string);
       // if packet is out of sequence, auto-report against Moderation Service
       // DID - an administrative report not for any particular account
       if (!bsky::moderation::auxiliary_data::instance()
                .update_rewind_point_if_valid(seq, emitted_at)) {
-#if 0 
-        // logs too much data for 50K per day report rate limit, use when needed
-        bsky::moderation::report_agent::instance().wait_enqueue(
-            bsky::moderation::account_report(
-                bsky::moderation::ModerationServiceIdentity,
-                bsky::moderation::out_of_sequence(
-                    seq, emitted_at, dump_json(header), dump_json(message))));
-#endif
       }
     }
   }

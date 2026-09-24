@@ -45,7 +45,7 @@ class auxiliary_data {
   // this returns 0 by design, if handling is disabled
   int64_t get_rewind_point() const;
   bool update_rewind_point_if_valid(const int64_t seq,
-                                    const std::string &emitted_at);
+                                    const bsky::parse_time_stamp emitted_at);
 
   // Periodic refresh
   void check_rewind_point();
@@ -87,8 +87,8 @@ class auxiliary_data {
   bool _enable_rewind = false;
   bool _enforce_sequencing = false;
   int64_t _cursor = 0;
-  std::array<char, UtcDateTimeMaxLength> _emitted_at = {};
-  bsky::time_stamp _last_rewind_checkpoint;
+  bsky::parse_time_stamp _emitted_at;
+  bsky::parse_time_stamp _last_rewind_checkpoint;
   std::chrono::steady_clock::time_point _last_rewind_flush;
   std::chrono::steady_clock::time_point _last_match_filter_refresh;
   std::chrono::steady_clock::time_point _last_popular_host_refresh;
