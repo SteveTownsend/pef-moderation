@@ -96,7 +96,6 @@ int64_t auxiliary_data::get_rewind_point() const {
 
 bool auxiliary_data::update_rewind_point_if_valid(
     const int64_t seq, const bsky::parse_time_stamp emitted_at) {
-  if (!_enable_rewind) return true;
   std::lock_guard<std::mutex> lock(_rewind_lock);
   // During backfill, observed the firehose apparently sometimes incorrectly
   // winds back. Also see https://github.com/bluesky-social/indigo/issues/1478
@@ -153,7 +152,6 @@ void auxiliary_data::set_rewind_point() {
 }
 
 void auxiliary_data::check_rewind_point() {
-  if (!_enable_rewind) return;
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.

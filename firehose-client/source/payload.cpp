@@ -89,13 +89,31 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         .Get({{"op", "message"}})
         .Increment();
     std::string op_type(header["t"].template get<std::string>());
-    int64_t seq(op_type != firehose::OpTypeInfo
-                    ? message["seq"].template get<int64_t>()
-                    : -1);
     metrics_factory::instance()
         .get_counter("firehose_content")
         .Get({{"op", "message"}, {"type", op_type}})
         .Increment();
+
+    // update last-seen sequence number if present and not out-of-sequence
+    int64_t seq(-1);
+    if (op_type != firehose::OpTypeInfo) {
+      std::string time_string(message["time"].template get<std::string>());
+      seq = message["seq"].template get<int64_t>();
+      bsky::parse_time_stamp emitted_at =
+          bsky::strict_time_stamp_from_iso_8601(time_string);
+      // if packet is out of sequence, count and skip it
+      // firehose seems to reset to subscribeRepos 'cursor' after backfill is
+      // complete
+      if (!bsky::moderation::auxiliary_data::instance()
+               .update_rewind_point_if_valid(seq, emitted_at)) {
+        metrics_factory::instance()
+            .get_counter("firehose_content")
+            .Get({{"skipped", ""}})
+            .Increment();
+        return;
+      }
+    }
+
     std::string repo;
     parser block_parser;
     if (op_type == firehose::OpTypeCommit) {
@@ -287,17 +305,6 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
 
         // forward account and its matched records for possible auto-moderation
         action_router::instance().wait_enqueue({seq, repo, std::move(matches)});
-      }
-    }
-    // update last-seen sequence number
-    if (op_type != firehose::OpTypeInfo) {
-      std::string time_string(message["time"].template get<std::string>());
-      bsky::parse_time_stamp emitted_at =
-          bsky::strict_time_stamp_from_iso_8601(time_string);
-      // if packet is out of sequence, auto-report against Moderation Service
-      // DID - an administrative report not for any particular account
-      if (!bsky::moderation::auxiliary_data::instance()
-               .update_rewind_point_if_valid(seq, emitted_at)) {
       }
     }
   }
