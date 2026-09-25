@@ -237,7 +237,21 @@ class datasource {
           .Get({{"host", _host}})
           .Increment(static_cast<double>(buffer.size()));
 
-      _handler.handle(buffer);
+      // one bad message should not kill the process
+      //
+      // observed
+      // 2026-09-25 10:53:11.205107133 critical     40
+      //   datasource exception [json.exception.type_error.302] type must be
+      //   binary, but is object
+      try {
+        _handler.handle(buffer);
+      } catch (const nlohmann::json::exception &exc) {
+        REL_ERROR("datasource JSON exception {}\n{}", exc.what(),
+                  beast::buffers_to_string(buffer.data()));
+      } catch (const std::exception &exc) {
+        REL_ERROR("datasource exception {}\n{}", exc.what(),
+                  beast::buffers_to_string(buffer.data()));
+      }
     }
 
     // Close the WebSocket connection

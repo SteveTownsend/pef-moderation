@@ -44,11 +44,12 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_response,
                           (std::string, reportedBy))
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::filter_match_info,
-                          (std::string, descriptor)(std::vector<int>, rules)(
-                              std::vector<std::string>, filters))
+                          (std::string, descriptor), (int64_t, seq),
+                          (std::vector<int>, rules),
+                          (std::vector<std::string>, filters))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::link_redirection_info,
-                          (std::string, descriptor)(std::vector<std::string>,
-                                                    uris))
+                          (std::string, descriptor), (int64_t, seq),
+                          (std::vector<std::string>, uris))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::out_of_sequence_info,
                           (std::string, descriptor), (int64_t, seq),
                           (std::string, emitted_at), (std::string, header),
@@ -129,10 +130,12 @@ void report_agent::wait_enqueue(account_report &&value) {
 
 // TODO add metrics
 void report_agent::string_match_report(
-    const size_t client, std::string const &did, std::string const &path,
-    std::string const &cid, std::unordered_set<int> const &rules,
+    const size_t client, const int64_t seq, std::string const &did,
+    std::string const &path, std::string const &cid,
+    std::unordered_set<int> const &rules,
     std::unordered_set<std::string> const &filters) {
   bsky::moderation::filter_match_info reason(_project_name);
+  reason.seq = seq;
   reason.rules = std::vector<int>(rules.cbegin(), rules.cend());
   reason.filters = std::vector<std::string>(filters.cbegin(), filters.cend());
   bsky::moderation::report_subject target(did, path, cid);
@@ -153,9 +156,11 @@ void report_agent::string_match_report(
 // TODO add metrics
 // TODO why is this never seen?
 void report_agent::link_redirection_report(
-    const size_t client, std::string const &did, std::string const &path,
-    std::string const &cid, std::vector<std::string> const &uri_chain) {
+    const size_t client, const int64_t seq, std::string const &did,
+    std::string const &path, std::string const &cid,
+    std::vector<std::string> const &uri_chain) {
   bsky::moderation::link_redirection_info reason(_project_name);
+  reason.seq = seq;
   reason.uris = uri_chain;
   bsky::moderation::report_subject target(did, path, cid);
   _pds_clients[client]
@@ -208,16 +213,17 @@ void report_agent::label_subject(
   }
 
   if (!controller::instance().is_active()) {
-    REL_WARNING("Skipping label for {}, labeler backlog {}",
+    REL_WARNING("Skipping label for {} {}, labeler backlog {}", comment.seq,
                 !subject.did.empty() ? subject.did : subject.uri,
                 _queue.size_approx());
     return;
   }
   if (rate_limited) {
     REL_INFO(
-        "Rate limited labeling {}, labeler backlog now {}, "
+        "Rate limited labeling {} {}, labeler backlog now {}, "
         "delay {} ms",
-        !subject.did.empty() ? subject.did : subject.uri, _queue.size_approx(),
+        comment.seq, !subject.did.empty() ? subject.did : subject.uri,
+        _queue.size_approx(),
         std::chrono::duration_cast<std::chrono::milliseconds>(
             system_clock::now() - now)
             .count());
@@ -233,9 +239,10 @@ void report_content_visitor::operator()(filter_matches const &value) {
       if (list_manager::instance().filter_if_special_account(value._did)) {
         continue;
       }
-      _agent.string_match_report(
-          _client, value._did, next_scope.first, next_scope.second._cid,
-          next_scope.second._rules, next_scope.second._filters);
+      _agent.string_match_report(_client, value._seq, value._did,
+                                 next_scope.first, next_scope.second._cid,
+                                 next_scope.second._rules,
+                                 next_scope.second._filters);
     } else {
       // if we automatically label, report is not needed. This process continues
       // for skipped accounts.
@@ -251,6 +258,7 @@ void report_content_visitor::operator()(filter_matches const &value) {
       restc_cpp::serialize_properties_t properties;
       restc_cpp::SerializeToJson(filter_info, oss);
       comment.context = "filter_matches: " + oss.str();
+      comment.seq = value._seq;
       comment.did = _agent.service_did();
       bsky::moderation::report_subject subject(value._did, next_scope.first,
                                                next_scope.second._cid);
@@ -260,14 +268,14 @@ void report_content_visitor::operator()(filter_matches const &value) {
   }
 }
 void report_content_visitor::operator()(link_redirection const &value) {
-  bsky::moderation::report_subject subject(_did);
-  _agent.link_redirection_report(_client, _did, value._path, value._cid,
-                                 value._uri_chain);
+  _agent.link_redirection_report(_client, value._seq, _did, value._path,
+                                 value._cid, value._uri_chain);
 }
 void report_content_visitor::operator()(blocks_moderation const &value) {
   // auto-labeling, no report needed
   bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
   comment.context = "blocks_moderation_service";
+  comment.seq = value._seq;
   comment.did = _agent.service_did();
   bsky::moderation::report_subject subject(_did);
   _agent.label_subject(_client, subject, {"blocks"}, {}, comment);
@@ -277,6 +285,7 @@ void report_content_visitor::operator()(high_facet_count const &value) {
   bsky::moderation::acknowledge_event_comment comment(_agent.project_name());
   comment.context =
       "facet spam " + value.get_name() + ' ' + std::to_string(value._count);
+  comment.seq = value._seq;
   comment.did = _agent.service_did();
   bsky::moderation::report_subject subject(_did, value._path, value._cid);
   _agent.label_subject(_client, subject, {value.get_name()}, {}, comment);

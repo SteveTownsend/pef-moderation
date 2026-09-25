@@ -89,6 +89,9 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         .Get({{"op", "message"}})
         .Increment();
     std::string op_type(header["t"].template get<std::string>());
+    int64_t seq(op_type != firehose::OpTypeInfo
+                    ? message["seq"].template get<int64_t>()
+                    : -1);
     metrics_factory::instance()
         .get_counter("firehose_content")
         .Get({{"op", "message"}, {"type", op_type}})
@@ -173,11 +176,11 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       }
       // handle all the CBORs with content, metrics, checking
       for (auto const &content_cbor : block_parser.content_cbors()) {
-        handle_content(processor, repo, content_cbor.first,
+        handle_content(processor, seq, repo, content_cbor.first,
                        content_cbor.second);
       }
       for (auto const &matchable_cbor : block_parser.matchable_cbors()) {
-        handle_matchable_content(processor, repo, matchable_cbor.first,
+        handle_matchable_content(processor, seq, repo, matchable_cbor.first,
                                  matchable_cbor.second);
       }
     } else if (op_type == firehose::OpTypeIdentity ||
@@ -283,12 +286,11 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             {repo, bsky::current_time(), activity::matches(count)});
 
         // forward account and its matched records for possible auto-moderation
-        action_router::instance().wait_enqueue({repo, std::move(matches)});
+        action_router::instance().wait_enqueue({seq, repo, std::move(matches)});
       }
     }
     // update last-seen sequence number
     if (op_type != firehose::OpTypeInfo) {
-      int64_t seq(message["seq"].template get<int64_t>());
       std::string time_string(message["time"].template get<std::string>());
       bsky::parse_time_stamp emitted_at =
           bsky::strict_time_stamp_from_iso_8601(time_string);
@@ -370,8 +372,9 @@ bsky::embed_type firehose_payload::context::process_embed(
 }
 
 void firehose_payload::handle_content(
-    post_processor<firehose_payload> &processor, std::string const &repo,
-    std::string const &cid, nlohmann::json const &content) {
+    post_processor<firehose_payload> &processor, const int64_t seq,
+    std::string const &repo, std::string const &cid,
+    nlohmann::json const &content) {
   context this_context(processor, content);
   this_context._repo = repo;
   if (_path_by_cid.contains(cid)) {
@@ -478,7 +481,7 @@ void firehose_payload::handle_content(
               {repo,
                bsky::time_stamp_from_iso_8601(
                    content["createdAt"].template get<std::string>()),
-               activity::facets(this_context._this_path, cid,
+               activity::facets(seq, this_context._this_path, cid,
                                 static_cast<unsigned short>(tags),
                                 static_cast<unsigned short>(mentions),
                                 static_cast<unsigned short>(links))});
@@ -507,7 +510,7 @@ void firehose_payload::handle_content(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
-         activity::block(this_context._this_path,
+         activity::block(seq, this_context._this_path,
                          content["subject"].template get<std::string>())});
   } else if (this_context._event_type == bsky::tracked_event::follow) {
     processor.request_recording(
@@ -544,15 +547,16 @@ void firehose_payload::handle_content(
   // pass along embeds for analysis
   if (!this_context.get_embeds().empty()) {
     bsky::moderation::embed_checker::instance().wait_enqueue(
-        {repo, this_context._this_path, cid, this_context.get_embeds()});
+        {seq, repo, this_context._this_path, cid, this_context.get_embeds()});
   }
 }
 
 void firehose_payload::handle_matchable_content(
-    post_processor<firehose_payload> &processor, std::string const &repo,
-    std::string const &cid, nlohmann::json const &content) {
+    post_processor<firehose_payload> &processor, const int64_t seq,
+    std::string const &repo, std::string const &cid,
+    nlohmann::json const &content) {
   // common processing
-  handle_content(processor, repo, cid, content);
+  handle_content(processor, seq, repo, cid, content);
 
   // check for matches
   std::string this_path;

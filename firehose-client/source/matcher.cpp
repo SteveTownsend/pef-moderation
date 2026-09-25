@@ -201,6 +201,7 @@ void matcher::report_if_needed(account_filter_matches &matches) {
   // auto-reportable
   // reports may be at account or content-item scope
   bsky::moderation::filter_matches mapped_matches;
+  mapped_matches._seq = matches._seq;
   mapped_matches._did = matches._did;
   for (auto const &result : matches._matches) {
     // this is the substring of the full JSON that matched one or more

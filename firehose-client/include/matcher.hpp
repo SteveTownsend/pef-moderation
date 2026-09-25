@@ -50,6 +50,7 @@ struct content_match {
 typedef std::vector<content_match> path_match_results;
 
 struct account_filter_matches {
+  int64_t _seq;
   std::string _did;
   path_match_results _matches;
 };

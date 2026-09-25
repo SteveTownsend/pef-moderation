@@ -124,6 +124,7 @@ struct acknowledge_event_comment {
       : descriptor(project_name) {}
   std::string descriptor;
   std::string context;
+  int64_t seq;
   std::string did;
   std::string path;
 };
@@ -438,10 +439,11 @@ class client {
     restc_cpp::SerializeToJson(request, body, properties);
 
     if (!_is_ready) {
-      REL_ERROR("Bluesky client not ready, skip report of {}", body.str());
+      REL_ERROR("Bluesky client not ready, skip report of {} {}", subject,
+                body.str());
     }
     if (_dry_run) {
-      REL_INFO("Dry-run Report of {}", body.str());
+      REL_INFO("Dry-run Report of {} {}", subject, body.str());
       return;
     }
 

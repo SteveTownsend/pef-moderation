@@ -49,7 +49,8 @@ BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::emit_event_label_request,
 // Acknowledge
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::acknowledge_event_comment,
                           (std::string, descriptor), (std::string, context),
-                          (std::string, did), (std::string, path))
+                          (int64_t, seq), (std::string, did),
+                          (std::string, path))
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::acknowledge_event,
                           (std::string, _type), (std::string, comment),
                           (bool, acknowledgeAccountSubjects))
@@ -235,7 +236,7 @@ void client::label_subject(
   std::vector<std::string> remove_label_list(remove_labels.cbegin(),
                                              remove_labels.cend());
   if (_dry_run) {
-    REL_INFO("Dry-run Label of {}: add {}, remove {}", subject,
+    REL_INFO("Dry-run Label of {} {}: add {}, remove {}", comment.seq, subject,
              format_vector(add_label_list), format_vector(remove_label_list));
     return;
   }
@@ -251,14 +252,14 @@ void client::label_subject(
   try {
     bsky::moderation::emit_event_response response =
         emit_event<bsky::moderation::emit_event_label_request>(request);
-    REL_INFO("Labeled {}: add {}, remove {} at {}", subject,
+    REL_INFO("Labeled {} {}: add {}, remove {} at {}", comment.seq, subject,
              format_vector(add_label_list), format_vector(remove_label_list),
              response.createdAt);
 
     // Acknowledge the report to close out workflow
     acknowledge_subject(subject, comment);
   } catch (std::exception const &exc) {
-    REL_ERROR("Label {}: add {}, remove {} error {}", subject,
+    REL_ERROR("Label {} {}: add {}, remove {} error {}", comment.seq, subject,
               format_vector(add_label_list), format_vector(remove_label_list),
               exc.what());
   }

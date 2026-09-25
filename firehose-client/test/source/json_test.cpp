@@ -1,9 +1,11 @@
-#include "common/bluesky/client.hpp"
-#include "restc-cpp/restc-cpp.h"
-#include <boost/fusion/adapted.hpp>
-#include <functional>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <boost/fusion/adapted.hpp>
+#include <functional>
+
+#include "common/bluesky/client.hpp"
+#include "restc-cpp/restc-cpp.h"
 
 BOOST_FUSION_ADAPT_STRUCT(bsky::moderation::report_subject,
                           (std::string, _type), (std::string, did),

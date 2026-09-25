@@ -346,6 +346,7 @@ int main(int argc, char **argv) {
                 label_settings["remove_labels"].as<std::vector<std::string>>());
             bsky::moderation::acknowledge_event_comment comment(PROJECT_NAME);
             comment.context = filter + "\n" + reason;
+            comment.seq = 0;
             comment.did = pds_client.service_did();
             bsky::moderation::report_subject target(subject);
             pds_client.label_subject(

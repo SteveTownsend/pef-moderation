@@ -19,7 +19,6 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
-#include "common/helpers.hpp"
 #include <cache.hpp>
 #include <chrono>
 #include <deque>
@@ -27,6 +26,8 @@ http://www.fsf.org/licensing/licenses
 #include <string>
 #include <unordered_map>
 #include <variant>
+
+#include "common/helpers.hpp"
 
 namespace activity {
 class event_cache;
@@ -54,6 +55,7 @@ struct follow {
   std::string _followed;
 };
 struct block {
+  int64_t seq;
   std::string _block;
   std::string _blocked;
 };
@@ -78,6 +80,7 @@ struct matches {
   unsigned short _count;
 };
 struct facets {
+  int64_t _seq;
   std::string _path;
   std::string _cid;
   unsigned short _tags;
@@ -93,8 +96,9 @@ struct timed_event {
                      event &&this_event)
       : _did(did), _created_at(created_at), _event(std::move(this_event)) {}
   inline timed_event(const timed_event &event)
-      : _did(event._did), _created_at(event._created_at), _event(event._event) {
-  }
+      : _did(event._did),
+        _created_at(event._created_at),
+        _event(event._event) {}
   inline timed_event &operator=(const timed_event &event) {
     _did = event._did;
     _created_at = event._created_at;
@@ -102,7 +106,8 @@ struct timed_event {
     return *this;
   }
   inline timed_event(timed_event &&event)
-      : _did(std::move(event._did)), _created_at(std::move(event._created_at)),
+      : _did(std::move(event._did)),
+        _created_at(std::move(event._created_at)),
         _event(std::move(event._event)) {}
 
   did_type _did;
@@ -134,7 +139,7 @@ typedef std::unordered_map<atproto::at_uri,
 // cache policy for Key with custom hash
 template <typename Key>
 class CustomLFUCachePolicy : public caches::ICachePolicy<Key> {
-public:
+ public:
   using lfu_iterator = typename std::multimap<std::size_t, Key>::iterator;
 
   CustomLFUCachePolicy() = default;
@@ -169,7 +174,7 @@ public:
     return frequency_storage.cbegin()->second;
   }
 
-private:
+ private:
   std::multimap<std::size_t, Key> frequency_storage;
   std::unordered_map<Key, lfu_iterator, atproto::at_uri_hash> lfu_storage;
 };
@@ -179,31 +184,31 @@ using lfu_cache_at_uri_t =
     typename caches::fixed_sized_cache<Key, Value, CustomLFUCachePolicy,
                                        content_hits>;
 class account {
-public:
+ public:
   enum class state { unknown, active, inactive };
   static inline std::string to_string(state my_state) {
     switch (my_state) {
-    case state::active:
-      return "active";
-    case state::inactive:
-      return "inactive";
-    case state::unknown:
-    default:
-      return "unknown";
+      case state::active:
+        return "active";
+      case state::inactive:
+        return "inactive";
+      case state::unknown:
+      default:
+        return "unknown";
     }
   }
 
   struct statistics {
     void record(event_cache &parent_cache, timed_event const &event);
 
-    void tags(const std::string &path, const std::string &cid,
-              const size_t count);
-    void links(const std::string &path, const std::string &cid,
-               const size_t count);
-    void mentions(const std::string &path, const std::string &cid,
-                  const size_t count);
-    void facets(const std::string &path, const std::string &cid,
-                const size_t count);
+    void tags(const int64_t seq, const std::string &path,
+              const std::string &cid, const size_t count);
+    void links(const int64_t seq, const std::string &path,
+               const std::string &cid, const size_t count);
+    void mentions(const int64_t seq, const std::string &path,
+                  const std::string &cid, const size_t count);
+    void facets(const int64_t seq, const std::string &path,
+                const std::string &cid, const size_t count);
 
     void alert();
 
@@ -294,8 +299,8 @@ public:
   static constexpr size_t FacetFactor = 10;
 
   // output a log every few events to highlight frequent activity
-  static constexpr size_t EventFactor = 500; // all events for the account
-  static constexpr size_t AlertFactor = 10;  // all alerts for the account
+  static constexpr size_t EventFactor = 500;  // all events for the account
+  static constexpr size_t AlertFactor = 10;   // all alerts for the account
   static constexpr size_t PostFactor = 25;
 
   // track content interactions at account and content-item level
@@ -335,16 +340,16 @@ public:
   inline size_t event_count() const { return _statistics._event_count; }
   inline size_t alert_count() const { return _statistics._alert_count; }
 
-  caches::WrappedValue<content_hit_count>
-  get_content_item(atproto::at_uri const &uri);
+  caches::WrappedValue<content_hit_count> get_content_item(
+      atproto::at_uri const &uri);
   // Callback on LFU cache eviction
   void on_erase(atproto::at_uri const &uri,
                 caches::WrappedValue<content_hit_count> const &entry);
   inline statistics &get_statistics() { return _statistics; }
 
-private:
-  caches::WrappedValue<content_hit_count>
-  get_content_hits(atproto::at_uri const &uri);
+ private:
+  caches::WrappedValue<content_hit_count> get_content_hits(
+      atproto::at_uri const &uri);
   // TODO might be better to indirect to event_cache
   std::shared_ptr<lfu_cache_at_uri_t<atproto::at_uri, content_hit_count>>
       _content_hits;
@@ -354,7 +359,8 @@ private:
 // visitor for account-specific logic
 struct augment_account_event {
   augment_account_event(event_cache &cache, account::statistics &stats);
-  template <typename T> void operator()(T const &value) {}
+  template <typename T>
+  void operator()(T const &value) {}
 
   void operator()(activity::post const &value);
   void operator()(activity::reply const &value);
@@ -377,11 +383,11 @@ struct augment_account_event {
 
   void operator()(activity::facets const &value);
 
-private:
+ private:
   void reply_to(atproto::at_uri const &uri);
 
   account::statistics &_stats;
   event_cache &_cache;
 };
 
-} // namespace activity
+}  // namespace activity
