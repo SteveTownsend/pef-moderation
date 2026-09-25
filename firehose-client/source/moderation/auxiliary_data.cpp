@@ -144,11 +144,24 @@ void auxiliary_data::set_rewind_point() {
   pqxx::work tx(*_cx);
   auto result = tx.exec("SELECT last_processed, emitted_at from firehose_state")
                     .one_row();
+
+  // Also init checkpoint high water mark
+  auto result2 = tx.exec(
+                       "SELECT seq, emitted_at from firehose_checkpoint where "
+                       "seq = (SELECT MAX(seq) FROM firehose_checkpoint)")
+                     .one_row();
   std::lock_guard<std::mutex> lock(_rewind_lock);
   _cursor = result[0].as<int64_t>();
   auto emitted_at = result[1].as<std::string>();
   _emitted_at = bsky::strict_time_stamp_from_iso_8601(emitted_at);
   REL_INFO("Backfill to {}/{}", _cursor, emitted_at);
+
+  _last_rewind_cursor = result2[0].as<int64_t>();
+  auto last_rewind_timestamp = result2[1].as<std::string>();
+  _last_rewind_checkpoint =
+      bsky::strict_time_stamp_from_iso_8601(last_rewind_timestamp);
+  REL_INFO("firehose_checkpoint high water mark {}/{}", _last_rewind_cursor,
+           bsky::iso_8601_from_time_stamp(_last_rewind_checkpoint));
 }
 
 void auxiliary_data::check_rewind_point() {
