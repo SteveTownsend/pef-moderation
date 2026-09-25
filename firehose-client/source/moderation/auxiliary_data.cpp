@@ -113,6 +113,11 @@ bool auxiliary_data::update_rewind_point_if_valid(
                   iso_8601_from_time_stamp(_emitted_at));
       }
     }
+    /* Skip this, observation is that emitted_at is not reliable at fine grain
+    after restart 2026-09-25 18:08:27.190342412    error     40 out-of-sequence:
+        emitted_at in hand 33931057034/2026-09-25T17:58:58.587000000Z precedes
+        last-known-good 33931057033/2026-09-25T17:58:59.534000000Z
+
     if (_emitted_at.time_since_epoch().count() != 0 &&
         emitted_at < _emitted_at) {
       static bool sequence_error = false;
@@ -127,6 +132,7 @@ bool auxiliary_data::update_rewind_point_if_valid(
             iso_8601_from_time_stamp(_emitted_at));
       }
     }
+      */
     if (out_of_order) return false;
   }
   _cursor = seq;
