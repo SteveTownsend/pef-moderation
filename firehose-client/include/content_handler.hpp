@@ -50,8 +50,9 @@ class content_handler {
     try {
       PAYLOAD(json_msg, matches).handle(_post_processor);
     } catch (std::exception const &exc) {
-      REL_ERROR("content_handler exception {}", exc.what());
-      controller::instance().force_stop();
+      REL_ERROR("content_handler exception {} on {}", exc.what(), json_msg);
+      // not fatal
+      // controller::instance().force_stop();
     }
   }
 

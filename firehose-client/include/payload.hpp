@@ -76,10 +76,11 @@ class firehose_payload {
     std::vector<embed::embed_info> _embeds;
   };
   void handle_content(post_processor<firehose_payload> &processor,
-                      std::string const &repo, std::string const &cid,
-                      nlohmann::json const &content);
+                      const int64_t seq, std::string const &repo,
+                      std::string const &cid, nlohmann::json const &content);
   void handle_matchable_content(post_processor<firehose_payload> &processor,
-                                std::string const &repo, std::string const &cid,
+                                const int64_t seq, std::string const &repo,
+                                std::string const &cid,
                                 nlohmann::json const &content);
 
   parser _parser;

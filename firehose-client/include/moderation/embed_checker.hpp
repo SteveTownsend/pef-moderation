@@ -51,6 +51,7 @@ struct video {
 typedef std::variant<external, image, record, video> embed_info;
 
 struct embed_info_list {
+  int64_t _seq;
   std::string _did;
   std::string _path;
   std::string _cid;
@@ -67,11 +68,12 @@ class embed_checker;
 struct embed_handler {
  public:
   inline embed_handler(embed_checker &checker,
-                       restc_cpp::RestClient &rest_client,
+                       restc_cpp::RestClient &rest_client, const int64_t seq,
                        std::string const &repo, std::string const &path,
                        std::string const &cid)
       : _checker(checker),
         _rest_client(rest_client),
+        _seq(seq),
         _repo(repo),
         _path(path),
         _cid(cid) {
@@ -96,6 +98,7 @@ struct embed_handler {
  private:
   embed_checker &_checker;
   restc_cpp::RestClient &_rest_client;
+  int64_t _seq;
   std::string _repo;
   std::string _path;
   std::string _cid;

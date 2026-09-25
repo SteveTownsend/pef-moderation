@@ -44,6 +44,7 @@ struct filter_match_info {
   inline filter_match_info(std::string const &project_name)
       : descriptor(project_name) {}
   std::string descriptor;
+  int64_t seq;
   std::vector<int> rules;
   std::vector<std::string> filters;
   constexpr std::string get_name() const { return "filter_match"; }
@@ -53,6 +54,7 @@ struct link_redirection_info {
   inline link_redirection_info(std::string const &project_name)
       : descriptor(project_name) {}
   std::string descriptor;
+  int64_t seq;
   std::vector<std::string> uris;
   constexpr std::string get_name() const { return "link_redirection"; }
 };
@@ -78,15 +80,19 @@ struct path_matches {
   std::unordered_set<std::string> _labels;
 };
 struct filter_matches {
+  int64_t _seq;
   std::string _did;
   std::unordered_map<std::string, path_matches> _scoped_matches;
 };
 struct link_redirection {
+  int64_t _seq;
   std::string _path;
   std::string _cid;
   std::vector<std::string> _uri_chain;
 };
-struct blocks_moderation {};
+struct blocks_moderation {
+  int64_t _seq;
+};
 enum class facet_type { total = 1, link, mention, tag };
 inline std::string facet_type_label(const facet_type facet) {
   switch (facet) {
@@ -103,16 +109,19 @@ inline std::string facet_type_label(const facet_type facet) {
   }
 }
 struct high_facet_count {
-  inline high_facet_count(const facet_type facet, const std::string &path,
-                          const std::string &cid, const size_t count)
-      : _facet(facet), _path(path), _cid(cid), _count(count) {}
+  inline high_facet_count(const facet_type facet, const int64_t seq,
+                          const std::string &path, const std::string &cid,
+                          const size_t count)
+      : _facet(facet), _seq(seq), _path(path), _cid(cid), _count(count) {}
   inline high_facet_count(const high_facet_count &rhs)
       : _facet(rhs._facet),
+        _seq(rhs._seq),
         _path(rhs._path),
         _cid(rhs._cid),
         _count(rhs._count) {}
   inline high_facet_count &operator=(const high_facet_count &rhs) {
     _facet = rhs._facet;
+    _seq = rhs._seq;
     _path = rhs._path;
     _cid = rhs._cid;
     _count = rhs._count;
@@ -120,6 +129,7 @@ struct high_facet_count {
   }
   inline std::string get_name() const { return facet_type_label(_facet); }
   facet_type _facet;
+  int64_t _seq;
   std::string _path;
   std::string _cid;
   size_t _count;
@@ -195,15 +205,17 @@ class report_agent {
   void start(YAML::Node const &settings, std::string const &project_name);
   void wait_enqueue(account_report &&value);
 
-  void string_match_report(const size_t client, std::string const &did,
-                           std::string const &path, std::string const &cid,
+  void string_match_report(const size_t client, const int64_t seq,
+                           std::string const &did, std::string const &path,
+                           std::string const &cid,
                            std::unordered_set<int> const &rules,
                            std::unordered_set<std::string> const &filters);
-  void link_redirection_report(const size_t client, std::string const &did,
-                               std::string const &path, std::string const &cid,
+  void link_redirection_report(const size_t client, const int64_t seq,
+                               std::string const &did, std::string const &path,
+                               std::string const &cid,
                                std::vector<std::string> const &uri_chain);
   void out_of_sequence_report(const size_t client,
-                              std::string const &service_did, int64_t _seq,
+                              std::string const &service_did, const int64_t seq,
                               std::string_view _emitted_at,
                               std::string_view _header,
                               std::string_view _message);

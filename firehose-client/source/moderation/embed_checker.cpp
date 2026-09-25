@@ -18,6 +18,9 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 #include "moderation/embed_checker.hpp"
+
+#include <ranges>
+
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
@@ -28,7 +31,6 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/action_router.hpp"
 #include "payload.hpp"
 #include "restc-cpp/RequestBuilder.h"
-#include <ranges>
 
 namespace bsky {
 namespace moderation {
@@ -93,8 +95,9 @@ void embed_checker::start() {
           // add LFU cache of content-cid/did/rate-limit
           // add metrics
           for (auto const &next_embed : embed_list._embeds) {
-            embed_handler handler(*this, *_rest_clients[count], embed_list._did,
-                                  embed_list._path, embed_list._cid);
+            embed_handler handler(*this, *_rest_clients[count], embed_list._seq,
+                                  embed_list._did, embed_list._path,
+                                  embed_list._cid);
             _rest_clients[count]->GetConnectionProperties()->redirectFn =
                 std::bind(&embed_handler::on_url_redirect, &handler,
                           std::placeholders::_1, std::placeholders::_2,
@@ -344,8 +347,8 @@ void embed_handler::operator()(embed::external const &value) {
         overflow = true;
         done = true;
         // TODO report this
-        report_agent::instance().wait_enqueue(
-            account_report(_repo, link_redirection(_path, _cid, _uri_chain)));
+        report_agent::instance().wait_enqueue(account_report(
+            _repo, link_redirection(_seq, _path, _cid, _uri_chain)));
         break;
       } catch (std::exception const &exc) {
         REL_ERROR("Redirect check for {} error {}", _root_url, exc.what());
@@ -385,7 +388,7 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
   // already processed, or whitelisted
   if (_checker.uri_seen(_repo, _path, url) ||
       _checker.should_process_uri(url)) {
-    return false; // stop following the chain
+    return false;  // stop following the chain
   };
 
   metrics_factory::instance()
@@ -403,7 +406,8 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
 
     REL_INFO("Redirect matched rules for {}", url);
     // malicious redirects are always reported - no blocklist filtering
-    action_router::instance().wait_enqueue({_repo, {{_path, _cid, results}}});
+    action_router::instance().wait_enqueue(
+        {_seq, _repo, {{_path, _cid, results}}});
   }
   return true;
 }
@@ -432,5 +436,5 @@ void embed_handler::operator()(embed::video const &value) {
   _checker.video_seen(_repo, _path, value._cid);
 }
 
-} // namespace moderation
-} // namespace bsky
+}  // namespace moderation
+}  // namespace bsky
