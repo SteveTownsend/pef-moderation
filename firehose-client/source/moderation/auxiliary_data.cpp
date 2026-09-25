@@ -157,10 +157,13 @@ void auxiliary_data::check_rewind_point() {
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.
-  std::lock_guard<std::mutex> lock(_rewind_lock);
-  int64_t cursor(_cursor);
-  bsky::parse_time_stamp timestamp(_emitted_at);
-  lock.~lock_guard();
+  int64_t cursor;
+  bsky::parse_time_stamp timestamp;
+  {
+    std::lock_guard<std::mutex> lock(_rewind_lock);
+    cursor = _cursor;
+    timestamp = _emitted_at;
+  }
   if (cursor == 0 || timestamp.time_since_epoch().count() == 0) {
     REL_INFO("No firehose data processed, skip check");
     return;

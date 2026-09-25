@@ -92,24 +92,25 @@ void ozone_adapter::check_refresh_tracked_accounts() {
       }
     }
 
-    std::lock_guard guard(_lock);
-    metrics_factory::instance()
-        .get_gauge("process_operation")
-        .Get({{"accounts", "tracked"}})
-        .Set(static_cast<double>(_tracked_accounts.size()));
-    _closed_reports.swap(new_closed);
-
-    // make tracked accounts sticky in the tracked account event cache by
-    // touching them each time
-    for (auto const &account : _tracked_accounts) {
-      activity::event_recorder::instance().get_handle(account);
-    }
-    // reset the container that tracks new reports
     decltype(_new_tracked_accounts) new_tracked;
-    new_tracked.swap(_new_tracked_accounts);
+    {
+      std::lock_guard guard(_lock);
+      metrics_factory::instance()
+          .get_gauge("process_operation")
+          .Get({{"accounts", "tracked"}})
+          .Set(static_cast<double>(_tracked_accounts.size()));
+      _closed_reports.swap(new_closed);
 
-    _last_refresh = std::chrono::steady_clock::now();
-    guard.~lock_guard();
+      // make tracked accounts sticky in the tracked account event cache by
+      // touching them each time
+      for (auto const &account : _tracked_accounts) {
+        activity::event_recorder::instance().get_handle(account);
+      }
+      // reset the container that tracks new reports
+      new_tracked.swap(_new_tracked_accounts);
+
+      _last_refresh = std::chrono::steady_clock::now();
+    }
 
     // resolve handles for new reports
     bsky::async_loader::instance().request_resolve_handles(

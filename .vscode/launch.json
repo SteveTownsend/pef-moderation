@@ -88,7 +88,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/release-gcc/firehose-client/firehose_client",
             "args": [
-                "./config/graph_db_config_dev.yml"
+                "./config/prod_config.yml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/firehose-client",
@@ -101,7 +101,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/logging-gcc/firehose-client/firehose_client",
             "args": [
-                "./config/graph_db_config_dev.yml"
+                "./config/prod_config.yml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/firehose-client",
