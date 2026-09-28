@@ -275,7 +275,9 @@ bool embed_checker::is_popular_host(std::string const &host) {
     }
     size_t done(0);
     for (auto hot_site : hot_sites) {
-      REL_INFO("{:6} embeds of host {}", hot_site.first, hot_site.second);
+      REL_INFO(
+          "{:6} embeds of {} ({})", hot_site.first, hot_site.second,
+          is_popular_host(hot_site.second) ? "popular host" : "candidate host");
       if (++done >= HostsOfInterest) {
         break;
       }

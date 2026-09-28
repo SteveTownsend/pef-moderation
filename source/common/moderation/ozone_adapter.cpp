@@ -38,12 +38,17 @@ void ozone_adapter::start(std::string const &connection_string,
   _connection_string = connection_string;
   if (!use_thread) return;
   _thread = std::thread([&, this] {
+    bool initialized(false);
     while (controller::instance().is_active()) {
       try {
         if (!_cx) {
           _cx = std::make_unique<pqxx::connection>(_connection_string);
           REL_INFO("Connected OK to moderation DB: {}",
                    safe_connection_string());
+        }
+        if (!initialized) {
+          seed_tracked_accounts_with_recently_reported();
+          initialized = true;
         }
         // Load the list of labeled and pending-review accounts
         // we may track some false positives but that's no big deal
@@ -116,6 +121,27 @@ void ozone_adapter::check_refresh_tracked_accounts() {
     bsky::async_loader::instance().request_resolve_handles(
         std::move(new_tracked));
   }
+}
+
+// Load recently-reported accounts
+void ozone_adapter::seed_tracked_accounts_with_recently_reported() {
+  // look back a week for reported accounts
+  std::string lookback(iso_8601_from_time_stamp(bsky::current_time() -
+                                                std::chrono::hours(7 * 24)));
+  std::string query(
+      std::format("select distinct(me.\"subjectDid\")"
+                  " from moderation_event me where me.\"createdAt\""
+                  " >= '{}' and me.\"action\""
+                  " in ('tools.ozone.moderation.defs#modEventReport')",
+                  lookback));
+  pqxx::work tx(*_cx);
+  size_t recently_reported = 0;
+  for (auto [did] : tx.query<std::string>(query)) {
+    if (bsky::moderation::ozone_adapter::instance().track_account(did)) {
+      ++recently_reported;
+    }
+  }
+  REL_INFO("Track {} recently-reported accounts", recently_reported);
 }
 
 void ozone_adapter::load_pending_report_tags() {
