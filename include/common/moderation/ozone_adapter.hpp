@@ -79,6 +79,7 @@ class ozone_adapter {
 
  private:
   void check_refresh_tracked_accounts();
+  void seed_tracked_accounts_with_recently_reported();
   std::string safe_connection_string() const;
 
   static constexpr std::chrono::milliseconds ThreadDelay =

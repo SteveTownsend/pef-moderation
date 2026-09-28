@@ -72,7 +72,14 @@ void report_agent::start(YAML::Node const &settings,
   _did = settings["did"].as<std::string>();
   _service_did = settings["service_did"].as<std::string>();
   _dry_run = settings["dry_run"].as<bool>();
+#if 0  
   _number_of_threads = settings["number_of_threads"].as<size_t>();
+#else
+  // Seems little point in multithreading - rate limiting handles
+  // backlogs
+  // Observations from Sept 2026, long-running backlog backfill
+  _number_of_threads = 1;
+#endif
   _pds_clients.reserve(_number_of_threads);
   _threads.reserve(_number_of_threads);
 
