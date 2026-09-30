@@ -145,6 +145,8 @@ class embed_checker {
   inline bool follow_links() const { return _follow_links; }
 
  private:
+  static constexpr std::chrono::milliseconds DequeueTimeout =
+      std::chrono::milliseconds(10000);
   embed_checker();
   ~embed_checker() = default;
 

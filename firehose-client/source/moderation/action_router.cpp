@@ -35,15 +35,21 @@ action_router::action_router() : _queue(QueueLimit) {}
 
 void action_router::start() {
   _thread = std::thread([&, this] {
-    while (controller::instance().is_active()) {
-      account_filter_matches matches;
-      _queue.wait_dequeue(matches);
-      // process the item
-      metrics_factory::instance()
-          .get_gauge("process_operation")
-          .Get({{"action_router", "backlog"}})
-          .Decrement();
-      matcher::shared().report_if_needed(matches);
+    try {
+      while (controller::instance().is_active()) {
+        account_filter_matches matches;
+        if (_queue.wait_dequeue_timed(matches, DequeueTimeout)) {
+          // process the item
+          metrics_factory::instance()
+              .get_gauge("process_operation")
+              .Get({{"action_router", "backlog"}})
+              .Decrement();
+          matcher::shared().report_if_needed(matches);
+        }
+      }
+    } catch (std::exception const &exc) {
+      REL_ERROR("action_router exception {}", exc.what());
+      controller::instance().force_stop();
     }
     REL_INFO("action_router stopping");
   });

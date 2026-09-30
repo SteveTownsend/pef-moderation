@@ -267,6 +267,7 @@ class datasource {
     std::ostringstream oss;
     oss << what << ": " << ec.message() << "\n";
     REL_ERROR("datasource error: {}", oss.str());
+    controller::instance().force_stop();
   }
 };
 #endif

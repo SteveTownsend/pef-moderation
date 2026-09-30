@@ -218,7 +218,7 @@ void matcher::report_if_needed(account_filter_matches &matches) {
           // auto-moderation not requested for this rule
           continue;
         }
-        // Handle matches must be reported at acocunt level
+        // Handle matches must be reported at account level
         if (path.compare(HandleSentinel) == 0) {
           scope = rule::report_scope::account;
         }
