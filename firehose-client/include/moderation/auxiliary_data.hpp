@@ -55,6 +55,7 @@ class auxiliary_data {
   void update_whitelisted_accounts();
   void update_active_defenders();
   void update_ignored_accounts();
+  void update_network_roots();
 
  private:
   static constexpr size_t UtcDateTimeMaxLength = 48;
@@ -78,6 +79,8 @@ class auxiliary_data {
       std::chrono::minutes(10);
   static constexpr std::chrono::minutes IgnoredAccountsRefreshInterval =
       std::chrono::minutes(60);
+  static constexpr std::chrono::minutes NetworkRootsRefreshInterval =
+      std::chrono::minutes(20);
 
   std::unique_ptr<pqxx::connection> _cx;
   std::string _connection_string;
@@ -97,6 +100,7 @@ class auxiliary_data {
   std::chrono::steady_clock::time_point _last_whitelisted_accounts_refresh;
   std::chrono::steady_clock::time_point _last_active_defenders_refresh;
   std::chrono::steady_clock::time_point _last_ignored_accounts_refresh;
+  std::chrono::steady_clock::time_point _last_network_roots_refresh;
   mutable std::mutex _lock;
   // Bluesky only for now
 };

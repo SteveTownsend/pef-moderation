@@ -19,17 +19,21 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #if defined(__GNUC__)
 #include "common/activity/neo4j_adapter.hpp"
-#include "common/activity/event_recorder.hpp"
-#include "common/bluesky/client.hpp"
-#include "common/controller.hpp"
-#include "common/log_wrapper.hpp"
+
 #include <boost/fusion/adapted.hpp>
 #include <functional>
 #include <unordered_set>
 
+#include "common/activity/event_recorder.hpp"
+#include "common/bluesky/client.hpp"
+#include "common/controller.hpp"
+#include "common/log_wrapper.hpp"
+
 namespace activity {
 
 neo4j_adapter::neo4j_adapter(YAML::Node const &settings) {
+  constexpr bool dry_run(true);
+  _dry_run = settings["dry_run"].as<bool>(dry_run);
   _connection_string = settings["connection_string"].as<std::string>();
   neo4j_connection_t *connection =
       neo4j_connect(_connection_string.c_str(), NULL, NEO4J_INSECURE);
@@ -65,5 +69,5 @@ std::string neo4j_adapter::safe_connection_string() const {
   // return _connection_string;
 }
 
-} // namespace activity
+}  // namespace activity
 #endif
