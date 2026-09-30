@@ -83,28 +83,29 @@ void embed_checker::start() {
       try {
         while (controller::instance().is_active()) {
           embed::embed_info_list embed_list;
-          _queue.wait_dequeue(embed_list);
-          // process the item
-          metrics_factory::instance()
-              .get_gauge("process_operation")
-              .Get({{"embed_checker", "backlog"}})
-              .Decrement();
+          if (_queue.wait_dequeue_timed(embed_list, DequeueTimeout)) {
+            // process the item
+            metrics_factory::instance()
+                .get_gauge("process_operation")
+                .Get({{"embed_checker", "backlog"}})
+                .Decrement();
 
-          // TODO the work
-          // add LFU cache of URL/did/rate-limit pairs
-          // add LFU cache of content-cid/did/rate-limit
-          // add metrics
-          for (auto const &next_embed : embed_list._embeds) {
-            embed_handler handler(*this, *_rest_clients[count], embed_list._seq,
-                                  embed_list._did, embed_list._path,
-                                  embed_list._cid);
-            _rest_clients[count]->GetConnectionProperties()->redirectFn =
-                std::bind(&embed_handler::on_url_redirect, &handler,
-                          std::placeholders::_1, std::placeholders::_2,
-                          std::placeholders::_3);
-            ;
+            // TODO the work
+            // add LFU cache of URL/did/rate-limit pairs
+            // add LFU cache of content-cid/did/rate-limit
+            // add metrics
+            for (auto const &next_embed : embed_list._embeds) {
+              embed_handler handler(*this, *_rest_clients[count],
+                                    embed_list._seq, embed_list._did,
+                                    embed_list._path, embed_list._cid);
+              _rest_clients[count]->GetConnectionProperties()->redirectFn =
+                  std::bind(&embed_handler::on_url_redirect, &handler,
+                            std::placeholders::_1, std::placeholders::_2,
+                            std::placeholders::_3);
+              ;
 
-            std::visit(handler, next_embed);
+              std::visit(handler, next_embed);
+            }
           }
         }
       } catch (std::exception const &exc) {

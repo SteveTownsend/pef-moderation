@@ -41,6 +41,8 @@ class action_router {
   action_router();
   ~action_router() = default;
 
+  static constexpr std::chrono::milliseconds DequeueTimeout =
+      std::chrono::milliseconds(10000);
   std::thread _thread;
   // Declare queue between match post-processing and HTTP Client
   moodycamel::BlockingConcurrentQueue<account_filter_matches> _queue;
