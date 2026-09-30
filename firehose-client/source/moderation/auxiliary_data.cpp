@@ -195,6 +195,7 @@ void auxiliary_data::check_rewind_point() {
       */
     // enforce strict monotonic behaviour in the DB
     if (timestamp < _last_rewind_checkpoint) {
+#if 0    
       if (_enforce_sequencing) {
         static bool sequence_error = false;
         if (!sequence_error) {
@@ -208,6 +209,7 @@ void auxiliary_data::check_rewind_point() {
         }
         return;
       }
+#endif
     } else if (std::chrono::duration_cast<std::chrono::minutes>(
                    timestamp - _last_rewind_checkpoint) >
                RewindCheckpointInterval) {
