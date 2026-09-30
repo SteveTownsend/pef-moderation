@@ -20,24 +20,26 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #if defined(__GNUC__)
 #if 0
-#include "common/config.hpp"
 #include <chrono>
 #include <mutex>
 #include <pqxx/pqxx>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "common/config.hpp"
 #endif
-#include "yaml-cpp/yaml.h"
 #include <neo4j-client.h>
+
+#include "yaml-cpp/yaml.h"
 
 namespace activity {
 
 class neo4j_adapter {
-public:
+ public:
   neo4j_adapter(YAML::Node const &settings);
 
-private:
+ private:
 #if 0
   void check_refresh_tracked_accounts();
 #endif
@@ -52,6 +54,7 @@ private:
   std::unique_ptr<pqxx::connection> _cx;
 #endif
   std::string _connection_string;
+  bool _dry_run = true;
 #if 0
   std::thread _thread;
   account_list _tracked_accounts;
@@ -64,5 +67,5 @@ private:
 #endif
 };
 
-} // namespace activity
+}  // namespace activity
 #endif

@@ -18,9 +18,10 @@ http://www.fsf.org/licensing/licenses
 >>> END OF LICENSE >>>
 *************************************************************************/
 
+#include <functional>
+
 #include "common/activity/event_recorder.hpp"
 #include "common/metrics_factory.hpp"
-#include <functional>
 
 namespace activity {
 
@@ -41,7 +42,7 @@ void event_cache::record(timed_event const &value) {
   caches::WrappedValue<account> source(get_account(value._did));
   source->record(*this, value);
 
-  std::visit(augment_event{}, value._event);
+  std::visit(augment_event{value._did, value._created_at}, value._event);
 }
 
 caches::WrappedValue<account> event_cache::get_account(std::string const &did) {
@@ -54,6 +55,75 @@ caches::WrappedValue<account> event_cache::get_account(std::string const &did) {
         .Increment();
   }
   return _account_events.Get(did);
+}
+
+void event_cache::augment_event::operator()(activity::post const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} post", _did);
+  }
+}
+void event_cache::augment_event::operator()(activity::reply const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._parent._authority) ||
+      event_recorder::instance().is_network_root(value._root._authority)) {
+    REL_INFO("Network root: {} reply to {} (root {})", _did,
+             value._parent._authority, value._root._authority);
+  }
+}
+void event_cache::augment_event::operator()(activity::repost const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._post._authority)) {
+    REL_INFO("Network root: {} reposted {}", _did, value._post._authority);
+  }
+}
+void event_cache::augment_event::operator()(activity::quote const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._post._authority)) {
+    REL_INFO("Network root: {} quoted {}", _did, value._post._authority);
+  }
+}
+void event_cache::augment_event::operator()(activity::block const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._blocked)) {
+    REL_INFO("Network root: {} blocked {}", _did, value._blocked);
+  }
+}
+void event_cache::augment_event::operator()(activity::follow const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._followed)) {
+    REL_INFO("Network root: {} followed {}", _did, value._followed);
+  }
+}
+void event_cache::augment_event::operator()(activity::like const &value) {
+  if (event_recorder::instance().is_network_root(_did) ||
+      event_recorder::instance().is_network_root(value._content._authority)) {
+    REL_INFO("Network root: {} liked {}", _did, value._content._authority);
+  }
+}
+void event_cache::augment_event::operator()(activity::active const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} active", _did);
+  }
+}
+void event_cache::augment_event::operator()(activity::handle const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} handle", _did);
+  }
+}
+void event_cache::augment_event::operator()(activity::inactive const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} inactive", _did);
+  }
+}
+void event_cache::augment_event::operator()(activity::profile const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} profile revised", _did);
+  }
+}
+void event_cache::augment_event::operator()(activity::deleted const &value) {
+  if (event_recorder::instance().is_network_root(_did)) {
+    REL_INFO("Network root: {} deleted {}", _did, value._path);
+  }
 }
 
 // Callback for tracked account removal
@@ -80,4 +150,4 @@ void event_cache::on_erase(std::string const &did,
   }
 }
 
-} // namespace activity
+}  // namespace activity

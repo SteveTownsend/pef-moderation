@@ -50,8 +50,34 @@ class event_cache {
  private:
   // visitor for event-specific logic
   struct augment_event {
+    augment_event(std::string const &did,
+                  std::chrono::system_clock::time_point created_at)
+        : _did(did), _created_at(created_at) {}
+    // default is no-op
     template <typename T>
     void operator()(T const &) {}
+
+    // track network roots
+    void operator()(activity::post const &value);
+    void operator()(activity::reply const &value);
+    void operator()(activity::repost const &value);
+    void operator()(activity::quote const &value);
+
+    void operator()(activity::block const &value);
+    void operator()(activity::follow const &value);
+
+    void operator()(activity::like const &value);
+
+    void operator()(activity::active const &value);
+    void operator()(activity::handle const &value);
+    void operator()(activity::inactive const &value);
+    void operator()(activity::profile const &value);
+
+    void operator()(activity::deleted const &value);
+
+   private:
+    std::string _did;
+    std::chrono::system_clock::time_point _created_at;
   };
 
   // LFU cache of recently-active accounts

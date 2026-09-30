@@ -19,6 +19,7 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 #include "moderation/auxiliary_data.hpp"
 
+#include "common/activity/event_recorder.hpp"
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/moderation/list_manager.hpp"
@@ -60,6 +61,7 @@ void auxiliary_data::start(YAML::Node const &settings) {
         update_whitelisted_accounts();
         update_active_defenders();
         update_ignored_accounts();
+        update_network_roots();
         // load/refresh string popular hosts used in embed:external and other
         // places
         update_popular_hosts();
@@ -369,6 +371,30 @@ void auxiliary_data::update_ignored_accounts() {
       // switch replacement rules into the main matcher
       list_manager::instance().update_ignored(std::move(new_ignored));
       _last_ignored_accounts_refresh = std::chrono::steady_clock::now();
+    }
+  }
+}
+void auxiliary_data::update_network_roots() {
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(
+          now - _last_network_roots_refresh) > NetworkRootsRefreshInterval) {
+    pqxx::work tx(*_cx);
+    bool load_failed(false);
+    std::unordered_set<std::string> new_network_roots;
+    for (auto [did] : tx.query<std::string>("SELECT did FROM network_roots;")) {
+      new_network_roots.insert(did);
+      // make network root accounts sticky in the tracked account event cache by
+      // touching them each time
+      for (auto const &account : new_network_roots) {
+        activity::event_recorder::instance().get_handle(account);
+      }
+    }
+
+    if (!load_failed) {
+      // switch replacement rules into the main matcher
+      activity::event_recorder::instance().update_roots(
+          std::move(new_network_roots));
+      _last_network_roots_refresh = std::chrono::steady_clock::now();
     }
   }
 }

@@ -388,12 +388,8 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
                                     const restc_cpp::Reply &reply) {
   REL_INFO("Redirect code {} for {}", code, url);
   _uri_chain.emplace_back(url);
-  // already processed, or whitelisted
-  if (_checker.uri_seen(_repo, _path, url) ||
-      _checker.should_process_uri(url)) {
-    return false;  // stop following the chain
-  };
 
+  // check the new URL passed in for rule matches
   metrics_factory::instance()
       .get_counter("embedded_content")
       .Get({{"link", "redirections"}})
@@ -412,6 +408,12 @@ bool embed_handler::on_url_redirect(int code, std::string &url,
     action_router::instance().wait_enqueue(
         {_seq, _repo, {{_path, _cid, results}}});
   }
+
+  // already processed, or whitelisted
+  if (_checker.uri_seen(_repo, _path, url) ||
+      _checker.should_process_uri(url)) {
+    return false;  // stop following the chain
+  };
   return true;
 }
 

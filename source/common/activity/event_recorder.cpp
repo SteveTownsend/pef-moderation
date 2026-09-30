@@ -55,4 +55,15 @@ void event_recorder::record(timed_event &&value) {
   _events.record(value);
 }
 
+void event_recorder::update_roots(
+    std::unordered_set<std::string> new_network_roots) {
+  std::lock_guard<std::mutex> lock(_network_roots_lock);
+  _network_roots = std::move(new_network_roots);
+}
+
+bool event_recorder::is_network_root(std::string const &did) const {
+  std::lock_guard<std::mutex> lock(_network_roots_lock);
+  return _network_roots.contains(did);
+}
+
 }  // namespace activity

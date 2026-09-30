@@ -34,11 +34,15 @@ class event_recorder {
   void update_handle(std::string const &did, std::string const &handle);
   std::string get_handle(std::string const &did);
   void record(timed_event &&value);
+  void update_roots(std::unordered_set<std::string> new_network_roots);
+  bool is_network_root(std::string const &did) const;
 
  private:
   event_recorder() = default;
+  mutable std::mutex _network_roots_lock;
   caches::WrappedValue<account> add_if_needed(std::string const &did);
 
+  std::unordered_set<std::string> _network_roots;
   event_cache _events;
 };
 }  // namespace activity
