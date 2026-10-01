@@ -23,6 +23,7 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/moderation/list_manager.hpp"
+#include "datasource.hpp"
 #include "matcher.hpp"
 #include "moderation/embed_checker.hpp"
 
@@ -92,8 +93,8 @@ void auxiliary_data::prepare_statements() {
 }
 
 int64_t auxiliary_data::get_rewind_point() const {
-  std::lock_guard<std::mutex> lock(_rewind_lock);
-  return _enable_rewind ? _cursor : 0;
+  return _enable_rewind ? datasource<firehose_payload>::instance().get_cursor()
+                        : 0;
 }
 
 bool auxiliary_data::update_rewind_point_if_valid(
@@ -105,14 +106,16 @@ bool auxiliary_data::update_rewind_point_if_valid(
   // normal, auto-reporting the sequence error
   if (_enforce_sequencing) {
     bool out_of_order(false);
-    if (seq < _cursor) {
+    auto [cursor, was_emitted_at] =
+        datasource<firehose_payload>::instance().get_state();
+    if (seq < cursor) {
       static bool sequence_error = false;
       out_of_order = true;
       if (!sequence_error) {
         sequence_error = true;
         REL_ERROR("out-of-sequence: seq {}/{} precedes current cursor {}/{}",
-                  seq, iso_8601_from_time_stamp(emitted_at), _cursor,
-                  iso_8601_from_time_stamp(_emitted_at));
+                  seq, iso_8601_from_time_stamp(emitted_at), cursor,
+                  iso_8601_from_time_stamp(was_emitted_at));
       }
     }
     /* Skip this, observation is that emitted_at is not reliable at fine grain
@@ -120,8 +123,8 @@ bool auxiliary_data::update_rewind_point_if_valid(
         emitted_at in hand 33931057034/2026-09-25T17:58:58.587000000Z precedes
         last-known-good 33931057033/2026-09-25T17:58:59.534000000Z
 
-    if (_emitted_at.time_since_epoch().count() != 0 &&
-        emitted_at < _emitted_at) {
+    if (was_emitted_at.time_since_epoch().count() != 0 &&
+        emitted_at < was_emitted_at) {
       static bool sequence_error = false;
       out_of_order = true;
       if (!sequence_error) {
@@ -130,15 +133,14 @@ bool auxiliary_data::update_rewind_point_if_valid(
             "out-of-sequence: emitted_at in hand {}/{} precedes "
             "last-known-good "
             "{}/{}",
-            seq, iso_8601_from_time_stamp(emitted_at), _cursor,
-            iso_8601_from_time_stamp(_emitted_at));
+            seq, iso_8601_from_time_stamp(emitted_at), cursor,
+            iso_8601_from_time_stamp(was_emitted_at));
       }
     }
       */
     if (out_of_order) return false;
   }
-  _cursor = seq;
-  _emitted_at = emitted_at;
+  datasource<firehose_payload>::instance().move_cursor(seq, emitted_at);
   return true;
 }
 
@@ -146,7 +148,7 @@ bool auxiliary_data::update_rewind_point_if_valid(
 // backfill
 void auxiliary_data::set_rewind_point() {
   if (!_enable_rewind) {
-    _cursor = 0;
+    datasource<firehose_payload>::instance().move_cursor(0);
     return;
   }
   pqxx::work tx(*_cx);
@@ -159,10 +161,11 @@ void auxiliary_data::set_rewind_point() {
                        "seq = (SELECT MAX(seq) FROM firehose_checkpoint)")
                      .one_row();
   std::lock_guard<std::mutex> lock(_rewind_lock);
-  _cursor = result[0].as<int64_t>();
+  const int64_t cursor = result[0].as<int64_t>();
   auto emitted_at = result[1].as<std::string>();
-  _emitted_at = bsky::strict_time_stamp_from_iso_8601(emitted_at);
-  REL_INFO("Backfill to {}/{}", _cursor, emitted_at);
+  datasource<firehose_payload>::instance().move_cursor(
+      cursor, bsky::strict_time_stamp_from_iso_8601(emitted_at));
+  REL_INFO("Backfill to {}/{}", cursor, emitted_at);
 
   _last_rewind_cursor = result2[0].as<int64_t>();
   auto last_rewind_timestamp = result2[1].as<std::string>();
@@ -176,13 +179,8 @@ void auxiliary_data::check_rewind_point() {
   // Don't save a checkpoint until interval has elapsed, provided checkpoint
   // candidate has been recorded. This relies on emitted_at values, not
   // current/real time.
-  int64_t cursor;
-  bsky::parse_time_stamp timestamp;
-  {
-    std::lock_guard<std::mutex> lock(_rewind_lock);
-    cursor = _cursor;
-    timestamp = _emitted_at;
-  }
+  auto [cursor, timestamp] =
+      datasource<firehose_payload>::instance().get_state();
   if (cursor == 0 || timestamp.time_since_epoch().count() == 0) {
     REL_INFO("No firehose data processed, skip check");
     return;

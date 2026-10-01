@@ -24,6 +24,7 @@ http://www.fsf.org/licensing/licenses
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
+#include <boost/beast/core/role.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #include <cstdlib>
@@ -56,12 +57,16 @@ class datasource {
   datasource() {}
   ~datasource() = default;
 
-  void set_config(std::shared_ptr<config> &settings, const int64_t cursor) {
+  void set_config(std::shared_ptr<config> &settings) {
     _settings = settings;
     _host = _settings->get_config()[PROJECT_NAME]["datasource"]["hosts"]
                 .as<std::string>();
     _port = _settings->get_config()[PROJECT_NAME]["datasource"]["port"]
                 .as<std::string>();
+  }
+
+  void set_subscription() {
+    const int64_t cursor(get_cursor());
     _subscription =
         _settings->get_config()[PROJECT_NAME]["datasource"]["subscription"]
             .as<std::string>();
@@ -104,9 +109,11 @@ class datasource {
         .get_histogram("firehose_facets")
         .Add({{"facet", "total"}}, boundaries);
     _thread = std::thread([&, this] {
-      REL_INFO("client startup for {}:{} at {}", _host, _port, _subscription);
       try {
         while (controller::instance().is_active()) {
+          set_subscription();
+          REL_INFO("websocket connecting to {}:{} at {}", _host, _port,
+                   _subscription);
           // The io_context is required for all I/O
           net::io_context ioc;
 
@@ -134,7 +141,7 @@ class datasource {
 
           // we should run forever unless killed. Try to reconnect in a little
           // while.
-          std::this_thread::sleep_for(std::chrono::seconds(10));
+          std::this_thread::sleep_for(std::chrono::seconds(30));
         }
       } catch (std::exception const &exc) {
         REL_CRITICAL("datasource exception {}", exc.what());
@@ -145,6 +152,27 @@ class datasource {
 
   void wait_for_end_thread() { _thread.join(); }
 
+  void move_cursor(const int64_t seq, const bsky::parse_time_stamp emitted_at) {
+    std::lock_guard<std::mutex> lock(_lock);
+    _cursor = seq;
+    _emitted_at = emitted_at;
+  }
+
+  void move_cursor(const int64_t seq) {
+    std::lock_guard<std::mutex> lock(_lock);
+    _cursor = seq;
+  }
+
+  std::pair<int64_t, bsky::parse_time_stamp> get_state() const {
+    std::lock_guard<std::mutex> lock(_lock);
+    return {_cursor, _emitted_at};
+  }
+
+  int64_t get_cursor() const {
+    std::lock_guard<std::mutex> lock(_lock);
+    return _cursor;
+  }
+
  private:
   // TODO support round robin if needed
   std::string _host;
@@ -153,6 +181,9 @@ class datasource {
   content_handler<PAYLOAD> _handler;
   std::shared_ptr<config> _settings;
   std::thread _thread;
+  mutable std::mutex _lock;
+  int64_t _cursor = 0;
+  bsky::parse_time_stamp _emitted_at;
   std::unique_ptr<datasource> _instance;
 
   void do_work(net::io_context &ioc, ssl::context &ctx,
@@ -225,7 +256,11 @@ class datasource {
 
       // Read a message into our buffer
       ws.async_read(buffer, yield[ec]);
-      if (ec) return fail(ec, "read");
+      if (ec) {
+        // non-fatal, close the socket before exiting
+        error(ec, "read");
+        break;
+      }
 
       // update stats
       metrics_factory::instance()
@@ -256,18 +291,22 @@ class datasource {
 
     // Close the WebSocket connection
     ws.async_close(websocket::close_code::normal, yield[ec]);
-    if (ec) return fail(ec, "close");
+    if (ec) return error(ec, "close");
 
     // If we get here then the connection is closed gracefully
-    REL_INFO("websocket stopping");
+    REL_INFO("websocket exiting");
   }
 
   // Report a failure
   void fail(beast::error_code ec, char const *what) {
+    error(ec, what);
+    controller::instance().force_stop();
+  }
+
+  void error(beast::error_code ec, char const *what) {
     std::ostringstream oss;
     oss << what << ": " << ec.message() << "\n";
     REL_ERROR("datasource error: {}", oss.str());
-    controller::instance().force_stop();
   }
 };
 #endif
