@@ -267,6 +267,7 @@ bool embed_checker::is_popular_host(std::string const &host) {
     ++(*_observed_hosts.Get(host));
   }
   auto now(std::chrono::system_clock::now());
+  bool is_popular(_popular_hosts.contains(host));
   if (now > _last_host_dump + HostDumpInterval) {
     _last_host_dump = now;
     std::multimap<size_t, std::string, std::greater<size_t>> hot_sites;
@@ -276,15 +277,14 @@ bool embed_checker::is_popular_host(std::string const &host) {
     }
     size_t done(0);
     for (auto hot_site : hot_sites) {
-      REL_INFO(
-          "{:6} embeds of {} ({})", hot_site.first, hot_site.second,
-          is_popular_host(hot_site.second) ? "popular host" : "candidate host");
+      REL_INFO("{:6} embeds of {} ({})", hot_site.first, hot_site.second,
+               is_popular ? "popular host" : "candidate host");
       if (++done >= HostsOfInterest) {
         break;
       }
     }
   }
-  return _popular_hosts.contains(host);
+  return is_popular;
 }
 
 void embed_handler::operator()(embed::external const &value) {

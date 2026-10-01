@@ -280,19 +280,16 @@ void auxiliary_data::update_popular_hosts() {
   if (std::chrono::duration_cast<std::chrono::seconds>(
           now - _last_popular_host_refresh) > PopularHostsRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_hosts;
     for (auto [hostname] :
          tx.query<std::string>("SELECT hostname FROM popular_hosts;")) {
       new_hosts.insert(hostname);
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      std::lock_guard guard(_lock);
-      embed_checker::instance().refresh_hosts(std::move(new_hosts));
-      _last_popular_host_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    std::lock_guard guard(_lock);
+    embed_checker::instance().refresh_hosts(std::move(new_hosts));
+    _last_popular_host_refresh = std::chrono::steady_clock::now();
   }
 }
 
@@ -320,18 +317,15 @@ void auxiliary_data::update_whitelisted_accounts() {
           now - _last_whitelisted_accounts_refresh) >
       WhitelistedAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_whitelist;
     for (auto [did] :
          tx.query<std::string>("SELECT did FROM whitelisted_accounts;")) {
       new_whitelist.insert(did);
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      list_manager::instance().update_whitelist(std::move(new_whitelist));
-      _last_whitelisted_accounts_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    list_manager::instance().update_whitelist(std::move(new_whitelist));
+    _last_whitelisted_accounts_refresh = std::chrono::steady_clock::now();
   }
 }
 
@@ -341,19 +335,16 @@ void auxiliary_data::update_active_defenders() {
           now - _last_active_defenders_refresh) >
       ActiveDefendersRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_active_defenders;
     for (auto [did] :
          tx.query<std::string>("SELECT did FROM active_defenders;")) {
       new_active_defenders.insert(did);
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      list_manager::instance().update_active_defenders(
-          std::move(new_active_defenders));
-      _last_active_defenders_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    list_manager::instance().update_active_defenders(
+        std::move(new_active_defenders));
+    _last_active_defenders_refresh = std::chrono::steady_clock::now();
   }
 }
 void auxiliary_data::update_ignored_accounts() {
@@ -362,18 +353,15 @@ void auxiliary_data::update_ignored_accounts() {
           now - _last_ignored_accounts_refresh) >
       IgnoredAccountsRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_ignored;
     for (auto [did] :
          tx.query<std::string>("SELECT did FROM ignored_accounts;")) {
       new_ignored.insert(did);
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      list_manager::instance().update_ignored(std::move(new_ignored));
-      _last_ignored_accounts_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    list_manager::instance().update_ignored(std::move(new_ignored));
+    _last_ignored_accounts_refresh = std::chrono::steady_clock::now();
   }
 }
 void auxiliary_data::update_network_roots() {
@@ -381,7 +369,6 @@ void auxiliary_data::update_network_roots() {
   if (std::chrono::duration_cast<std::chrono::seconds>(
           now - _last_network_roots_refresh) > NetworkRootsRefreshInterval) {
     pqxx::work tx(*_cx);
-    bool load_failed(false);
     std::unordered_set<std::string> new_network_roots;
     for (auto [did] : tx.query<std::string>("SELECT did FROM network_roots;")) {
       new_network_roots.insert(did);
@@ -392,12 +379,10 @@ void auxiliary_data::update_network_roots() {
       }
     }
 
-    if (!load_failed) {
-      // switch replacement rules into the main matcher
-      activity::event_recorder::instance().update_roots(
-          std::move(new_network_roots));
-      _last_network_roots_refresh = std::chrono::steady_clock::now();
-    }
+    // switch replacement rules into the main matcher
+    activity::event_recorder::instance().update_roots(
+        std::move(new_network_roots));
+    _last_network_roots_refresh = std::chrono::steady_clock::now();
   }
 }
 
