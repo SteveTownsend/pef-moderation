@@ -89,8 +89,6 @@ class auxiliary_data {
   mutable std::mutex _rewind_lock;
   bool _enable_rewind = false;
   bool _enforce_sequencing = false;
-  int64_t _cursor = 0;
-  bsky::parse_time_stamp _emitted_at;
   int64_t _last_rewind_cursor = 0;
   bsky::parse_time_stamp _last_rewind_checkpoint;
   std::chrono::steady_clock::time_point _last_rewind_flush;

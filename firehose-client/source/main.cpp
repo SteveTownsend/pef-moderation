@@ -153,8 +153,6 @@ int main(int argc, char **argv) {
     // seeds matcher with rules
     bsky::moderation::auxiliary_data::instance().start(
         settings->get_config()[PROJECT_NAME]["auxiliary_data"]);
-    int64_t cursor(
-        bsky::moderation::auxiliary_data::instance().get_rewind_point());
 
     // wait for matcher and embed checker to be ready
     do {
@@ -186,7 +184,7 @@ int main(int argc, char **argv) {
     } while (!list_manager::instance().is_ready());
 
     // continue as long as firehose runs OK
-    datasource<firehose_payload>::instance().set_config(settings, cursor);
+    datasource<firehose_payload>::instance().set_config(settings);
     datasource<firehose_payload>::instance().start();
     datasource<firehose_payload>::instance().wait_for_end_thread();
 
