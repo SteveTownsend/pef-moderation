@@ -2,6 +2,7 @@
 FROM ubuntu:24.04 AS build
 
 ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16 peg pkg-config libedit-dev'
+ARG BUILD_FLAVOUR='Release'
 RUN apt-get -y update && apt-get -y install $BUILD_DEPS
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
   update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
@@ -25,7 +26,7 @@ RUN git clone -b master https://github.com/SteveTownsend/restc-cpp.git
 WORKDIR /usr/src/restc-cpp
 RUN git submodule init && git submodule update
 RUN mkdir _build
-RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=Release -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
+RUN cmake . -B ./build -DCMAKE_BUILD_TYPE=#BUILD_FLAVOUR -DRESTC_CPP_WITH_FUNCTIONALT_TESTS=OFF -DRESTC_CPP_LOG_WITH_INTERNAL_LOG=ON -DRESTC_CPP_WITH_UNIT_TESTS=OFF -DRESTC_CPP_LOG_LEVEL_STR=info -DRESTC_CPP_USE_CPP20=ON && cd build && make install
 ENV RESTC_CPP_ROOT=/usr/src/restc-cpp
 
 WORKDIR /usr/src
@@ -43,7 +44,7 @@ RUN ./autogen.sh && ./configure --disable-werror && make clean check && make ins
 WORKDIR /usr/pef-moderation
 COPY . .
 RUN date | tee timestamp.txt
-RUN rm -rf ./release-gcc && cmake --preset=Release-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
+RUN rm -rf ./release-gcc && cmake --preset=$BUILD_FLAVOUR-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc && \
   rm -rf /var/lib/apt/lists/* && rm -rf /usr/src && \
   apt-get purge -y --auto-remove $buildDeps
 
