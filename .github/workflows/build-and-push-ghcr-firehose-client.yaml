@@ -89,6 +89,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64
           file: ./Dockerfile.firehose_client
+          build-args: |
+            BUILD_FLAVOUR=RelWithDebInfo
           tags: |
             ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
