@@ -323,6 +323,14 @@ bsky::embed_type firehose_payload::context::process_embed(
       // Embedded record, this is a quote post
       _event_type = bsky::tracked_event::quote;
       _recorded = true;
+      if (!embed.contains("record") ||
+          (!embed["record"].contains("uri") &&
+           (!embed["record"].contains("record") ||
+            !embed["record"]["record"].contains("uri")))) {
+        REL_ERROR("malformed 'record/record-with-media' embed '{}'",
+                  dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       uri = embed_type == bsky::embed_type::record
                 ? embed["record"]["uri"].template get<std::string>()
                 : embed["record"]["record"]["uri"].template get<std::string>();
@@ -339,6 +347,10 @@ bsky::embed_type firehose_payload::context::process_embed(
       }
       break;
     case bsky::embed_type::external:
+      if (!embed.contains("external") || !embed["external"].contains("uri")) {
+        REL_ERROR("malformed 'external' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       add_embed(embed::external(
           embed["external"]["uri"].template get<std::string>()));
       if (embed["external"].contains("thumb")) {
@@ -353,7 +365,15 @@ bsky::embed_type firehose_payload::context::process_embed(
       break;
     case bsky::embed_type::images:
       // pass along the CID in each image
+      if (!embed.contains("images")) {
+        REL_ERROR("malformed 'images' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       for (auto const &image : embed["images"]) {
+        if (!image.contains("image") || !image["image"].contains("ref")) {
+          REL_ERROR("malformed image in 'images' embed '{}'", dump_json(embed));
+          return bsky::embed_type::invalid;
+        }
         encoded_cid =
             image["image"]["ref"].template get<nlohmann::json::binary_t>();
         // nlohmann parser leaves a leading zero byte
@@ -364,6 +384,10 @@ bsky::embed_type firehose_payload::context::process_embed(
       }
       break;
     case bsky::embed_type::video:
+      if (!embed.contains("video") || !embed["video"].contains("ref")) {
+        REL_ERROR("malformed 'video' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       encoded_cid =
           embed["video"]["ref"].template get<nlohmann::json::binary_t>();
       // nlohmann parser leaves a leading zero byte
@@ -373,6 +397,8 @@ bsky::embed_type firehose_payload::context::process_embed(
       add_embed(embed::video(cid));
       break;
     default:
+      REL_ERROR("unexpected embed type for embed '{}'", dump_json(embed));
+      return bsky::embed_type::invalid;
       break;
   }
   return embed_type;
@@ -418,88 +444,100 @@ void firehose_payload::handle_content(
     }
     if (content.contains("embed")) {
       auto const &embed(content["embed"]);
-      this_context._embed_type_str = embed["$type"].template get<std::string>();
-      bsky::embed_type embed_type = this_context.process_embed(embed);
-
-      if (content.contains("facets")) {
-        size_t mentions(0);
-        size_t links(0);
-        if (embed_type == bsky::embed_type::video && embed.contains("langs")) {
-          // count languages in video
-          auto langs(embed["langs"].template get<std::vector<std::string>>());
-          for (auto const &lang : langs) {
-            metrics_factory::instance()
-                .get_counter("firehose_content")
-                .Get({{"embed", this_context._embed_type_str},
-                      {"language", lang}})
-                .Increment();
-          }
-        }
-        bool has_facets(false);
-        for (auto const &facet : content["facets"]) {
-          has_facets = true;
-          for (auto const &feature : facet["features"]) {
-            auto const &facet_type(
-                feature["$type"].template get<std::string>());
-            if (facet_type == bsky::AppBskyRichtextFacetMention) {
-              ++mentions;
-            } else if (facet_type == bsky::AppBskyRichtextFacetTag) {
-              ++tags;
-              // }
-            } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
-              _path_candidates.emplace_back(path_candidates{
-                  this_context._this_path,
-                  cid,
-                  {{collection, std::string(bsky::AppBskyRichtextFacetLink),
-                    feature["uri"].template get<std::string>()}}});
-              this_context.add_embed(
-                  embed::external(feature["uri"].template get<std::string>()));
-              ++links;
+      if (!embed["external"].contains("$type")) {
+        REL_ERROR("malformed embed: missing '$type' for {}", dump_json(embed));
+      } else {
+        this_context._embed_type_str =
+            embed["$type"].template get<std::string>();
+        bsky::embed_type embed_type = this_context.process_embed(embed);
+        if (embed_type != bsky::embed_type::invalid) {
+          // skip malformed data, logged in called function
+          if (content.contains("facets")) {
+            size_t mentions(0);
+            size_t links(0);
+            if (embed_type == bsky::embed_type::video &&
+                embed.contains("langs")) {
+              // count languages in video
+              auto langs(
+                  embed["langs"].template get<std::vector<std::string>>());
+              for (auto const &lang : langs) {
+                metrics_factory::instance()
+                    .get_counter("firehose_content")
+                    .Get({{"embed", this_context._embed_type_str},
+                          {"language", lang}})
+                    .Increment();
+              }
             }
-          }
-        }
-        // record metrics for facet types by embed type
-        if (mentions > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt(
-                  {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}})
-              .Observe(static_cast<double>(mentions));
-        }
-        if (links > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
-              .Observe(static_cast<double>(links));
-        }
-        if (tags > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
-              .Observe(static_cast<double>(tags));
-        }
-        if (has_facets) {
-          size_t total(mentions + tags + links);
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", "total"}})
-              .Observe(static_cast<double>(total));
-          processor.request_recording(
-              {repo,
-               bsky::time_stamp_from_iso_8601(
-                   content["createdAt"].template get<std::string>()),
-               activity::facets(seq, this_context._this_path, cid,
-                                static_cast<unsigned short>(tags),
-                                static_cast<unsigned short>(mentions),
-                                static_cast<unsigned short>(links))});
-        }
-        if (content.contains("langs")) {
-          auto langs(content["langs"].template get<std::vector<std::string>>());
-          for (auto const &lang : langs) {
-            metrics_factory::instance()
-                .get_counter("firehose_content")
-                .Get({{"collection", collection}, {"language", lang}})
-                .Increment();
+            bool has_facets(false);
+            for (auto const &facet : content["facets"]) {
+              has_facets = true;
+              for (auto const &feature : facet["features"]) {
+                auto const &facet_type(
+                    feature["$type"].template get<std::string>());
+                if (facet_type == bsky::AppBskyRichtextFacetMention) {
+                  ++mentions;
+                } else if (facet_type == bsky::AppBskyRichtextFacetTag) {
+                  ++tags;
+                  // }
+                } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
+                  _path_candidates.emplace_back(path_candidates{
+                      this_context._this_path,
+                      cid,
+                      {{collection, std::string(bsky::AppBskyRichtextFacetLink),
+                        feature["uri"].template get<std::string>()}}});
+                  this_context.add_embed(embed::external(
+                      feature["uri"].template get<std::string>()));
+                  ++links;
+                }
+              }
+            }
+            // record metrics for facet types by embed type
+            if (mentions > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt({{"facet",
+                           std::string(bsky::AppBskyRichtextFacetMention)}})
+                  .Observe(static_cast<double>(mentions));
+            }
+            if (links > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt(
+                      {{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
+                  .Observe(static_cast<double>(links));
+            }
+            if (tags > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt(
+                      {{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
+                  .Observe(static_cast<double>(tags));
+            }
+            if (has_facets) {
+              size_t total(mentions + tags + links);
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt({{"facet", "total"}})
+                  .Observe(static_cast<double>(total));
+              processor.request_recording(
+                  {repo,
+                   bsky::time_stamp_from_iso_8601(
+                       content["createdAt"].template get<std::string>()),
+                   activity::facets(seq, this_context._this_path, cid,
+                                    static_cast<unsigned short>(tags),
+                                    static_cast<unsigned short>(mentions),
+                                    static_cast<unsigned short>(links))});
+            }
+            if (content.contains("langs")) {
+              auto langs(
+                  content["langs"].template get<std::vector<std::string>>());
+              for (auto const &lang : langs) {
+                metrics_factory::instance()
+                    .get_counter("firehose_content")
+                    .Get({{"collection", collection}, {"language", lang}})
+                    .Increment();
+              }
+            }
           }
         }
       }
