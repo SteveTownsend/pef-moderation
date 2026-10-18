@@ -90,7 +90,7 @@ jobs:
           platforms: linux/amd64
           file: ./Dockerfile.firehose_client
           build-args: |
-            BUILD_FLAVOUR=Logging
+            BUILD_FLAVOUR=logging-gcc
           tags: |
             ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
