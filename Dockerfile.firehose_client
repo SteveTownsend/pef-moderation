@@ -44,7 +44,7 @@ RUN ./autogen.sh && ./configure --disable-werror && make clean check && make ins
 WORKDIR /usr/pef-moderation
 COPY . .
 RUN date | tee timestamp.txt
-RUN rm -rf ./release-gcc && cmake --preset=$BUILD_FLAVOUR-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./release-gcc &&  \
+RUN rm -rf ./$BUILD_FLAVOUR && cmake --preset=$BUILD_FLAVOUR-GCC -DDB_CRAWLER_BUILD=OFF && cmake --build ./$BUILD_FLAVOUR &&  \
   rm -rf /var/lib/apt/lists/* && rm -rf /usr/src && \
   apt-get purge -y --auto-remove $buildDeps
 
@@ -56,7 +56,7 @@ RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
 
 WORKDIR /firehose-client
 RUN mkdir -p /firehose-client/logs /etc/firehose-client
-COPY --from=build /usr/pef-moderation/timestamp.txt /usr/pef-moderation/release-gcc/firehose-client/firehose_client /firehose-client/
+COPY --from=build /usr/pef-moderation/timestamp.txt /usr/pef-moderation/$BUILD_FLAVOUR/firehose-client/firehose_client /firehose-client/
 COPY --from=build /usr/local /usr/local
 
 RUN rm -rf /var/lib/apt/lists/* && \
