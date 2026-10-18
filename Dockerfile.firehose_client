@@ -52,6 +52,7 @@ RUN rm -rf ./$BUILD_FLAVOUR && cmake --preset=$BUILD_FLAVOUR -DDB_CRAWLER_BUILD=
 FROM ubuntu:24.04
 
 ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
+ARG BUILD_FLAVOUR
 RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
 
 WORKDIR /firehose-client
