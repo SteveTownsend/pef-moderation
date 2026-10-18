@@ -444,7 +444,7 @@ void firehose_payload::handle_content(
     }
     if (content.contains("embed")) {
       auto const &embed(content["embed"]);
-      if (!embed["external"].contains("$type")) {
+      if (!embed.contains("$type")) {
         REL_ERROR("malformed embed: missing '$type' for {}", dump_json(embed));
       } else {
         this_context._embed_type_str =
