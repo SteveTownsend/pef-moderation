@@ -67,9 +67,9 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
   auto const &other_cbors(_parser.other_cbors());
   if (other_cbors.size() != 2) {
     std::ostringstream oss;
-    for (auto const &cbor : _parser.other_cbors()) {
-      oss << cbor.second.dump();
-    }
+    // for (auto const &cbor : _parser.other_cbors()) {
+    //   oss << cbor.second.dump();
+    // }
     REL_ERROR("Malformed firehose message {}", oss.str());
     return;
   }

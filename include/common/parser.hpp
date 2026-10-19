@@ -84,9 +84,9 @@ class parser {
     }
     if (!parsed) {
       std::ostringstream oss;
-      oss << std::hex;
-      auto os_iter = std::ostream_iterator<int>(oss);
-      std::ranges::copy(first, last, os_iter);
+      // oss << std::hex;
+      // auto os_iter = std::ostream_iterator<int>(oss);
+      // std::ranges::copy(first, last, os_iter);
 
       REL_ERROR("from_cbor_sequence parse failed: {}", oss.str());
     }
