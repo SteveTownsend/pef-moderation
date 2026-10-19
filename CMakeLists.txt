@@ -155,7 +155,7 @@ include_directories(${multiformats_SOURCE_DIR}/include)
 FetchContent_Declare(
   json
   GIT_REPOSITORY https://github.com/stevetownsend/json
-  GIT_TAG 13b6b8878d161ee1efe56237c62afa45abb54772)
+  GIT_TAG ef14b8425a517452202ae6c4ff20675abaf10a1e)
 FetchContent_MakeAvailable(json)
 
 # logging
