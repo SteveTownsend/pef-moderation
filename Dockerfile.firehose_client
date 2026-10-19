@@ -1,11 +1,11 @@
 # install dependencies and build
 FROM ubuntu:26.04 AS build
 
-ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-14 g++-14 ninja-build libgtest-dev postgresql-server-dev-16 peg pkg-config libedit-dev'
+ARG BUILD_DEPS='libboost-all-dev git libicu-dev libssl-dev cmake gcc-15 g++-15 ninja-build libgtest-dev postgresql-server-dev-18 peg pkg-config libedit-dev'
 ARG BUILD_FLAVOUR='release-gcc'
 RUN apt-get -y update && apt-get -y install $BUILD_DEPS
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 && \
-  update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 140 
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 150 && \
+  update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 150
 
 WORKDIR /usr/src
 ADD https://api.github.com/repos/SteveTownsend/prometheus-cpp/git/refs/heads/master prom-version.json
@@ -51,7 +51,7 @@ RUN rm -rf ./$BUILD_FLAVOUR && cmake --preset=$BUILD_FLAVOUR -DDB_CRAWLER_BUILD=
 # prepare the runtime environment
 FROM ubuntu:26.04
 
-ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-16 libpq-dev'
+ARG RUNTIME_DEPS='libicu-dev libssl-dev cmake postgresql-client-18 libpq-dev'
 ARG BUILD_FLAVOUR
 RUN apt-get -y update && apt-get -y install sudo $RUNTIME_DEPS
 
