@@ -84,9 +84,9 @@ class parser {
     }
     if (!parsed) {
       std::ostringstream oss;
-      oss << std::hex;
-      auto os_iter = std::ostream_iterator<int>(oss);
-      std::ranges::copy(first, last, os_iter);
+      // oss << std::hex;
+      // auto os_iter = std::ostream_iterator<int>(oss);
+      // std::ranges::copy(first, last, os_iter);
 
       REL_ERROR("from_cbor_sequence parse failed: {}", oss.str());
     }
@@ -149,7 +149,7 @@ class parser {
       nlohmann::basic_json result;
       SAX this_pass_sax(result, _callback, _allow_exceptions);
       this->sax = &this_pass_sax;
-      if (this->parse_cbor_internal(true, _tag_handler)) {
+      if (this->parse_cbor_internal(_tag_handler)) {
         // check callback for top-level object parse completion
         return _callback(0, nlohmann::detail::parse_event_t::result, result);
       }
@@ -189,7 +189,7 @@ class parser {
       nlohmann::basic_json result;
       SAX this_pass_sax(result, _callback, _allow_exceptions);
       this->sax = &this_pass_sax;
-      if (this->parse_cbor_internal(true, _tag_handler)) {
+      if (this->parse_cbor_internal(_tag_handler)) {
         // check callback for top-level object parse completion
         return _callback(0, nlohmann::detail::parse_event_t::result, result);
       }
@@ -230,7 +230,6 @@ class parser {
               nlohmann::detail::parse_error::create(
                   110, this->chars_read,
                   this->exception_message(
-                      this->input_format,
                       nlohmann::detail::concat(
                           "expected end of input; last byte: 0x",
                           this->get_token_string()),

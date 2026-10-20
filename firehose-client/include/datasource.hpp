@@ -36,8 +36,8 @@ http://www.fsf.org/licensing/licenses
 #include "common/controller.hpp"
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
-#include "content_handler.hpp"
 #include "matcher.hpp"
+#include "payload.hpp"
 #include "project_defs.hpp"
 
 namespace beast = boost::beast;          // from <boost/beast.hpp>
@@ -178,7 +178,6 @@ class datasource {
   std::string _host;
   std::string _port;
   std::string _subscription;
-  content_handler<PAYLOAD> _handler;
   std::shared_ptr<config> _settings;
   std::thread _thread;
   mutable std::mutex _lock;
@@ -279,7 +278,7 @@ class datasource {
       //   datasource exception [json.exception.type_error.302] type must be
       //   binary, but is object
       try {
-        _handler.handle(buffer);
+        firehose_payload().handle(buffer);
       } catch (const nlohmann::json::exception &exc) {
         REL_ERROR("datasource JSON exception {}\n{}", exc.what(),
                   beast::buffers_to_string(buffer.data()));

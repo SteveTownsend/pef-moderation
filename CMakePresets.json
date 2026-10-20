@@ -118,7 +118,7 @@
             }
         },
         {
-            "name": "Debug-MSVC",
+            "name": "debug-msvc",
             "inherits": [
                 "buildtype-debug",
                 "architecture-x64",
@@ -131,7 +131,7 @@
             "binaryDir": "${sourceDir}/debug-msvc"
         },
         {
-            "name": "Release-MSVC",
+            "name": "release-msvc",
             "inherits": [
                 "buildtype-release",
                 "architecture-x64",
@@ -144,7 +144,7 @@
             "binaryDir": "${sourceDir}/release-msvc"
         },
         {
-            "name": "Logging-MSVC",
+            "name": "logging-msvc",
             "inherits": [
                 "buildtype-relwithdebinfo",
                 "architecture-x64",
@@ -157,7 +157,7 @@
             "binaryDir": "${sourceDir}/logging-msvc"
         },
         {
-            "name": "Debug-GCC",
+            "name": "debug-gcc",
             "inherits": [
                 "buildtype-debug",
                 "architecture-x64",
@@ -170,7 +170,7 @@
             "binaryDir": "${sourceDir}/debug-gcc"
         },
         {
-            "name": "Release-GCC",
+            "name": "release-gcc",
             "inherits": [
                 "buildtype-release",
                 "architecture-x64",
@@ -183,7 +183,7 @@
             "binaryDir": "${sourceDir}/release-gcc"
         },
         {
-            "name": "Logging-GCC",
+            "name": "logging-gcc",
             "inherits": [
                 "buildtype-relwithdebinfo",
                 "architecture-x64",
@@ -200,37 +200,37 @@
         {
             "name": "rel-msvc",
             "displayName": "Release (MSVC)",
-            "configurePreset": "Release-MSVC",
+            "configurePreset": "release-msvc",
             "description": "Optimized release build."
         },
         {
             "name": "log-msvc",
             "displayName": "Logging (MSVC)",
-            "configurePreset": "Logging-MSVC",
+            "configurePreset": "logging-msvc",
             "description": "Optimized release build with logging."
         },
         {
             "name": "deb-msvc",
             "displayName": "Debug (MSVC)",
-            "configurePreset": "Debug-MSVC",
+            "configurePreset": "debug-msvc",
             "description": "Debug build for testing."
         },
         {
             "name": "rel-gcc",
             "displayName": "Release (GCC)",
-            "configurePreset": "Release-GCC",
+            "configurePreset": "release-gcc",
             "description": "Optimized release build."
         },
         {
             "name": "log-gcc",
             "displayName": "Logging (GCC)",
-            "configurePreset": "Logging-GCC",
+            "configurePreset": "logging-gcc",
             "description": "Optimized release build with logging."
         },
         {
             "name": "deb-gcc",
             "displayName": "Debug (GCC)",
-            "configurePreset": "Debug-GCC",
+            "configurePreset": "debug-gcc",
             "description": "Debug build for testing."
         }
     ]

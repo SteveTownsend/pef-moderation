@@ -32,44 +32,15 @@ http://www.fsf.org/licensing/licenses
 #include "moderation/embed_checker.hpp"
 #include "payload.hpp"
 
-jetstream_payload::jetstream_payload() {}
-jetstream_payload::jetstream_payload(std::string json_msg,
-                                     match_results matches)
-    : _json_msg(json_msg), _matches(matches) {}
-
-void jetstream_payload::handle(post_processor<jetstream_payload> &) {
-  // TODO almost identical to jetstream_payload::handle
-  // Publish metrics for matches
-  for (auto &result : _matches) {
-    // this is the substring of the full JSON that matched one or more
-    // desired strings
-    REL_INFO("Candidate {}|{}|{}\nmatches {}\non message:{}",
-             result._candidate._type, result._candidate._field,
-             result._candidate._value, result._matches, _json_msg);
-    for (auto const &match : result._matches) {
-      prometheus::Labels labels(
-          {{"type", result._candidate._type},
-           {"field", result._candidate._field},
-           {"filter", wstring_to_utf8(match.get_keyword())}});
-      metrics_factory::instance()
-          .get_counter("message_string_matches")
-          .Get(labels)
-          .Increment();
-    }
-  }
-}
-
-firehose_payload::firehose_payload() {}
-firehose_payload::firehose_payload(parser &my_parser)
-    : _parser(std::move(my_parser)) {}
-
-void firehose_payload::handle(post_processor<firehose_payload> &processor) {
-  auto const &other_cbors(_parser.other_cbors());
+void firehose_payload::handle(beast::flat_buffer const &beast_data) {
+  parser wrapper_parser;
+  wrapper_parser.get_candidates_from_flat_buffer(beast_data);
+  auto const &other_cbors(wrapper_parser.other_cbors());
   if (other_cbors.size() != 2) {
     std::ostringstream oss;
-    for (auto const &cbor : _parser.other_cbors()) {
-      oss << cbor.second.dump();
-    }
+    // for (auto const &cbor : wrapper_parser.other_cbors()) {
+    //   oss << cbor.second.dump();
+    // }
     REL_ERROR("Malformed firehose message {}", oss.str());
     return;
   }
@@ -160,7 +131,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
         }
         // track deletions
         if (oper_kind == firehose::op_kind::delete_) {
-          processor.request_recording(
+          _post_processor.request_recording(
               {repo,
                bsky::time_stamp_from_iso_8601(
                    message["time"].template get<std::string>()),
@@ -194,11 +165,10 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       }
       // handle all the CBORs with content, metrics, checking
       for (auto const &content_cbor : block_parser.content_cbors()) {
-        handle_content(processor, seq, repo, content_cbor.first,
-                       content_cbor.second);
+        handle_content(seq, repo, content_cbor.first, content_cbor.second);
       }
       for (auto const &matchable_cbor : block_parser.matchable_cbors()) {
-        handle_matchable_content(processor, seq, repo, matchable_cbor.first,
+        handle_matchable_content(seq, repo, matchable_cbor.first,
                                  matchable_cbor.second);
       }
     } else if (op_type == firehose::OpTypeIdentity ||
@@ -210,7 +180,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             std::string(matcher::HandleSentinel),  // path
             std::string(matcher::HandleSentinel),  // cid
             {{op_type, std::string(matcher::HandleSentinel), handle}}});
-        processor.request_recording(
+        _post_processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
@@ -228,20 +198,20 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
                 {"status", active ? "active" : "inactive"}})
           .Increment();
       if (active) {
-        processor.request_recording(
+        _post_processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
              activity::active()});
       } else if (message.contains("status")) {
-        processor.request_recording(
+        _post_processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
              activity::inactive(bsky::down_reason_from_string(
                  message["status"].template get<std::string>()))});
       } else {
-        processor.request_recording(
+        _post_processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
@@ -250,7 +220,7 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
       REL_INFO("{} {}", op_type.c_str(), dump_json(message));
     } else if (op_type == firehose::OpTypeTombstone) {
       repo = message["did"].template get<std::string>();
-      processor.request_recording(
+      _post_processor.request_recording(
           {repo,
            bsky::time_stamp_from_iso_8601(
                message["time"].template get<std::string>()),
@@ -291,7 +261,8 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
             }
           }
         }
-        // only log message once - might be interleaved with other thread output
+        // only log message once - might be interleaved with other thread
+        // output
         if (op_type == firehose::OpTypeCommit) {
           // curate a smaller version of the full message for correlation
           REL_INFO("in message: {} {} {}", repo, dump_json(message["ops"]),
@@ -300,10 +271,11 @@ void firehose_payload::handle(post_processor<firehose_payload> &processor) {
           REL_INFO("in message: {} {}", repo, dump_json(message));
         }
         // record suspect activity as a special-case event
-        processor.request_recording(
+        _post_processor.request_recording(
             {repo, bsky::current_time(), activity::matches(count)});
 
-        // forward account and its matched records for possible auto-moderation
+        // forward account and its matched records for possible
+        // auto-moderation
         action_router::instance().wait_enqueue({seq, repo, std::move(matches)});
       }
     }
@@ -323,6 +295,14 @@ bsky::embed_type firehose_payload::context::process_embed(
       // Embedded record, this is a quote post
       _event_type = bsky::tracked_event::quote;
       _recorded = true;
+      if (!embed.contains("record") ||
+          (!embed["record"].contains("uri") &&
+           (!embed["record"].contains("record") ||
+            !embed["record"]["record"].contains("uri")))) {
+        REL_ERROR("malformed 'record/record-with-media' embed '{}'",
+                  dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       uri = embed_type == bsky::embed_type::record
                 ? embed["record"]["uri"].template get<std::string>()
                 : embed["record"]["record"]["uri"].template get<std::string>();
@@ -339,6 +319,10 @@ bsky::embed_type firehose_payload::context::process_embed(
       }
       break;
     case bsky::embed_type::external:
+      if (!embed.contains("external") || !embed["external"].contains("uri")) {
+        REL_ERROR("malformed 'external' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       add_embed(embed::external(
           embed["external"]["uri"].template get<std::string>()));
       if (embed["external"].contains("thumb")) {
@@ -353,7 +337,15 @@ bsky::embed_type firehose_payload::context::process_embed(
       break;
     case bsky::embed_type::images:
       // pass along the CID in each image
+      if (!embed.contains("images")) {
+        REL_ERROR("malformed 'images' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       for (auto const &image : embed["images"]) {
+        if (!image.contains("image") || !image["image"].contains("ref")) {
+          REL_ERROR("malformed image in 'images' embed '{}'", dump_json(embed));
+          return bsky::embed_type::invalid;
+        }
         encoded_cid =
             image["image"]["ref"].template get<nlohmann::json::binary_t>();
         // nlohmann parser leaves a leading zero byte
@@ -364,6 +356,10 @@ bsky::embed_type firehose_payload::context::process_embed(
       }
       break;
     case bsky::embed_type::video:
+      if (!embed.contains("video") || !embed["video"].contains("ref")) {
+        REL_ERROR("malformed 'video' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
       encoded_cid =
           embed["video"]["ref"].template get<nlohmann::json::binary_t>();
       // nlohmann parser leaves a leading zero byte
@@ -373,16 +369,18 @@ bsky::embed_type firehose_payload::context::process_embed(
       add_embed(embed::video(cid));
       break;
     default:
+      REL_ERROR("unexpected embed type for embed '{}'", dump_json(embed));
+      return bsky::embed_type::invalid;
       break;
   }
   return embed_type;
 }
 
-void firehose_payload::handle_content(
-    post_processor<firehose_payload> &processor, const int64_t seq,
-    std::string const &repo, std::string const &cid,
-    nlohmann::json const &content) {
-  context this_context(processor, content);
+void firehose_payload::handle_content(const int64_t seq,
+                                      std::string const &repo,
+                                      std::string const &cid,
+                                      nlohmann::json const &content) {
+  context this_context(_post_processor, content);
   this_context._repo = repo;
   if (_path_by_cid.contains(cid)) {
     this_context._this_path = _path_by_cid[cid];
@@ -398,7 +396,7 @@ void firehose_payload::handle_content(
     if (content.contains("reply")) {
       this_context._event_type = bsky::tracked_event::reply;
       recorded = true;
-      processor.request_recording(
+      _post_processor.request_recording(
           {repo,
            bsky::time_stamp_from_iso_8601(
                content["createdAt"].template get<std::string>()),
@@ -418,116 +416,128 @@ void firehose_payload::handle_content(
     }
     if (content.contains("embed")) {
       auto const &embed(content["embed"]);
-      this_context._embed_type_str = embed["$type"].template get<std::string>();
-      bsky::embed_type embed_type = this_context.process_embed(embed);
-
-      if (content.contains("facets")) {
-        size_t mentions(0);
-        size_t links(0);
-        if (embed_type == bsky::embed_type::video && embed.contains("langs")) {
-          // count languages in video
-          auto langs(embed["langs"].template get<std::vector<std::string>>());
-          for (auto const &lang : langs) {
-            metrics_factory::instance()
-                .get_counter("firehose_content")
-                .Get({{"embed", this_context._embed_type_str},
-                      {"language", lang}})
-                .Increment();
-          }
-        }
-        bool has_facets(false);
-        for (auto const &facet : content["facets"]) {
-          has_facets = true;
-          for (auto const &feature : facet["features"]) {
-            auto const &facet_type(
-                feature["$type"].template get<std::string>());
-            if (facet_type == bsky::AppBskyRichtextFacetMention) {
-              ++mentions;
-            } else if (facet_type == bsky::AppBskyRichtextFacetTag) {
-              ++tags;
-              // }
-            } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
-              _path_candidates.emplace_back(path_candidates{
-                  this_context._this_path,
-                  cid,
-                  {{collection, std::string(bsky::AppBskyRichtextFacetLink),
-                    feature["uri"].template get<std::string>()}}});
-              this_context.add_embed(
-                  embed::external(feature["uri"].template get<std::string>()));
-              ++links;
+      if (!embed.contains("$type")) {
+        REL_ERROR("malformed embed: missing '$type' for {}", dump_json(embed));
+      } else {
+        this_context._embed_type_str =
+            embed["$type"].template get<std::string>();
+        bsky::embed_type embed_type = this_context.process_embed(embed);
+        if (embed_type != bsky::embed_type::invalid) {
+          // skip malformed data, logged in called function
+          if (content.contains("facets")) {
+            size_t mentions(0);
+            size_t links(0);
+            if (embed_type == bsky::embed_type::video &&
+                embed.contains("langs")) {
+              // count languages in video
+              auto langs(
+                  embed["langs"].template get<std::vector<std::string>>());
+              for (auto const &lang : langs) {
+                metrics_factory::instance()
+                    .get_counter("firehose_content")
+                    .Get({{"embed", this_context._embed_type_str},
+                          {"language", lang}})
+                    .Increment();
+              }
             }
-          }
-        }
-        // record metrics for facet types by embed type
-        if (mentions > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt(
-                  {{"facet", std::string(bsky::AppBskyRichtextFacetMention)}})
-              .Observe(static_cast<double>(mentions));
-        }
-        if (links > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
-              .Observe(static_cast<double>(links));
-        }
-        if (tags > 0) {
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
-              .Observe(static_cast<double>(tags));
-        }
-        if (has_facets) {
-          size_t total(mentions + tags + links);
-          metrics_factory::instance()
-              .get_histogram("firehose_facets")
-              .GetAt({{"facet", "total"}})
-              .Observe(static_cast<double>(total));
-          processor.request_recording(
-              {repo,
-               bsky::time_stamp_from_iso_8601(
-                   content["createdAt"].template get<std::string>()),
-               activity::facets(seq, this_context._this_path, cid,
-                                static_cast<unsigned short>(tags),
-                                static_cast<unsigned short>(mentions),
-                                static_cast<unsigned short>(links))});
-        }
-        if (content.contains("langs")) {
-          auto langs(content["langs"].template get<std::vector<std::string>>());
-          for (auto const &lang : langs) {
-            metrics_factory::instance()
-                .get_counter("firehose_content")
-                .Get({{"collection", collection}, {"language", lang}})
-                .Increment();
+            bool has_facets(false);
+            for (auto const &facet : content["facets"]) {
+              has_facets = true;
+              for (auto const &feature : facet["features"]) {
+                auto const &facet_type(
+                    feature["$type"].template get<std::string>());
+                if (facet_type == bsky::AppBskyRichtextFacetMention) {
+                  ++mentions;
+                } else if (facet_type == bsky::AppBskyRichtextFacetTag) {
+                  ++tags;
+                  // }
+                } else if (facet_type == bsky::AppBskyRichtextFacetLink) {
+                  _path_candidates.emplace_back(path_candidates{
+                      this_context._this_path,
+                      cid,
+                      {{collection, std::string(bsky::AppBskyRichtextFacetLink),
+                        feature["uri"].template get<std::string>()}}});
+                  this_context.add_embed(embed::external(
+                      feature["uri"].template get<std::string>()));
+                  ++links;
+                }
+              }
+            }
+            // record metrics for facet types by embed type
+            if (mentions > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt({{"facet",
+                           std::string(bsky::AppBskyRichtextFacetMention)}})
+                  .Observe(static_cast<double>(mentions));
+            }
+            if (links > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt(
+                      {{"facet", std::string(bsky::AppBskyRichtextFacetLink)}})
+                  .Observe(static_cast<double>(links));
+            }
+            if (tags > 0) {
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt(
+                      {{"facet", std::string(bsky::AppBskyRichtextFacetTag)}})
+                  .Observe(static_cast<double>(tags));
+            }
+            if (has_facets) {
+              size_t total(mentions + tags + links);
+              metrics_factory::instance()
+                  .get_histogram("firehose_facets")
+                  .GetAt({{"facet", "total"}})
+                  .Observe(static_cast<double>(total));
+              _post_processor.request_recording(
+                  {repo,
+                   bsky::time_stamp_from_iso_8601(
+                       content["createdAt"].template get<std::string>()),
+                   activity::facets(seq, this_context._this_path, cid,
+                                    static_cast<unsigned short>(tags),
+                                    static_cast<unsigned short>(mentions),
+                                    static_cast<unsigned short>(links))});
+            }
+            if (content.contains("langs")) {
+              auto langs(
+                  content["langs"].template get<std::vector<std::string>>());
+              for (auto const &lang : langs) {
+                metrics_factory::instance()
+                    .get_counter("firehose_content")
+                    .Get({{"collection", collection}, {"language", lang}})
+                    .Increment();
+              }
+            }
           }
         }
       }
     }
     if (!recorded) {
       // plain old post, not a reply or quote
-      processor.request_recording(
+      _post_processor.request_recording(
           {repo,
            bsky::time_stamp_from_iso_8601(
                content["createdAt"].template get<std::string>()),
            activity::post(this_context._this_path)});
     }
   } else if (this_context._event_type == bsky::tracked_event::block) {
-    processor.request_recording(
+    _post_processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
          activity::block(seq, this_context._this_path,
                          content["subject"].template get<std::string>())});
   } else if (this_context._event_type == bsky::tracked_event::follow) {
-    processor.request_recording(
+    _post_processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
          activity::follow(this_context._this_path,
                           content["subject"].template get<std::string>())});
   } else if (this_context._event_type == bsky::tracked_event::like) {
-    processor.request_recording(
+    _post_processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
@@ -535,7 +545,7 @@ void firehose_payload::handle_content(
              this_context._this_path,
              content["subject"]["uri"].template get<std::string>())});
   } else if (this_context._event_type == bsky::tracked_event::profile) {
-    processor.request_recording(
+    _post_processor.request_recording(
         {repo,
          (content.contains("createdAt")
               ? bsky::time_stamp_from_iso_8601(
@@ -543,7 +553,7 @@ void firehose_payload::handle_content(
               : bsky::current_time()),
          activity::profile(this_context._this_path)});
   } else if (this_context._event_type == bsky::tracked_event::repost) {
-    processor.request_recording(
+    _post_processor.request_recording(
         {repo,
          bsky::time_stamp_from_iso_8601(
              content["createdAt"].template get<std::string>()),
@@ -558,12 +568,12 @@ void firehose_payload::handle_content(
   }
 }
 
-void firehose_payload::handle_matchable_content(
-    post_processor<firehose_payload> &processor, const int64_t seq,
-    std::string const &repo, std::string const &cid,
-    nlohmann::json const &content) {
+void firehose_payload::handle_matchable_content(const int64_t seq,
+                                                std::string const &repo,
+                                                std::string const &cid,
+                                                nlohmann::json const &content) {
   // common processing
-  handle_content(processor, seq, repo, cid, content);
+  handle_content(seq, repo, cid, content);
 
   // check for matches
   std::string this_path;

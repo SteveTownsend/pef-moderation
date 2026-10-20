@@ -95,9 +95,8 @@ candidate_list parser::get_candidates_from_json(
   return {};
 }
 
-inline bool parser::cbor_callback(int /* depth */,
-                                  nlohmann::json::parse_event_t event,
-                                  nlohmann::json &parsed) {
+bool parser::cbor_callback(int /* depth */, nlohmann::json::parse_event_t event,
+                           nlohmann::json &parsed) {
   if (event == nlohmann::json::parse_event_t::result) {
     // Check for "roots" and decode embedded CIDs is found
     if (parsed.contains("roots")) {

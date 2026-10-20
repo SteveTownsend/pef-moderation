@@ -27,26 +27,13 @@ http://www.fsf.org/licensing/licenses
 #include "common/parser.hpp"
 #include "matcher.hpp"
 #include "post_processor.hpp"
-
-class jetstream_payload {
- public:
-  jetstream_payload();
-  jetstream_payload(std::string json_msg, match_results matches);
-  void handle(post_processor<jetstream_payload> &processor);
-  inline std::string to_string() const { return _json_msg; }
-
- private:
-  std::string _json_msg;
-  match_results _matches;
-};
 class firehose_payload {
  public:
-  firehose_payload();
-  firehose_payload(parser &my_parser);
-  void handle(post_processor<firehose_payload> &processor);
-  inline std::string to_string() const {
-    auto const &header(_parser.other_cbors().front().second);
-    auto const &message(_parser.other_cbors().back().second);
+  firehose_payload() = default;
+  void handle(beast::flat_buffer const &beast_data);
+  inline std::string to_string(parser &my_parser) const {
+    auto const &header(my_parser.other_cbors().front().second);
+    auto const &message(my_parser.other_cbors().back().second);
     std::ostringstream oss;
     oss << "header (" << dump_json(header) << ") message ("
         << dump_json(message) << ')';
@@ -75,15 +62,13 @@ class firehose_payload {
     nlohmann::json const &_content;
     std::vector<embed::embed_info> _embeds;
   };
-  void handle_content(post_processor<firehose_payload> &processor,
-                      const int64_t seq, std::string const &repo,
+  void handle_content(const int64_t seq, std::string const &repo,
                       std::string const &cid, nlohmann::json const &content);
-  void handle_matchable_content(post_processor<firehose_payload> &processor,
-                                const int64_t seq, std::string const &repo,
+  void handle_matchable_content(const int64_t seq, std::string const &repo,
                                 std::string const &cid,
                                 nlohmann::json const &content);
 
-  parser _parser;
+  post_processor<firehose_payload> _post_processor;
   path_candidate_list _path_candidates;
   std::unordered_map<std::string, std::string> _path_by_cid;
 };
