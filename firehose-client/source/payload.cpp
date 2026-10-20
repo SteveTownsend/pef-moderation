@@ -33,269 +33,252 @@ http://www.fsf.org/licensing/licenses
 #include "payload.hpp"
 
 void firehose_payload::handle(beast::flat_buffer const &beast_data) {
-  try {
-    auto matches(matcher::shared().find_all_matches(beast_data));
-    // No match, or all eliminated by contingent match processing
-    if (matches.empty()) {
-      return;
-    }
-    parser wrapper_parser;
-    wrapper_parser.get_candidates_from_flat_buffer(beast_data);
-    auto const &other_cbors(wrapper_parser.other_cbors());
-    if (other_cbors.size() != 2) {
-      std::ostringstream oss;
-      // for (auto const &cbor : wrapper_parser.other_cbors()) {
-      //   oss << cbor.second.dump();
-      // }
-      REL_ERROR("Malformed firehose message {}", oss.str());
-      return;
-    }
-    auto const &header(other_cbors.front().second);
-    auto const &message(other_cbors.back().second);
-    REL_DEBUG("Firehose header:  {}", dump_json(header));
-    REL_DEBUG("         message: {}", dump_json(message));
-    int op(header["op"].template get<int>());
-    if (op == static_cast<int>(firehose::op::error)) {
-      metrics_factory::instance()
-          .get_counter("firehose_content")
-          .Get({{"op", "error"}})
-          .Increment();
-    } else if (op == static_cast<int>(firehose::op::message)) {
-      metrics_factory::instance()
-          .get_counter("firehose_content")
-          .Get({{"op", "message"}})
-          .Increment();
-      std::string op_type(header["t"].template get<std::string>());
-      metrics_factory::instance()
-          .get_counter("firehose_content")
-          .Get({{"op", "message"}, {"type", op_type}})
-          .Increment();
+  parser wrapper_parser;
+  wrapper_parser.get_candidates_from_flat_buffer(beast_data);
+  auto const &other_cbors(wrapper_parser.other_cbors());
+  if (other_cbors.size() != 2) {
+    std::ostringstream oss;
+    // for (auto const &cbor : wrapper_parser.other_cbors()) {
+    //   oss << cbor.second.dump();
+    // }
+    REL_ERROR("Malformed firehose message {}", oss.str());
+    return;
+  }
+  auto const &header(other_cbors.front().second);
+  auto const &message(other_cbors.back().second);
+  REL_DEBUG("Firehose header:  {}", dump_json(header));
+  REL_DEBUG("         message: {}", dump_json(message));
+  int op(header["op"].template get<int>());
+  if (op == static_cast<int>(firehose::op::error)) {
+    metrics_factory::instance()
+        .get_counter("firehose_content")
+        .Get({{"op", "error"}})
+        .Increment();
+  } else if (op == static_cast<int>(firehose::op::message)) {
+    metrics_factory::instance()
+        .get_counter("firehose_content")
+        .Get({{"op", "message"}})
+        .Increment();
+    std::string op_type(header["t"].template get<std::string>());
+    metrics_factory::instance()
+        .get_counter("firehose_content")
+        .Get({{"op", "message"}, {"type", op_type}})
+        .Increment();
 
-      // update last-seen sequence number if present and not out-of-sequence
-      int64_t seq(-1);
-      if (op_type != firehose::OpTypeInfo) {
-        std::string time_string(message["time"].template get<std::string>());
-        seq = message["seq"].template get<int64_t>();
-        bsky::parse_time_stamp emitted_at =
-            bsky::strict_time_stamp_from_iso_8601(time_string);
-        // if packet is out of sequence, count and skip it
-        // firehose seems to reset to subscribeRepos 'cursor' after backfill is
-        // complete
-        if (!bsky::moderation::auxiliary_data::instance()
-                 .update_rewind_point_if_valid(seq, emitted_at)) {
-          metrics_factory::instance()
-              .get_counter("firehose_content")
-              .Get({{"skipped", ""}})
-              .Increment();
-          return;
-        }
-      }
-
-      std::string repo;
-      parser block_parser;
-      if (op_type == firehose::OpTypeCommit) {
-        repo = message["repo"].template get<std::string>();
-        if (message.contains("blocks")) {
-          // CAR file - nested in-situ parse to extract as JSON
-          auto blocks(
-              message["blocks"].template get<nlohmann::json::binary_t>());
-          bool parsed(
-              block_parser.json_from_car(blocks.cbegin(), blocks.cend()));
-          if (parsed) {
-            DBG_DEBUG("Commit content blocks: {}",
-                      block_parser.dump_parse_content());
-            DBG_DEBUG("Commit other blocks: {}",
-                      block_parser.dump_parse_other());
-          } else {
-            // TODO error handling
-          }
-        }
-        for (auto const &oper : message["ops"]) {
-          size_t count = 0;
-          auto path(oper["path"].template get<std::string>());
-          auto kind(oper["action"].template get<std::string>());
-          firehose::op_kind oper_kind(firehose::op_kind_from_string(kind));
-          for (const auto token : std::views::split(path, '/')) {
-            // with string_view's C++23 range constructor:
-            std::string field(token.cbegin(), token.cend());
-            switch (count) {
-              case 0:
-                if (field.empty())
-                  throw std::invalid_argument("Blank collection in op.path " +
-                                              path);
-                metrics_factory::instance()
-                    .get_counter("firehose_content")
-                    .Get({{"op", "message"},
-                          {"type", op_type},
-                          {"collection", field},
-                          {"kind", kind}})
-                    .Increment();
-                break;
-              case 1:
-                if (field.empty())
-                  throw std::invalid_argument("Blank key in op.path " + path);
-                break;
-            }
-            ++count;
-          }
-          // track deletions
-          if (oper_kind == firehose::op_kind::delete_) {
-            _post_processor.request_recording(
-                {repo,
-                 bsky::time_stamp_from_iso_8601(
-                     message["time"].template get<std::string>()),
-                 activity::deleted(path)});
-          } else if (oper.contains("cid") && !oper["cid"].is_null()) {
-            auto cid(oper["cid"].template get<nlohmann::json::binary_t>());
-            try {
-              // nlhomann parser gives us a leading zero
-              atproto::cid_decoder decoder(cid.cbegin() + 1, cid.cend());
-              std::string friendly_cid(decoder.as_string());
-              auto insertion(_path_by_cid.insert({friendly_cid, path}));
-              if (!insertion.second) {
-                // We see this for Block operations very rarely. Log to try to
-                // track it down
-                REL_ERROR(
-                    "Duplicate cid {} at op.path {}, already used for path {}",
-                    friendly_cid, path, insertion.first->second);
-                REL_ERROR("Firehose header:  {}", dump_json(header));
-                REL_ERROR("         message: {}", dump_json(message));
-                REL_ERROR("Content CBORs:  {}",
-                          block_parser.dump_parse_content());
-                REL_ERROR("Matched CBORs:  {}",
-                          block_parser.dump_parse_matched());
-                REL_ERROR("Other CBORs:    {}",
-                          block_parser.dump_parse_other());
-              }
-            } catch (std::exception const &exc) {
-              REL_ERROR("CID parse error {} in message {}", exc.what(),
-                        dump_json(message));
-            }
-          }
-        }
-        // handle all the CBORs with content, metrics, checking
-        for (auto const &content_cbor : block_parser.content_cbors()) {
-          handle_content(seq, repo, content_cbor.first, content_cbor.second);
-        }
-        for (auto const &matchable_cbor : block_parser.matchable_cbors()) {
-          handle_matchable_content(seq, repo, matchable_cbor.first,
-                                   matchable_cbor.second);
-        }
-      } else if (op_type == firehose::OpTypeIdentity ||
-                 op_type == firehose::OpTypeHandle) {
-        repo = message["did"].template get<std::string>();
-        if (message.contains("handle")) {
-          std::string handle(message["handle"].template get<std::string>());
-          _path_candidates.emplace_back(path_candidates{
-              std::string(matcher::HandleSentinel),  // path
-              std::string(matcher::HandleSentinel),  // cid
-              {{op_type, std::string(matcher::HandleSentinel), handle}}});
-          _post_processor.request_recording(
-              {repo,
-               bsky::time_stamp_from_iso_8601(
-                   message["time"].template get<std::string>()),
-               activity::handle(handle)});
-          activity::event_recorder::instance().update_handle(repo, handle);
-        }
-        REL_INFO("{} {}", op_type.c_str(), dump_json(message));
-      } else if (op_type == firehose::OpTypeAccount) {
-        repo = message["did"].template get<std::string>();
-        bool active(message["active"].template get<bool>());
+    // update last-seen sequence number if present and not out-of-sequence
+    int64_t seq(-1);
+    if (op_type != firehose::OpTypeInfo) {
+      std::string time_string(message["time"].template get<std::string>());
+      seq = message["seq"].template get<int64_t>();
+      bsky::parse_time_stamp emitted_at =
+          bsky::strict_time_stamp_from_iso_8601(time_string);
+      // if packet is out of sequence, count and skip it
+      // firehose seems to reset to subscribeRepos 'cursor' after backfill is
+      // complete
+      if (!bsky::moderation::auxiliary_data::instance()
+               .update_rewind_point_if_valid(seq, emitted_at)) {
         metrics_factory::instance()
             .get_counter("firehose_content")
-            .Get({{"op", "message"},
-                  {"type", op_type},
-                  {"status", active ? "active" : "inactive"}})
+            .Get({{"skipped", ""}})
             .Increment();
-        if (active) {
-          _post_processor.request_recording(
-              {repo,
-               bsky::time_stamp_from_iso_8601(
-                   message["time"].template get<std::string>()),
-               activity::active()});
-        } else if (message.contains("status")) {
-          _post_processor.request_recording(
-              {repo,
-               bsky::time_stamp_from_iso_8601(
-                   message["time"].template get<std::string>()),
-               activity::inactive(bsky::down_reason_from_string(
-                   message["status"].template get<std::string>()))});
+        return;
+      }
+    }
+
+    std::string repo;
+    parser block_parser;
+    if (op_type == firehose::OpTypeCommit) {
+      repo = message["repo"].template get<std::string>();
+      if (message.contains("blocks")) {
+        // CAR file - nested in-situ parse to extract as JSON
+        auto blocks(message["blocks"].template get<nlohmann::json::binary_t>());
+        bool parsed(block_parser.json_from_car(blocks.cbegin(), blocks.cend()));
+        if (parsed) {
+          DBG_DEBUG("Commit content blocks: {}",
+                    block_parser.dump_parse_content());
+          DBG_DEBUG("Commit other blocks: {}", block_parser.dump_parse_other());
         } else {
+          // TODO error handling
+        }
+      }
+      for (auto const &oper : message["ops"]) {
+        size_t count = 0;
+        auto path(oper["path"].template get<std::string>());
+        auto kind(oper["action"].template get<std::string>());
+        firehose::op_kind oper_kind(firehose::op_kind_from_string(kind));
+        for (const auto token : std::views::split(path, '/')) {
+          // with string_view's C++23 range constructor:
+          std::string field(token.cbegin(), token.cend());
+          switch (count) {
+            case 0:
+              if (field.empty())
+                throw std::invalid_argument("Blank collection in op.path " +
+                                            path);
+              metrics_factory::instance()
+                  .get_counter("firehose_content")
+                  .Get({{"op", "message"},
+                        {"type", op_type},
+                        {"collection", field},
+                        {"kind", kind}})
+                  .Increment();
+              break;
+            case 1:
+              if (field.empty())
+                throw std::invalid_argument("Blank key in op.path " + path);
+              break;
+          }
+          ++count;
+        }
+        // track deletions
+        if (oper_kind == firehose::op_kind::delete_) {
           _post_processor.request_recording(
               {repo,
                bsky::time_stamp_from_iso_8601(
                    message["time"].template get<std::string>()),
-               activity::inactive(bsky::down_reason::unknown)});
+               activity::deleted(path)});
+        } else if (oper.contains("cid") && !oper["cid"].is_null()) {
+          auto cid(oper["cid"].template get<nlohmann::json::binary_t>());
+          try {
+            // nlhomann parser gives us a leading zero
+            atproto::cid_decoder decoder(cid.cbegin() + 1, cid.cend());
+            std::string friendly_cid(decoder.as_string());
+            auto insertion(_path_by_cid.insert({friendly_cid, path}));
+            if (!insertion.second) {
+              // We see this for Block operations very rarely. Log to try to
+              // track it down
+              REL_ERROR(
+                  "Duplicate cid {} at op.path {}, already used for path {}",
+                  friendly_cid, path, insertion.first->second);
+              REL_ERROR("Firehose header:  {}", dump_json(header));
+              REL_ERROR("         message: {}", dump_json(message));
+              REL_ERROR("Content CBORs:  {}",
+                        block_parser.dump_parse_content());
+              REL_ERROR("Matched CBORs:  {}",
+                        block_parser.dump_parse_matched());
+              REL_ERROR("Other CBORs:    {}", block_parser.dump_parse_other());
+            }
+          } catch (std::exception const &exc) {
+            REL_ERROR("CID parse error {} in message {}", exc.what(),
+                      dump_json(message));
+          }
         }
-        REL_INFO("{} {}", op_type.c_str(), dump_json(message));
-      } else if (op_type == firehose::OpTypeTombstone) {
-        repo = message["did"].template get<std::string>();
+      }
+      // handle all the CBORs with content, metrics, checking
+      for (auto const &content_cbor : block_parser.content_cbors()) {
+        handle_content(seq, repo, content_cbor.first, content_cbor.second);
+      }
+      for (auto const &matchable_cbor : block_parser.matchable_cbors()) {
+        handle_matchable_content(seq, repo, matchable_cbor.first,
+                                 matchable_cbor.second);
+      }
+    } else if (op_type == firehose::OpTypeIdentity ||
+               op_type == firehose::OpTypeHandle) {
+      repo = message["did"].template get<std::string>();
+      if (message.contains("handle")) {
+        std::string handle(message["handle"].template get<std::string>());
+        _path_candidates.emplace_back(path_candidates{
+            std::string(matcher::HandleSentinel),  // path
+            std::string(matcher::HandleSentinel),  // cid
+            {{op_type, std::string(matcher::HandleSentinel), handle}}});
         _post_processor.request_recording(
             {repo,
              bsky::time_stamp_from_iso_8601(
                  message["time"].template get<std::string>()),
-             activity::inactive(bsky::down_reason::tombstone)});
-        REL_INFO("{} {}", op_type.c_str(), dump_json(message));
-      } else if (op_type == firehose::OpTypeMigrate ||
-                 op_type == firehose::OpTypeInfo) {
-        // no-op
+             activity::handle(handle)});
+        activity::event_recorder::instance().update_handle(repo, handle);
       }
-      REL_TRACE("{} {}", header.dump(), message.dump());
-      if (!_path_candidates.empty()) {
-        auto matches(matcher::shared().all_matches_for_path_candidates(
-            _path_candidates));
-        if (!matches.empty()) {
-          // track/retrieve account info
-          auto handle(activity::event_recorder::instance().ensure_loaded(repo));
-          // Publish metrics for matches
-          size_t count(0);
-          for (auto const &result : matches) {
-            for (auto const &next_match : result._matches) {
-              // this is the substring of the full JSON that matched one or more
-              // desired strings
-              // start tracking this account if not already
-              REL_INFO(
-                  "{}/{}/{} matched candidate {}|{}|{}", next_match._matches,
-                  repo, handle, next_match._candidate._type,
-                  next_match._candidate._field, next_match._candidate._value);
-              count += next_match._matches.size();
-              for (auto const &match : next_match._matches) {
-                prometheus::Labels labels(
-                    {{"type", next_match._candidate._type},
-                     {"field", next_match._candidate._field},
-                     {"filter", wstring_to_utf8(match.get_keyword())}});
-                metrics_factory::instance()
-                    .get_counter("message_string_matches")
-                    .Get(labels)
-                    .Increment();
-              }
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
+    } else if (op_type == firehose::OpTypeAccount) {
+      repo = message["did"].template get<std::string>();
+      bool active(message["active"].template get<bool>());
+      metrics_factory::instance()
+          .get_counter("firehose_content")
+          .Get({{"op", "message"},
+                {"type", op_type},
+                {"status", active ? "active" : "inactive"}})
+          .Increment();
+      if (active) {
+        _post_processor.request_recording(
+            {repo,
+             bsky::time_stamp_from_iso_8601(
+                 message["time"].template get<std::string>()),
+             activity::active()});
+      } else if (message.contains("status")) {
+        _post_processor.request_recording(
+            {repo,
+             bsky::time_stamp_from_iso_8601(
+                 message["time"].template get<std::string>()),
+             activity::inactive(bsky::down_reason_from_string(
+                 message["status"].template get<std::string>()))});
+      } else {
+        _post_processor.request_recording(
+            {repo,
+             bsky::time_stamp_from_iso_8601(
+                 message["time"].template get<std::string>()),
+             activity::inactive(bsky::down_reason::unknown)});
+      }
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
+    } else if (op_type == firehose::OpTypeTombstone) {
+      repo = message["did"].template get<std::string>();
+      _post_processor.request_recording(
+          {repo,
+           bsky::time_stamp_from_iso_8601(
+               message["time"].template get<std::string>()),
+           activity::inactive(bsky::down_reason::tombstone)});
+      REL_INFO("{} {}", op_type.c_str(), dump_json(message));
+    } else if (op_type == firehose::OpTypeMigrate ||
+               op_type == firehose::OpTypeInfo) {
+      // no-op
+    }
+    REL_TRACE("{} {}", header.dump(), message.dump());
+    if (!_path_candidates.empty()) {
+      auto matches(
+          matcher::shared().all_matches_for_path_candidates(_path_candidates));
+      if (!matches.empty()) {
+        // track/retrieve account info
+        auto handle(activity::event_recorder::instance().ensure_loaded(repo));
+        // Publish metrics for matches
+        size_t count(0);
+        for (auto const &result : matches) {
+          for (auto const &next_match : result._matches) {
+            // this is the substring of the full JSON that matched one or more
+            // desired strings
+            // start tracking this account if not already
+            REL_INFO("{}/{}/{} matched candidate {}|{}|{}", next_match._matches,
+                     repo, handle, next_match._candidate._type,
+                     next_match._candidate._field,
+                     next_match._candidate._value);
+            count += next_match._matches.size();
+            for (auto const &match : next_match._matches) {
+              prometheus::Labels labels(
+                  {{"type", next_match._candidate._type},
+                   {"field", next_match._candidate._field},
+                   {"filter", wstring_to_utf8(match.get_keyword())}});
+              metrics_factory::instance()
+                  .get_counter("message_string_matches")
+                  .Get(labels)
+                  .Increment();
             }
           }
-          // only log message once - might be interleaved with other thread
-          // output
-          if (op_type == firehose::OpTypeCommit) {
-            // curate a smaller version of the full message for correlation
-            REL_INFO("in message: {} {} {}", repo, dump_json(message["ops"]),
-                     block_parser.dump_parse_content());
-          } else {
-            REL_INFO("in message: {} {}", repo, dump_json(message));
-          }
-          // record suspect activity as a special-case event
-          _post_processor.request_recording(
-              {repo, bsky::current_time(), activity::matches(count)});
-
-          // forward account and its matched records for possible
-          // auto-moderation
-          action_router::instance().wait_enqueue(
-              {seq, repo, std::move(matches)});
         }
+        // only log message once - might be interleaved with other thread
+        // output
+        if (op_type == firehose::OpTypeCommit) {
+          // curate a smaller version of the full message for correlation
+          REL_INFO("in message: {} {} {}", repo, dump_json(message["ops"]),
+                   block_parser.dump_parse_content());
+        } else {
+          REL_INFO("in message: {} {}", repo, dump_json(message));
+        }
+        // record suspect activity as a special-case event
+        _post_processor.request_recording(
+            {repo, bsky::current_time(), activity::matches(count)});
+
+        // forward account and its matched records for possible
+        // auto-moderation
+        action_router::instance().wait_enqueue({seq, repo, std::move(matches)});
       }
     }
-  } catch (std::exception const &exc) {
-    REL_ERROR("firehose_payload exception {} on {}", exc.what(),
-              boost::beast::buffers_to_string(beast_data.data()));
-    // not fatal
-    // controller::instance().force_stop();
   }
 }
 
