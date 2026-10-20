@@ -1,4 +1,4 @@
-project(firehose_client VERSION 2.11.13 LANGUAGES C CXX)
+project(firehose_client VERSION 2.11.14 LANGUAGES C CXX)
 
 configure_file(./cmake/firehost_client_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/project_defs.hpp)
 
@@ -8,7 +8,6 @@ add_compile_definitions(
 
 add_executable(firehose_client
   ./source/main.cpp
-  ./source/content_handler.cpp
   ./source/matcher.cpp
   ./source/payload.cpp
   ./source/moderation/action_router.cpp

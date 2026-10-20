@@ -44,19 +44,6 @@
             "console": "externalTerminal"
         },
         {
-            "name": "Jetstream Client (Debug)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/debug-msvc/firehose-client/firehose_client.exe",
-            "args": [
-                "./config/live_config.yml"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/firehose-client",
-            "environment": [],
-            "console": "externalTerminal"
-        },
-        {
             "name": "Firehose Client (Debug)",
             "type": "cppvsdbg",
             "request": "launch",
@@ -109,19 +96,6 @@
             "externalConsole": false
         },
         {
-            "name": "Jetstream Client (Release)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/release-msvc/firehose-client/firehose_client.exe",
-            "args": [
-                "./config/live_config.yml"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/firehose-client",
-            "environment": [],
-            "console": "externalTerminal"
-        },
-        {
             "name": "Firehose Client (Release)",
             "type": "cppvsdbg",
             "request": "launch",
@@ -141,19 +115,6 @@
             "program": "${workspaceFolder}/logging-msvc/firehose-client/firehose_client.exe",
             "args": [
                 "./config/full_config_dev.yml"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/firehose-client",
-            "environment": [],
-            "console": "externalTerminal"
-        },
-        {
-            "name": "Jetstream Client (Logging)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/firehose-client/firehose_client.exe",
-            "args": [
-                "./config/live_config.yml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/firehose-client",
