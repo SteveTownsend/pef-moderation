@@ -355,6 +355,28 @@ bsky::embed_type firehose_payload::context::process_embed(
         add_embed(embed::image(cid));
       }
       break;
+    case bsky::embed_type::gallery:
+      // pass along the CID in each item
+      // TODO support new types when lexicon adds them - only images initially
+      if (!embed.contains("items")) {
+        REL_ERROR("malformed 'gallery' embed '{}'", dump_json(embed));
+        return bsky::embed_type::invalid;
+      }
+      for (auto const &item : embed["items"]) {
+        if (!item.contains("image") || !item["image"].contains("ref")) {
+          REL_ERROR("malformed image in 'gallery' embed '{}'",
+                    dump_json(embed));
+          return bsky::embed_type::invalid;
+        }
+        encoded_cid =
+            item["image"]["ref"].template get<nlohmann::json::binary_t>();
+        // nlohmann parser leaves a leading zero byte
+        cid = atproto::cid_decoder<nlohmann::json::binary_t::const_iterator>(
+                  encoded_cid.cbegin() + 1, encoded_cid.cend())
+                  .as_string();
+        add_embed(embed::image(cid));
+      }
+      break;
     case bsky::embed_type::video:
       if (!embed.contains("video") || !embed["video"].contains("ref")) {
         REL_ERROR("malformed 'video' embed '{}'", dump_json(embed));

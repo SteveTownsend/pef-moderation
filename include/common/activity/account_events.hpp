@@ -291,10 +291,10 @@ class account {
   // initial thresholds updated per auto-report and label support, covered under
   // https://github.com/SteveTownsend/pef-moderation/issues/219 99.5% threshold
   // based on observed metrics
-  static constexpr size_t TagFacetThreshold = 23;
-  static constexpr size_t LinkFacetThreshold = 7;
-  static constexpr size_t MentionFacetThreshold = 10;
-  static constexpr size_t TotalFacetThreshold = 20;
+  static constexpr size_t TagFacetThreshold = 27;
+  static constexpr size_t LinkFacetThreshold = 4;
+  static constexpr size_t MentionFacetThreshold = 12;
+  static constexpr size_t TotalFacetThreshold = 23;
   // allow occasional verbosity in facets
   static constexpr size_t FacetFactor = 10;
 

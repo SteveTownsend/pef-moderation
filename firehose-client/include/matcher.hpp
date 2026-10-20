@@ -140,6 +140,10 @@ class matcher {
          std::string const &categories, const int rule_id, const bool track,
          const bool label);
     rule(rule const &);
+
+    friend bool operator==(rule const &lhs, rule const &rhs);
+    friend bool operator!=(rule const &lhs, rule const &rhs);
+
     inline std::string to_string() const {
       std::ostringstream oss;
       oss << "id=" << _id << '|' << "track=" << (_track ? 'y' : 'n') << '|'
@@ -182,5 +186,9 @@ class matcher {
   mutable aho_corasick::wtrie _substring_trie;
   mutable aho_corasick::wtrie _whole_word_trie;
   std::unordered_map<std::wstring, rule> _rule_lookup;
+};
+
+struct rule_hash {
+  std::size_t operator()(const matcher::rule &v) const;
 };
 #endif

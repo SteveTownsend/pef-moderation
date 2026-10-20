@@ -155,6 +155,8 @@ void report_agent::string_match_report(
     for (const auto &rule : rules) {
       add_tags.push_back("rid:" + std::to_string(rule));
     }
+    // Mark the target as auto-reported
+    add_tags.push_back("src:auto");
     bsky::moderation::tag_event_comment comment(_project_name);
     _pds_clients[client]->tag_report_subject(target, comment, add_tags, {});
   }
