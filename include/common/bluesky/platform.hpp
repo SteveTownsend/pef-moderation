@@ -112,7 +112,8 @@ enum class embed_type {
   images,
   record,
   record_with_media,
-  video
+  video,
+  gallery
 };
 
 embed_type embed_type_from_string(std::string_view embed_type_str);

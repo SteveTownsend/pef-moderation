@@ -20,6 +20,11 @@ http://www.fsf.org/licensing/licenses
 
 #include "matcher.hpp"
 
+#include <boost/describe.hpp>
+#include <boost/hash2/flavor.hpp>
+#include <boost/hash2/get_integral_result.hpp>
+#include <boost/hash2/hash_append.hpp>
+#include <boost/hash2/xxhash.hpp>
 #include <exception>
 #include <fstream>
 #include <ranges>
@@ -72,6 +77,32 @@ void matcher::load_filter_file(std::string const &filename) {
 
 void matcher::refresh_rules(matcher &&replacement) {
   std::lock_guard log(_lock);
+  // Record changes vs prior rules
+  typedef std::unordered_set<matcher::rule, rule_hash> rule_set;
+  rule_set old_rules;
+  for (auto const &pair : _rule_lookup) {
+    old_rules.insert(pair.second);
+  }
+  rule_set new_rules;
+  for (auto const &pair : replacement._rule_lookup) {
+    new_rules.insert(pair.second);
+  }
+
+  auto removals = old_rules | std::views::filter([&new_rules](matcher::rule r) {
+                    return !new_rules.contains(r);
+                  });
+  for (auto deleted : removals) {
+    REL_INFO("Rule refresh: removed {}", deleted.to_string());
+  }
+  auto additions = new_rules | std::views::filter([&](matcher::rule r) {
+                     return !old_rules.contains(r);
+                   });
+  for (auto added : additions) {
+    REL_INFO("Rule refresh: added {}", added.to_string());
+  }
+  if (additions.empty() && removals.empty()) {
+    REL_INFO("Rule refresh: list unchanged");
+  }
   _rule_lookup.swap(replacement._rule_lookup);
   _substring_trie = std::move(replacement._substring_trie);
   _whole_word_trie = std::move(replacement._whole_word_trie);
@@ -95,7 +126,7 @@ bool matcher::add_rule(std::string const &filter, std::string const &labels,
 bool matcher::insert_rule(rule &&new_rule) {
   // Check for intentionally-skipped rule
   if (!new_rule._track) {
-    REL_WARNING("Skipped rule '{}'", new_rule.to_string());
+    REL_TRACE("Skipped rule '{}'", new_rule.to_string());
     return false;
   }
   // TODO handle this for refresh case
@@ -110,9 +141,9 @@ bool matcher::insert_rule(rule &&new_rule) {
   else if (new_rule._match_type == rule::match_type::whole_word)
     _whole_word_trie.insert(canonical_form);
   if (_rule_lookup.insert({canonical_form, new_rule}).second) {
-    REL_INFO("Stored rule '{}'", new_rule.to_string());
+    REL_TRACE("Stored rule '{}'", new_rule.to_string());
   } else {
-    REL_WARNING("Duplicate rule '{}'", new_rule.to_string());
+    REL_ERROR("Duplicate rule '{}'", new_rule.to_string());
   }
   return true;
 }
@@ -430,6 +461,29 @@ matcher::rule::rule(matcher::rule const &rhs)
       _substring_trie.insert(to_canonical(std::string_view(subtoken)));
     }
   }
+}
+
+bool operator==(matcher::rule const &lhs, matcher::rule const &rhs) {
+  return lhs._target == rhs._target && lhs._labels == rhs._labels &&
+         lhs._track == rhs._track && lhs._report == rhs._report &&
+         lhs._label == rhs._label && lhs._content_scope == rhs._content_scope &&
+         lhs._block_list_name == rhs._block_list_name &&
+         lhs._match_type == rhs._match_type &&
+         lhs._contingent == rhs._contingent;
+}
+bool operator!=(matcher::rule const &lhs, matcher::rule const &rhs) {
+  return !(lhs == rhs);
+}
+
+BOOST_DESCRIBE_STRUCT(matcher::rule, (),
+                      (_target, _labels, _track, _report, _label,
+                       _content_scope, _block_list_name, _match_type,
+                       _contingent))
+std::size_t rule_hash::operator()(const matcher::rule &v) const {
+  boost::hash2::xxhash_64 h;
+  boost::hash2::default_flavor flavour;
+  boost::hash2::hash_append(h, flavour, v);
+  return boost::hash2::get_integral_result<std::size_t>(h);
 }
 
 bool matcher::rule::passes_contingent_checks(
