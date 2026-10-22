@@ -51,6 +51,7 @@ constexpr std::string_view AppBskyEmbedRecord = "app.bsky.embed.record";
 constexpr std::string_view AppBskyEmbedRecordWithMedia =
     "app.bsky.embed.recordWithMedia";
 constexpr std::string_view AppBskyEmbedVideo = "app.bsky.embed.video";
+constexpr std::string_view AppBskyEmbedGallery = "app.bsky.embed.gallery";
 
 constexpr std::string_view AppBskyRichtextFacet = "app.bsky.richtext.facet";
 constexpr std::string_view AppBskyRichtextFacetLink =

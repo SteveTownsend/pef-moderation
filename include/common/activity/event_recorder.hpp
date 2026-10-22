@@ -21,7 +21,6 @@ http://www.fsf.org/licensing/licenses
 *************************************************************************/
 
 #include "common/activity/event_cache.hpp"
-#include "readerwriterqueue.h"
 
 namespace activity {
 class event_recorder {
