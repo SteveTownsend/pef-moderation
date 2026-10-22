@@ -62,7 +62,7 @@ include_directories(${caching_SOURCE_DIR}/include)
 # lock-free queues
 FetchContent_Declare(
   reader_writer_queue
-  GIT_TAG v1.0.7
+  GIT_TAG 6867b56452352acf077fccd5f6cc7e3a8cfde0fb
   GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue
 )
 FetchContent_MakeAvailable(reader_writer_queue)
@@ -70,7 +70,7 @@ include_directories(${reader_writer_queue_SOURCE_DIR})
 
 FetchContent_Declare(
   concurrent_queue
-  GIT_TAG v1.0.5
+  GIT_TAG 683b9e31ea15eb69f1b81cc1defc7850d5f20b71
   GIT_REPOSITORY https://github.com/cameron314/concurrentqueue
 )
 FetchContent_MakeAvailable(concurrent_queue)

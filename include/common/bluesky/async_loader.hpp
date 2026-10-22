@@ -24,7 +24,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/log_wrapper.hpp"
 #include "common/metrics_factory.hpp"
 #include "common/rest_utils.hpp"
-#include "readerwriterqueue.h"
 
 namespace bsky {
 

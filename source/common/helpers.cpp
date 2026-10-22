@@ -89,6 +89,9 @@ embed_type embed_type_from_string(std::string_view embed_type_str) {
   if (embed_type_str == AppBskyEmbedVideo) {
     return embed_type::video;
   }
+  if (embed_type_str == AppBskyEmbedGallery) {
+    return embed_type::gallery;
+  }
   return embed_type::invalid;
 }
 

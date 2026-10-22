@@ -36,7 +36,6 @@ http://www.fsf.org/licensing/licenses
 #include "common/parser.hpp"
 #include "matcher.hpp"
 #include "moderation/embed_checker.hpp"
-#include "readerwriterqueue.h"
 
 namespace firehose {
 
